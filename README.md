@@ -7,9 +7,9 @@ A small collection of formalized theorems in **complex analysis** using **Lean 4
 This repository currently contains:
 
 - A formalization of the **Poisson integral theorem** for harmonic functions on the unit disc.  
-  [MathWorld: Poisson Integral](https://mathworld.wolfram.com/PoissonIntegral.html)
+  File: [PoissonIntegral.lean](ComplexAnalysis/PoissonIntegral.lean), reference: [MathWorld: Poisson Integral](https://mathworld.wolfram.com/PoissonIntegral.html)  
 - A formalization of the **Herglotz–Riesz representation theorem** for positive harmonic functions on the unit disc.  
-  [Wikipedia: Positive_harmonic_function](https://en.wikipedia.org/wiki/Positive_harmonic_function)
+  File: [HerglotzRieszRepresentations.lean](ComplexAnalysis/Positive/HerglotzRieszRepresentations.lean), reference: [Wikipedia: Positive_harmonic_function](https://en.wikipedia.org/wiki/Positive_harmonic_function)  
 
 ## Dependencies
 
