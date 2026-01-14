@@ -1,0 +1,269 @@
+\documentclass[11pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1.2in]{geometry}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{thmtools}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Theorem environments
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+
+% Custom commands
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\D}{\mathbb{D}}
+\newcommand{\T}{\mathbb{T}}
+\newcommand{\abs}[1]{\left|#1\right|}
+\newcommand{\norm}[1]{\left\|#1\right\|}
+\DeclareMathOperator{\supp}{supp}
+\renewcommand{\Re}{\operatorname{Re}}
+\renewcommand{\Im}{\operatorname{Im}}
+
+% Title information
+\title{\textbf{Proof of the Herglotz Representation Theorem}}
+
+\begin{document}
+\date{}
+\maketitle
+\setlength{\parindent}{0pt}
+
+\section{Preliminary Results}
+
+Let $\D = \{z \in \C : \abs{z} < 1\}$ denote the unit disc and $\mathbb{H} = \{z \in \C : \Re z > 0\}$ the right half-plane. We consider the Borel $\sigma$-algebra on~$\C$.\\
+
+We follow a proof that can be found, e.g., in \cite[Section 3]{Garnett1981}.\\
+
+Let $C(\partial\D)$ be the space of continuous, real-valued functions on~$\partial\D$, equipped with the supremum norm $\norm{\cdot}_\infty$, and let $C(\partial\D)^*$ be its dual space.\\
+
+
+We first need some technical lemmas that establish the compactness and convergence properties needed for the main theorem. 
+
+\begin{lemma}[Compactness in the dual ball]\label{lem:compact}
+The set 
+\[
+K = \{\Lambda \in C(\partial\D)^* : \abs{\Lambda(f)} \leq 1 \text{ for all } f \in C(\partial\D) \text{ with } \norm{f}_\infty \leq 1\}
+\]
+is a compact metric space with respect to the induced weak*-topology of $C(\partial\D)^*$.
+\end{lemma}
+
+\begin{proof}
+By the Banach-Alaoglu theorem, $K$ is weak*-compact as the closed unit ball in the dual space.
+
+Since $C(\partial\D)$ is a separable vector space (the unit circle is a compact metric space) and $K$ is weak*-compact, the space $K$ is metrizable in the weak*-topology. This follows because $C(\partial\D)^*$ has a countable family of continuous functions that separates points, given by evaluation at a countable dense subset of~$C(\partial\D)$.
+\end{proof}
+
+Let $p\colon \D \to \mathbb{H}$ be analytic with $p(0) = 1$. Let $u = \Re p$ denote its real part. 
+
+Consider a sequence $(r_n)_{n\in\N}$ in $(0,1)$ such that $r_n \to 1$ as $n \to \infty$ (for example, $r_n = \frac{n+1}{n+2}$). For every $n \in \N$, define $u_n\colon \D \to \R$ by
+\[
+u_n(z) = u(r_n z), \quad z \in \D.
+\]
+
+For every $n \in \N$, define the linear functional $\Lambda_n \in C(\partial\D)^*$ by
+\[
+\Lambda_n(f) = \frac{1}{2\pi} \int_0^{2\pi} f(e^{it}) u_n(e^{it}) \, dt, \quad f \in C(\partial\D).
+\]
+
+\begin{lemma}[Boundedness of the functionals]\label{lem:bounded}
+For every $n \in \N$, we have $\abs{\Lambda_n(f)} \leq 1$ for all $f \in C(\partial\D)$ with $\norm{f}_\infty \leq 1$.
+\end{lemma}
+
+\begin{proof}
+Let $n \in \N$ and $f \in C(\partial\D)$ with $\norm{f}_\infty \leq 1$. Since $u_n(\zeta) > 0$ for all $\zeta \in \partial\D$ (as $u_n$ is the real part of a function mapping to the right half-plane), we have
+\[
+\abs{\Lambda_n(f)} \leq \frac{1}{2\pi} \int_0^{2\pi} \abs{f(e^{it})} u_n(e^{it}) \, dt \leq \frac{1}{2\pi} \int_0^{2\pi} u_n(e^{it}) \, dt.
+\]
+
+Since $u_n$ is harmonic on $\D$ and continuous on $\overline{\D}$, by the mean value property for harmonic functions,
+\[
+\frac{1}{2\pi} \int_0^{2\pi} u_n(e^{it}) \, dt = u_n(0) = u(0) = \Re p(0) = 1.
+\]
+This completes the proof.
+\end{proof}
+
+\begin{lemma}[Existence of a convergent subsequence]\label{lem:subsequence}
+There exists a subsequence $(\Lambda_{n_k})_{k\in\N}$ of $(\Lambda_n)_{n\in\N}$ and a functional $\Lambda \in C(\partial\D)^*$ such that
+\[
+\lim_{k\to\infty} \Lambda_{n_k}(f) = \Lambda(f), \quad \text{for all } f \in C(\partial\D).
+\]
+\end{lemma}
+
+\begin{proof}
+By \Cref{lem:bounded}, the sequence $(\Lambda_n)_{n\in\N}$ lies in $K$. By \Cref{lem:compact}, there exist $\Lambda \in K$ and a subsequence $(\Lambda_{n_k})_{k\in\N}$ of $(\Lambda_n)_{n\in\N}$ that is weak*-convergent to~$\Lambda$.
+\end{proof}
+
+\section{The Representing Measure}
+
+\begin{lemma}[Existence of the probability measure]\label{lem:measure}
+There exists a probability measure $\mu$ on $\partial\D$ and a subsequence $(r_{n_k})_{k\in\N}$ such that
+\[
+\lim_{k\to\infty} \frac{1}{2\pi} \int_0^{2\pi} f(e^{it}) u(r_{n_k} e^{it}) \, dt = \int_{\partial\D} f(\zeta) \, d\mu(\zeta)
+\]
+for all $f \in C(\partial\D)$ with $f(\zeta) \geq 0$ for all $\zeta \in \partial\D$.
+\end{lemma}
+
+\begin{proof}
+Let $\Lambda \in C(\partial\D)^*$ and $(r_{n_k})_{k\in\N}$ be given by \Cref{lem:subsequence}. Since $u(z) > 0$ for all $z \in \D$ (as $p$ maps to the right half-plane), in view of \Cref{lem:subsequence}, $\Lambda$ is a positive functional on~$C(\partial\D)$. 
+
+By the Riesz-Markov-Kakutani representation theorem, there exists a measure $\mu$ on $\partial\D$ such that 
+\[
+\Lambda(f) = \int_{\partial\D} f(\zeta) \, d\mu(\zeta)
+\]
+for all $f \in C(\partial\D)$ with $f(\zeta) \geq 0$ for all $\zeta \in \partial\D$. 
+
+For $f \equiv 1$, by the mean value property, we have
+\[
+\mu(\partial\D) = \lim_{k\to\infty} \frac{1}{2\pi} \int_0^{2\pi} u(r_{n_k} e^{it}) \, dt = 1.
+\]
+Therefore, $\mu$ is a probability measure.
+\end{proof}
+
+\begin{lemma}[Properties of the Herglotz kernel integral]\label{lem:herglotz_kernel}
+Let $\mu$ be a probability measure on $\partial\D$ and define
+\[
+q(z) = \int_{\partial\D} \frac{\zeta + z}{\zeta - z} \, d\mu(\zeta), \quad z \in \D.
+\]
+Then $q$ is analytic on~$\D$, takes values in~$\mathbb{H}$, and satisfies $q(0) = 1$.
+\end{lemma}
+
+\begin{proof}
+The function $z \mapsto \frac{\zeta + z}{\zeta - z}$ is analytic for $z \in \D$ and $\zeta \in \partial\D$ (since $\abs{z} < 1 = \abs{\zeta}$). By dominated convergence and Morera's theorem, $q$ is analytic on~$\D$.
+
+For the real part, note that
+\[
+\Re \frac{\zeta + z}{\zeta - z} = \frac{1 - \abs{z}^2}{\abs{\zeta - z}^2} > 0
+\]
+for $z \in \D$ and $\zeta \in \partial\D$. Therefore, $q$ maps to~$\mathbb{H}$.
+
+Finally, $q(0) = \int_{\partial\D} \frac{\zeta}{\zeta} \, d\mu(\zeta) = \mu(\partial\D) = 1$.
+\end{proof}
+
+\section{Key Technical Lemmas}
+
+\begin{lemma}[Poisson-type integral formula]\label{lem:poisson}
+For every $r \in (0,1)$,
+\[
+u(rz) = \frac{1}{2\pi} \int_0^{2\pi} \Re \frac{e^{it} + z}{e^{it} - z} \cdot u(re^{it}) \, dt, \quad \text{for all } z \in \D.
+\]
+\end{lemma}
+
+\begin{proof}
+Fix $r \in (0,1)$ and $z \in \D$. The function $p(r\,\cdot)$ is analytic on $\frac{1}{r}\D$, and since $\frac{1}{r} > 1$, by the Cauchy integral formula,
+\[
+p(rz) = \frac{1}{2\pi i} \int_{\partial\D} \frac{p(r\zeta)}{\zeta - z} \, d\zeta = \frac{1}{2\pi} \int_0^{2\pi} \frac{p(re^{it}) e^{it}}{e^{it} - z} \, dt.
+\]
+
+Since $\abs{\frac{1}{\overline{z}}} > 1$, the function $\zeta \mapsto \frac{p(r\zeta)}{\frac{1}{\overline{z}} - \zeta}$ is analytic on a disc centered at~$0$ with radius larger than~$1$. By the Cauchy-Goursat theorem for a circle,
+\[
+0 = \frac{1}{2\pi i} \int_{\partial\D} \frac{p(r\zeta)}{\frac{1}{\overline{z}} - \zeta} \, d\zeta = \frac{1}{2\pi} \int_0^{2\pi} \frac{p(re^{it}) \overline{z}}{e^{-it} - \overline{z}} \, dt.
+\]
+
+Adding these two integral formulas yields
+\[
+p(rz) = \frac{1}{2\pi} \int_0^{2\pi} p(re^{it}) \cdot \frac{1 - \abs{z}^2}{\abs{e^{it} - z}^2} \, dt = \frac{1}{2\pi} \int_0^{2\pi} p(re^{it}) \cdot \Re \frac{e^{it} + z}{e^{it} - z} \, dt.
+\]
+
+Taking the real part of both sides completes the proof.
+\end{proof}
+
+\begin{lemma}[Uniqueness via real parts]\label{lem:uniqueness_real}
+Let $p, q\colon \D \to \mathbb{H}$ be analytic with $\Re p = \Re q$ and $p(0) = q(0)$. Then $p = q$.
+\end{lemma}
+
+\begin{proof}
+The function $p - q$ is analytic on~$\D$ and $\Re(p - q) \equiv 0$ on~$\D$. By the Cauchy-Riemann equations, $(p - q)' \equiv 0$. Therefore, $p - q$ is constant on~$\D$, and since $p(0) = q(0)$, we conclude $p = q$.
+\end{proof}
+
+\section{Main Theorem}
+
+\begin{theorem}[Herglotz representation theorem]\label{thm:herglotz}
+Let $p\colon \D \to \mathbb{H}$ be analytic with $p(0) = 1$. Then there exists a \emph{unique} probability measure $\mu$ on $\C$ with support on~$\partial\D$ such that
+\[
+p(z) = \int_{\partial\D} \frac{\zeta + z}{\zeta - z} \, d\mu(\zeta), \quad \text{for all } z \in \D.
+\]
+\end{theorem}
+
+\begin{proof}
+\textbf{Existence.} Let $\mu$ be given by \Cref{lem:measure}. Let $z \in \D$. Using \Cref{lem:measure,lem:herglotz_kernel,lem:poisson}, we have
+\begin{align*}
+\int_{\partial\D} \Re \frac{e^{it} + z}{e^{it} - z} \, d\mu(\zeta) 
+&= \lim_{k\to\infty} \frac{1}{2\pi} \int_0^{2\pi} \Re \frac{e^{it} + z}{e^{it} - z} \cdot u(r_{n_k} e^{it}) \, dt \\
+&= \lim_{k\to\infty} u(r_{n_k} z) = u(z).
+\end{align*}
+
+Let $q$ be as in \Cref{lem:herglotz_kernel}. Then $\Re q = \Re p = u$ and $q(0) = p(0) = 1$. By \Cref{lem:uniqueness_real}, $p = q$, so $p$ has the desired representation.
+
+\medskip
+\noindent\textbf{Uniqueness.} Assume there exist probability measures $\mu_1, \mu_2$ on $\C$ with support on~$\partial\D$ such that
+\[
+p(z) = \int_{\partial\D} \frac{\zeta + z}{\zeta - z} \, d\mu_1(\zeta) = \int_{\partial\D} \frac{\zeta + z}{\zeta - z} \, d\mu_2(\zeta), \quad z \in \D.
+\]
+
+Let $\eta = \mu_2 - \mu_1$. Then $\eta$ is a signed finite measure on $\C$ with support on~$\partial\D$. Moreover, for every $j \in \{1, 2\}$, using the geometric series expansion (valid for $\abs{z} < 1$),
+\[
+\int_{\partial\D} \frac{\zeta + z}{\zeta - z} \, d\mu_j(\zeta) = \int_{\partial\D} \left(1 + 2\sum_{n=1}^\infty \zeta^{-n} z^n\right) d\mu_j(\zeta) = \mu_j(\partial\D) + 2\sum_{n=1}^\infty z^n \int_{\partial\D} \zeta^{-n} \, d\mu_j(\zeta).
+\]
+
+Therefore,
+\[
+\int_{\partial\D} \zeta^{-n} \, d\mu_1(\zeta) = \int_{\partial\D} \zeta^{-n} \, d\mu_2(\zeta), \quad \text{for all } n \in \N.
+\]
+
+This implies
+\[
+\int_{\partial\D} f(\zeta) \, d\mu_1(\zeta) = \int_{\partial\D} f(\zeta) \, d\mu_2(\zeta)
+\]
+for every polynomial $f$ on~$\C$. Since the polynomials (or equivalently, the Laurent polynomials $\{\zeta^n : n \in \Z\}$) are dense in $C(\partial\D)$ by the Stone-Weierstrass theorem, and both $\mu_1$ and $\mu_2$ are probability measures, we conclude $\mu_1 = \mu_2$.
+\end{proof}
+
+\begin{remark}
+The Herglotz representation theorem is fundamental in complex analysis and harmonic analysis. It provides a correspondence between analytic functions with positive real part and probability measures on the circle, analogous to how the Poisson integral formula represents harmonic functions in terms of their boundary values.
+\end{remark}
+
+\begin{remark}
+The kernel $\frac{\zeta + z}{\zeta - z}$ appearing in the theorem is known as the \emph{Herglotz kernel} or \emph{Riesz-Herglotz kernel}. Its real part,
+\[
+\Re \frac{\zeta + z}{\zeta - z} = \frac{1 - \abs{z}^2}{\abs{\zeta - z}^2},
+\]
+is the Poisson kernel for the unit disc.
+\end{remark}
+
+\begin{thebibliography}{9}
+
+\bibitem{Garnett1981}
+John B.~Garnett, \emph{Bounded Analytic Functions}, Section~3, Saunders College Publishing/Harcourt Brace, 1981.
+
+\bibitem{RudinRCA1987}
+Walter~Rudin, \emph{Real and Complex Analysis}, 3rd edition, McGraw-Hill, 1987.
+
+\bibitem{RudinFA1991}
+Walter~Rudin, \emph{Functional Analysis}, 2nd edition, McGraw-Hill, 1991.
+
+\end{thebibliography}
+
+\end{document}
