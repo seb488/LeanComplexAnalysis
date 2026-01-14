@@ -18,10 +18,4 @@ This repository currently contains:
 
 ## Usage
 
-Clone the repository and build with `lake`:
-
-```bash
-git clone https://github.com/<your-username>/<repo-name>.git
-cd <repo-name>
-lake update
-lake build
+Clone the repository and build with `lake`.
