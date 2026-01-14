@@ -124,10 +124,6 @@ lemma goursat_vanishing_integral
   exact ⟨by rw [Real.sin_sq, Real.cos_sq] ; ring, trivial⟩
 
 
-/-- The closed unit disc is compact. -/
-lemma compact_closedUnitDisc : IsCompact (closedBall (0 : ℂ) 1) := by
-  simpa using (isCompact_closedBall (0 : ℂ) 1)
-
 /-- As `r → 1`, the Poisson integral of a continuous function `g` on the closed unit disc
 converges to the boundary integral. More precisely, for a sequence `r_n → 1` with
 `r_n ∈ (0,1)`, the integral against the real part of the Herglotz kernel converges. -/
@@ -160,7 +156,7 @@ lemma poisson_integral_limit_to_boundary (g : ℂ → ℝ) (hz : z ∈ (ball 0 1
         |((exp (x * I) + z) / (exp (x * I) - z)).re| ≤
           sSup (Set.image (fun w => |((w + z) / (w - z)).re|) (sphere 0 1)) := by
       refine ⟨le_csSup ?_ ?_, le_csSup ?_ ?_⟩
-      · have h_compact : IsCompact (closedBall (0 : ℂ) 1) :=  compact_closedUnitDisc
+      · have h_compact : IsCompact (closedBall (0 : ℂ) 1) :=  isCompact_closedBall (0 : ℂ) 1
         exact IsCompact.bddAbove (h_compact.image_of_continuousOn hc.abs)
       · refine ⟨_, ?_, rfl⟩
         simp_all
