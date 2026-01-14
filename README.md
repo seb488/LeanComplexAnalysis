@@ -10,6 +10,7 @@ This repository currently contains:
   File: [PoissonIntegral.lean](ComplexAnalysis/PoissonIntegral.lean), reference: [MathWorld: Poisson Integral](https://mathworld.wolfram.com/PoissonIntegral.html)  
 - A formalization of the **Herglotz–Riesz representation theorem** for positive harmonic functions on the unit disc.  
   File: [HerglotzRieszRepresentations.lean](ComplexAnalysis/Positive/HerglotzRieszRepresentations.lean), reference: [Wikipedia: Positive_harmonic_function](https://en.wikipedia.org/wiki/Positive_harmonic_function)  
+  📄 [PDF: sketch of the proof](Docs/ProofHerglotzRiesz.pdf)
 
 ## Dependencies
 
