@@ -10,6 +10,7 @@ public import Mathlib.Analysis.InnerProductSpace.Harmonic.Constructions
 public import Mathlib.Analysis.Normed.Module.WeakDual
 public import Mathlib.MeasureTheory.Measure.Support
 public import Mathlib.MeasureTheory.Integral.RieszMarkovKakutani.Real
+public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 public import Mathlib.Topology.ContinuousMap.SecondCountableSpace
 public import Mathlib.Topology.ContinuousMap.CompactlySupported
 public import Mathlib.RingTheory.FractionalIdeal.Basic
@@ -74,10 +75,10 @@ open Complex InnerProductSpace MeasureTheory Metric Set Topology
 /-! ## Properties of Herglotz–Riesz functions-/
 
 /-- The Herglotz-Riesz kernel is integrable on the unit circle. -/
-lemma herglotz_integrable (μ : Measure (sphere (0 : ℂ) 1)) (hμ : IsProbabilityMeasure μ)
+lemma herglotz_integrable (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
     (w : ℂ) (hw : w ∈ ball 0 1) :
     Integrable (fun x : (sphere (0 : ℂ) 1) => (x + w) / (x - w)) μ := by
-  have h_bounded : ∃ C : ℝ, ∀ x ∈ μ.support, ‖(x + w) / (x - w)‖ ≤ C := by
+  have h_bounded : ∃ C : ℝ, ∀ x ∈ μ.toMeasure.support, ‖(x + w) / (x - w)‖ ≤ C := by
     have h_cont : ContinuousOn (fun x : ℂ => (x + w) / (x - w)) (Metric.sphere 0 1) := by
       exact continuousOn_of_forall_continuousAt
         fun x hx => ContinuousAt.div (continuousAt_id.add continuousAt_const)
@@ -90,25 +91,26 @@ lemma herglotz_integrable (μ : Measure (sphere (0 : ℂ) 1)) (hμ : IsProbabili
       exact Measurable.mul (measurable_id.add_const _) (Measurable.inv (measurable_id.sub_const _))
     exact h_measurable.aestronglyMeasurable.comp_measurable measurable_subtype_coe
   · filter_upwards [MeasureTheory.measure_eq_zero_iff_ae_notMem.1 (
-      show μ (μ.supportᶜ) = 0 by simp)] with x hx using h_bounded.choose_spec x <|
-        by simpa using hx
+      show μ.toMeasure (μ.toMeasure.supportᶜ) = 0 by simp)] with x hx using
+        h_bounded.choose_spec x <| by simpa using hx
 
 /-- The Herglotz-Riesz representation produces a ℂ differentiable function. -/
-lemma herglotz_hasDerivAt (μ : Measure (sphere (0 : ℂ) 1))
-    (hμ : IsProbabilityMeasure μ) (w₀ : ℂ) (hw₀ : ‖w₀‖ < 1) :
-    HasDerivAt (fun w : ℂ  => ∫ x, (x + w) / (x - w) ∂μ) (∫ x, 2 * x / (x - w₀) ^ 2 ∂μ) w₀ := by
+lemma herglotz_hasDerivAt (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
+    (w₀ : ℂ) (hw₀ : ‖w₀‖ < 1) :
+    HasDerivAt (fun w : ℂ  => ∫ x : (sphere (0 : ℂ) 1), (x + w) / (x - w) ∂μ)
+      (∫ x : (sphere (0 : ℂ) 1), 2 * x / (x - w₀) ^ 2 ∂μ) w₀ := by
   have h_diff_quot : Filter.Tendsto
-    (fun w => (∫ x, ((x + w) / (x - w) - (x + w₀) / (x - w₀)) ∂μ) / (w - w₀))
-      (nhdsWithin w₀ {w₀}ᶜ) (nhds (∫ x, 2 * x / (x - w₀)^2 ∂μ)) := by
+    (fun w => (∫ x : (sphere (0 : ℂ) 1), ((x + w) / (x - w) - (x + w₀) / (x - w₀)) ∂μ) / (w - w₀))
+      (nhdsWithin w₀ {w₀}ᶜ) (nhds (∫ x : (sphere (0 : ℂ) 1), 2 * x / (x - w₀)^2 ∂μ)) := by
     have h_diff_quot : Filter.Tendsto
-      (fun w => ∫ x, ((x + w) / (x - w) - (x + w₀) / (x - w₀)) / (w - w₀) ∂μ)
-        (nhdsWithin w₀ {w₀}ᶜ) (nhds (∫ x, 2 * x / (x - w₀)^2 ∂μ)) := by
+      (fun w => ∫ x : (sphere (0 : ℂ) 1), ((x + w) / (x - w) - (x + w₀) / (x - w₀)) / (w - w₀) ∂μ)
+        (nhdsWithin w₀ {w₀}ᶜ) (nhds (∫ x : (sphere (0 : ℂ) 1), 2 * x / (x - w₀)^2 ∂μ)) := by
       refine MeasureTheory.tendsto_integral_filter_of_dominated_convergence ?_ ?_ ?_ ?_ ?_
       · use fun x => 8 / (1 - ‖w₀‖) ^ 2
       · refine Filter.eventually_of_mem self_mem_nhdsWithin fun n hn =>
           Measurable.aestronglyMeasurable ?_
         fun_prop
-      · have h_bound : ∀ x ∈ μ.support, ∀ n, ‖n - w₀‖ < (1 - ‖w₀‖) / 2 →
+      · have h_bound : ∀ x ∈ μ.toMeasure.support, ∀ n, ‖n - w₀‖ < (1 - ‖w₀‖) / 2 →
           ‖((x + n) / (x - n) - (x + w₀) / (x - w₀)) / (n - w₀)‖ ≤ 8 / (1 - ‖w₀‖)^2 := by
           intros x hx n hn
           have h_norm : ‖(x : ℂ)‖ = 1 := by simp
@@ -141,9 +143,10 @@ lemma herglotz_hasDerivAt (μ : Measure (sphere (0 : ℂ) 1))
         rw [Metric.eventually_nhds_iff]
         exact ⟨(1 - ‖w₀‖) / 2, half_pos (sub_pos.mpr hw₀), fun n hn hn' =>
           Filter.eventually_of_mem (MeasureTheory.measure_eq_zero_iff_ae_notMem.mp (
-            show μ (μ.supportᶜ) = 0 from by simp)) fun x hx => h_bound x (by aesop) n hn⟩
+            show μ.toMeasure (μ.toMeasure.supportᶜ) = 0 from by simp)) fun x hx =>
+              h_bound x (by aesop) n hn⟩
       · norm_num
-      · have h_tendsto : ∀ x ∈ μ.support,
+      · have h_tendsto : ∀ x ∈ μ.toMeasure.support,
           Filter.Tendsto (fun n => ((x + n) / (x - n) - (x + w₀) / (x - w₀)) / (n - w₀))
             (nhdsWithin w₀ {w₀}ᶜ) (nhds (2 * x / (x - w₀) ^ 2)) := by
           intro x hx
@@ -158,7 +161,7 @@ lemma herglotz_hasDerivAt (μ : Measure (sphere (0 : ℂ) 1))
                 exact absurd hw₀ <| by simp [h_norm]
           rw [hasDerivAt_iff_tendsto_slope] at h_lim
           exact h_lim.congr fun n => by rw [slope_def_field]
-        refine MeasureTheory.measure_mono_null (t := μ.supportᶜ) ?_ ?_
+        refine MeasureTheory.measure_mono_null (t := μ.toMeasure.supportᶜ) ?_ ?_
         · exact fun x hx => fun hx' => hx <| h_tendsto x hx'
         · exact Measure.measure_compl_support
     simpa only [MeasureTheory.integral_div] using h_diff_quot
@@ -176,7 +179,7 @@ lemma herglotz_hasDerivAt (μ : Measure (sphere (0 : ℂ) 1))
         ((x : ℂ) - w)⁻¹ * ((x : ℂ) + w)) μ := by
       have h_integrable3 : MeasureTheory.Integrable (fun x : (sphere (0 : ℂ) 1) =>
         ((x : ℂ) + w) / ((x : ℂ) - w)) μ := by
-          apply herglotz_integrable μ hμ w
+          apply herglotz_integrable μ w
           simp [hw]
       simpa only [div_eq_inv_mul] using h_integrable3
     exact ⟨h_integrable2 w (by linarith [norm_sub_norm_le w w₀, dist_eq_norm w w₀]),
@@ -185,15 +188,14 @@ lemma herglotz_hasDerivAt (μ : Measure (sphere (0 : ℂ) 1))
 
 /-- Every Herglotz–Riesz representation is analytic, maps 0 to 1 and the unit disc
 into the right half-plane. -/
-theorem HerglotzRiesz_realPos (μ : Measure (sphere (0 : ℂ) 1))
-    (hμ : IsProbabilityMeasure μ) :
-    let p : ℂ → ℂ := fun z => ∫ x, (x + z) / (x - z) ∂μ
+theorem HerglotzRiesz_realPos (μ : ProbabilityMeasure (sphere (0 : ℂ) 1)) :
+    let p : ℂ → ℂ := fun z => ∫ x : (sphere (0 : ℂ) 1), (x + z) / (x - z) ∂μ
     AnalyticOn ℂ p (ball 0 1) ∧ p 0 = 1 ∧ MapsTo p (ball 0 1) {w : ℂ | 0 < w.re} := by
   refine ⟨?_, ?_, ?_⟩
   · apply_rules [DifferentiableOn.analyticOn]
     · refine fun z hz => DifferentiableAt.differentiableWithinAt ?_
       apply HasDerivAt.differentiableAt
-      apply herglotz_hasDerivAt μ hμ z
+      apply herglotz_hasDerivAt μ z
       apply mem_ball.mp at hz
       rw [dist_eq_norm, sub_zero] at hz
       exact hz
@@ -206,8 +208,7 @@ theorem HerglotzRiesz_realPos (μ : Measure (sphere (0 : ℂ) 1))
         rw [← add_div, lt_div_iff₀] <;> norm_num [Complex.normSq, Complex.norm_def] at *
         · rw [Real.sqrt_lt'] at hz <;> nlinarith
         · rw [Real.sqrt_lt'] at hz <;> nlinarith [sq_nonneg (x.re * z.im - x.im * z.re)]
-      have h_integral_pos : 0 < ∫ x : (sphere (0 : ℂ) 1),
-        Complex.re ((x + z) / (x - z)) ∂μ := by
+      have h_integral_pos : 0 < ∫ x : (sphere (0 : ℂ) 1), Complex.re ((x + z) / (x - z)) ∂μ := by
         rw [integral_pos_iff_support_of_nonneg_ae]
         · simp_all [Function.support]
           rw [show {x : ↑ (sphere (0 : ℂ) 1) | ¬ ((x + z) / (x - z) |> Complex.re) = 0} =
@@ -219,7 +220,7 @@ theorem HerglotzRiesz_realPos (μ : Measure (sphere (0 : ℂ) 1))
           have h_norm : ‖(x : ℂ)‖ = 1 := by simp
           apply le_of_lt (h_real_part x h_norm)
         · refine Integrable.mono' (g:= fun x => ‖(x + z) / (x - z)‖) ?_ ?_ ?_
-          · exact Integrable.norm (herglotz_integrable μ hμ z hz)
+          · exact Integrable.norm (herglotz_integrable μ z hz)
           · exact Measurable.aestronglyMeasurable (Measurable.comp (Complex.measurable_re)
               (Measurable.div (Continuous.measurable (by continuity))
                 (Continuous.measurable (by continuity))))
@@ -229,7 +230,7 @@ theorem HerglotzRiesz_realPos (μ : Measure (sphere (0 : ℂ) 1))
         ∫ x : (sphere (0 : ℂ) 1), Complex.re (f x) ∂μ = Complex.re (
           ∫ x : (sphere (0 : ℂ) 1), f x ∂μ) := by exact (by convert integral_re hf)
       rw [h_integral_re]
-      exact herglotz_integrable μ hμ z hz
+      exact herglotz_integrable μ z hz
     exact fun z hz => h_real_part z hz
 
 /-! ## Existence of the Herglotz–Riesz measure -/
@@ -715,14 +716,15 @@ lemma riesz_rep (Λ : WeakDual ℝ C_unit_circle)
     convert RealRMK.integral_rieszMeasure Λ_c f_c using 1
     simp only [hf_c]
 
+
 /-- Convergence of the subsequence of linear functionals. -/
 lemma convergence_sub_seq_functionals (p : ℂ → ℂ) (r : ℕ → ℝ)
     (hp_analytic : AnalyticOn ℂ p (ball (0 : ℂ) 1))
     (hp0 : p 0 = 1)
     (hp_map : MapsTo p (ball (0 : ℂ) 1) {w : ℂ | 0 < w.re})
     (hr : ∀ n, r n ∈ Ioo 0 1) :
-    ∃ (μ : Measure (sphere (0 : ℂ) 1)) (phi : ℕ → ℕ),
-      IsProbabilityMeasure μ ∧ StrictMono phi ∧ ∀ f : C_unit_circle, 0 ≤ f →
+    ∃ (μ : ProbabilityMeasure (sphere (0 : ℂ) 1)) (phi : ℕ → ℕ),
+      StrictMono phi ∧ ∀ f : C_unit_circle, 0 ≤ f →
         Filter.Tendsto (fun k => (Λ_seq p r hp_analytic hr (phi k)) f)
           Filter.atTop (nhds (∫ z, f z ∂μ)) := by
   have := Λ_seq_converging_subsequence p r hp_analytic hp0 hp_map hr
@@ -733,7 +735,7 @@ lemma convergence_sub_seq_functionals (p : ℂ → ℂ) (r : ℕ → ℝ)
     exact le_of_tendsto_of_tendsto' tendsto_const_nhds hΛ fun k =>
      Λ_n_nonneg p r (phi k) hp_analytic hp_map (hr (phi k)) f hf_nonneg)
   -- We need to show that `μ` is a probability measure.
-  have h_prob : μ Set.univ = 1 := by
+  have h_prob : IsProbabilityMeasure μ := by
     have h_const : Λ (1 : C_unit_circle) = 1 := by
       convert tendsto_nhds_unique (hΛ 1) _
       convert tendsto_const_nhds.congr' _
@@ -742,8 +744,12 @@ lemma convergence_sub_seq_functionals (p : ℂ → ℂ) (r : ℕ → ℝ)
       unfold Λ_seq; unfold Λ_n; unfold Λ_n_linear; norm_num
       unfold Λ_n_val; norm_num; ring_nf
       exact congr_arg₂ _ (congr_arg₂ _ rfl (by norm_num)) rfl
-    rw [← ENNReal.toReal_eq_one_iff] ; aesop
-  exact ⟨μ, phi, ⟨by aesop⟩, hphi, fun f hf => by simpa only [hμ.2] using hΛ f⟩
+    have h : μ Set.univ = 1 := by
+      rw [← ENNReal.toReal_eq_one_iff] ; aesop
+    exact ⟨by simpa using h⟩
+  use ⟨μ, h_prob⟩
+  use phi
+  exact ⟨hphi, fun f hf => by simpa only [hμ.2] using hΛ f⟩
 
 /-- The value of `u` at `z` is equal to the real part of the integral
 of the Herglotz–Riesz kernel against the measure `μ`, under hypothesis of
@@ -752,15 +758,14 @@ lemma u_eq_limit_Lambda (p : ℂ → ℂ) (r : ℕ → ℝ)
     (hp_analytic : AnalyticOn ℂ p (ball (0 : ℂ) 1))
     (hr : ∀ n, r n ∈ Ioo 0 1)
     (hr_lim : Filter.Tendsto r Filter.atTop (nhds 1))
-    (μ : Measure (sphere (0 : ℂ) 1))
-    [IsFiniteMeasure μ]
+    (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
     (phi : ℕ → ℕ)
     (hphi_strict_mono : StrictMono phi)
     (hΛ_tendsto : ∀ f : C_unit_circle,
       Filter.Tendsto (fun k => (Λ_seq p r hp_analytic hr (phi k)) f)
         Filter.atTop (nhds (∫ z, f z ∂μ)))
     (z : ℂ) (hz : z ∈ ball 0 1) :
-    u p z = (∫ w, ((w : ℂ) + z) / ((w : ℂ) - z) ∂μ).re := by
+    u p z = (∫ w : (sphere (0 : ℂ) 1), ((w : ℂ) + z) / ((w : ℂ) - z) ∂μ).re := by
   -- Applying `u_approx_eq_Lambda` to the limit expression.
   have h_lambda_limit : Filter.Tendsto (fun k => u p (r (phi k) * z)) Filter.atTop (
     nhds (∫ w, (poisson_kernel_func z hz w) ∂μ)) := by
@@ -896,21 +901,21 @@ theorem HerglotzRiesz_representation_existence (p : ℂ → ℂ)
     (hp_analytic : AnalyticOn ℂ p (ball (0 : ℂ) 1))
     (hp0 : p 0 = 1)
     (hp_map : MapsTo p (ball (0 : ℂ) 1) {w : ℂ | 0 < w.re}) :
-    ∃ μ : Measure (sphere (0 : ℂ) 1), IsProbabilityMeasure μ ∧
-    ∀ z ∈ (ball (0 : ℂ) 1), p z = ∫ x, (x + z) / (x - z) ∂μ := by
+    ∃ μ : ProbabilityMeasure (sphere (0 : ℂ) 1),
+    ∀ z ∈ (ball (0 : ℂ) 1), p z = ∫ x : (sphere (0 : ℂ) 1), (x + z) / (x - z) ∂μ := by
   let r : ℕ → ℝ := fun n => 1 - 1 / (n + 2)
   have hr : ∀ n, r n ∈ Ioo 0 1 := by
     intro n ; simp [r] ; constructor
     · have : (1 : ℝ) < (↑n+2 : ℝ) := by linarith
       exact inv_lt_one_of_one_lt₀ this
     · linarith
-  obtain ⟨μ, phi, hμ_prob, hphi_strict_mono,
+  obtain ⟨μ, phi, hphi_strict_mono,
     hΛ_tendsto⟩ := convergence_sub_seq_functionals p r hp_analytic hp0 hp_map hr
-  obtain ⟨hq_analytic,hq0,_⟩ := HerglotzRiesz_realPos μ hμ_prob
+  obtain ⟨hq_analytic,hq0,_⟩ := HerglotzRiesz_realPos μ
   dsimp at *
   /- We apply `u_eq_limit_Lambda`. -/
   have h_u_eq_limit_Lambda : ∀ z ∈ (ball (0 : ℂ) 1), u p z =
-    (∫ w, ((w : ℂ) + z) / ((w : ℂ) - z) ∂μ).re := by
+    (∫ w : (sphere (0 : ℂ) 1), ((w : ℂ) + z) / ((w : ℂ) - z) ∂μ).re := by
     apply_rules [u_eq_limit_Lambda]
     · exact le_trans (tendsto_const_nhds.sub
       <| tendsto_const_nhds.div_atTop
@@ -931,11 +936,12 @@ theorem HerglotzRiesz_representation_existence (p : ℂ → ℂ)
       · exact Continuous.integrable_of_hasCompactSupport (by continuity) (
           by exact HasCompactSupport.of_compactSpace f_neg)
   -- By `analytic_unique_of_real_part`, `p(z) = q(z)` for all `z` in the unit disc.
-  have h_p_eq_q : ∀ z ∈ (ball (0 : ℂ) 1), p z = ∫ w, ((w : ℂ) + z) / ((w : ℂ) - z) ∂μ := by
+  have h_p_eq_q : ∀ z ∈ (ball (0 : ℂ) 1),
+    p z = ∫ w : (sphere (0 : ℂ) 1), ((w : ℂ) + z) / ((w : ℂ) - z) ∂μ := by
     apply_rules [analytic_unique_of_real_part]
     rw [hp0]
     exact hq0.symm
-  exact ⟨μ, hμ_prob, h_p_eq_q⟩
+  exact ⟨μ, h_p_eq_q⟩
 
 /-! ## Main results -/
 
@@ -945,27 +951,23 @@ Herglotz–Riesz representation. -/
 theorem HerglotzRiesz_representation_analytic
     (p : ℂ → ℂ) (hp_analytic : AnalyticOn ℂ p (ball (0 : ℂ) 1)) (hp0 : p 0 = 1)
     (h_real_pos : MapsTo p (ball (0 : ℂ) 1) {w : ℂ | 0 < w.re}) :
-    ∃! μ : Measure (sphere (0 : ℂ) 1), IsProbabilityMeasure μ ∧
-    ∀ z ∈ (ball (0 : ℂ) 1), p z = ∫ x, (x + z) / (x - z) ∂μ := by
+    ∃! μ : ProbabilityMeasure (sphere (0 : ℂ) 1),
+    ∀ z ∈ (ball (0 : ℂ) 1), p z = ∫ x : (sphere (0 : ℂ) 1), (x + z) / (x - z) ∂μ := by
     -- Existence
-    obtain ⟨μ, hμ_prob, hμ_rep⟩ :=
+    obtain ⟨μ, hμ_rep⟩ :=
      HerglotzRiesz_representation_existence p hp_analytic hp0 h_real_pos
     -- Uniqueness
     refine ExistsUnique.intro ?μ ?hμ ?uniq
     · exact μ
-    · exact ⟨hμ_prob, hμ_rep⟩
+    · exact hμ_rep
     · intro ν  hν
       -- split the conjunction
-      rcases hν with ⟨hν_prob, hν_rep⟩
-      -- turn probability facts into instances
-      haveI : IsProbabilityMeasure μ := hμ_prob
-      haveI : IsProbabilityMeasure ν := hν_prob
       symm
       refine HerglotzRiesz_representation_uniqueness μ ν ?_
       intro z hz
-      calc ∫ x, (x + z) / (x - z) ∂μ
+      calc ∫ x : (sphere (0 : ℂ) 1), (x + z) / (x - z) ∂μ
             = p z := (hμ_rep z hz).symm
-        _ = ∫ x, (x + z) / (x - z) ∂ν := hν_rep z hz
+        _ = ∫ x : (sphere (0 : ℂ) 1), (x + z) / (x - z) ∂ν := hν z hz
 
 /- Every harmonic function `u` on the unit disc with `u(0) = 1` and
 `u(z) > 0` for all `z` admits a unique Herglotz–Riesz integral representation. -/
@@ -973,8 +975,8 @@ theorem HerglotzRiesz_representation_harmonic
     (f : ℂ → ℝ)
     (h_pos : ∀ z ∈ (ball (0 : ℂ) 1), 0 < f z)
     (h_u_zero : f 0 = 1) (h_harmonic : HarmonicOnNhd f (ball (0 : ℂ) 1)) :
-    ∃! μ : Measure (sphere (0 : ℂ) 1), IsProbabilityMeasure μ ∧
-    ∀ z ∈ (ball (0 : ℂ) 1), f z = ∫ x,  (1 - ‖z‖^2) / ‖x - z‖^2 ∂μ := by
+    ∃! μ : ProbabilityMeasure (sphere (0 : ℂ) 1),
+    ∀ z ∈ (ball (0 : ℂ) 1), f z = ∫ x : (sphere (0 : ℂ) 1),  (1 - ‖z‖^2) / ‖x - z‖^2 ∂μ := by
 
   let unitDisc := ball (0 : ℂ) 1
   let unitCircle := sphere (0 : ℂ) 1
@@ -1013,11 +1015,11 @@ theorem HerglotzRiesz_representation_harmonic
     exact h_pos z hz
   have hF0 : F 0 = 1 := by simp [hF_re.2, h_u_zero]
 
-  obtain ⟨μ, hμ_prob, h_rep⟩ := HerglotzRiesz_representation_existence F hF_analytic hF0 h_real_pos
+  obtain ⟨μ, h_rep⟩ := HerglotzRiesz_representation_existence F hF_analytic hF0 h_real_pos
 
   -- Taking the real part and using `real_part_herglotz_kernel`, we get
-  have h_real_part : ∀ z ∈ unitDisc, f z = ∫ x, (1 - ‖z‖^2) / ‖(x : ℂ) - z‖^2 ∂μ := by
-    have h_real_part' : ∀ z ∈ unitDisc, (F z).re = ∫ x, ((x + z) / (x - z)).re ∂μ := by
+  have h_real_part : ∀ z ∈ unitDisc, f z = ∫ x : unitCircle, (1 - ‖z‖^2) / ‖(x : ℂ) - z‖^2 ∂μ := by
+    have h_real_part' : ∀ z ∈ unitDisc, (F z).re = ∫ x : unitCircle, ((x + z) / (x - z)).re ∂μ := by
       intro z hz; rw [h_rep z hz] ; rw [← integral_re_add_im]
       · aesop
       refine Integrable.mono' (g := fun x => 2 / (1 - ‖z‖)) ?_ ?_ ?_
@@ -1040,15 +1042,13 @@ theorem HerglotzRiesz_representation_harmonic
       Filter.Eventually.of_forall fun x => h_real_part_eq z hz x)]
   refine ExistsUnique.intro ?μ ?hμ ?uniq
   · exact μ
-  · exact ⟨hμ_prob, h_real_part⟩
+  · exact h_real_part
   · intro ν hν
-    haveI : IsProbabilityMeasure μ := hμ_prob
-    haveI : IsProbabilityMeasure ν := hν.1
     symm
-    set g : ℂ → ℂ := fun z => ∫ x, (x + z) / (x - z) ∂ν
+    set g : ℂ → ℂ := fun z => ∫ x : unitCircle, (x + z) / (x - z) ∂ν
     -- Apply theorem `HerglotzRiesz_realPos` to g.
     have hg : AnalyticOn ℂ g unitDisc ∧ g 0 = 1 ∧ MapsTo g unitDisc {w : ℂ | 0 < w.re} := by
-      have := HerglotzRiesz_realPos ν hν.1
+      have := HerglotzRiesz_realPos ν
       exact this
     obtain ⟨hg_analytic, hg0, hg_map⟩ := hg
     /- By `analytic_unique_of_real_part`, since `F` and `g` are analytic,
@@ -1057,8 +1057,8 @@ theorem HerglotzRiesz_representation_harmonic
       apply analytic_unique_of_real_part F g hF_analytic hg_analytic
       · intro z hz
         have hz' : ‖z‖ < 1 := by simpa [unitDisc, Metric.mem_ball, dist_eq_norm] using hz
-        have hg_real_part : (g z).re = ∫ x, (1 - ‖z‖^2) / ‖(x : ℂ) - z‖^2 ∂ν := by
-          have hg_real_part' : (g z).re = ∫ x, ((x + z) / (x - z)).re ∂ν := by
+        have hg_real_part : (g z).re = ∫ x : unitCircle, (1 - ‖z‖^2) / ‖(x : ℂ) - z‖^2 ∂ν := by
+          have hg_real_part' : (g z).re = ∫ x : unitCircle, ((x + z) / (x - z)).re ∂ν := by
             have h_integrable : Integrable (fun x : unitCircle => ((x + z) / (x - z))) ν := by
               refine Integrable.mono' (g := fun x => 2 / (1 - ‖z‖)) ?_ ?_ ?_
               · norm_num [integrable_const_iff]
@@ -1078,11 +1078,11 @@ theorem HerglotzRiesz_representation_harmonic
           filter_upwards with x
           have hx : ‖(x : ℂ)‖ = 1 := by simp
           exact real_part_herglotz_kernel hx
-        rw [hF_re.1 z hz, hg_real_part, hν.2 z hz]
-      · rw [hF_re.2, h_u_zero] ; norm_num [hν.1.measure_univ] ; exact hg0.symm
+        rw [hF_re.1 z hz, hg_real_part, hν z hz]
+      · rw [hF_re.2, h_u_zero] ; exact hg0.symm
     apply HerglotzRiesz_representation_uniqueness μ ν
     intro z hz
-    calc ∫ (x : ↑unitCircle), (↑x + z) / (↑x - z) ∂μ
+    calc ∫ (x : unitCircle), (↑x + z) / (↑x - z) ∂μ
       _ = F z := (h_rep z hz).symm
       _ = g z := h_fg_equal z hz
-      _ = ∫ (x : ↑unitCircle), (↑x + z) / (↑x - z) ∂ν := rfl
+      _ = ∫ (x : unitCircle), (↑x + z) / (↑x - z) ∂ν := rfl

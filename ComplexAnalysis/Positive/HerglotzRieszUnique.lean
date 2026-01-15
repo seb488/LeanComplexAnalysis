@@ -2,6 +2,7 @@ module
 public import Mathlib.Analysis.Complex.Harmonic.Analytic
 public import Mathlib.Analysis.Normed.Group.FunctionSeries
 public import Mathlib.MeasureTheory.Measure.HasOuterApproxClosed
+public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 public import Mathlib.Topology.ContinuousMap.StoneWeierstrass
 public import Mathlib.Tactic
 
@@ -47,10 +48,10 @@ lemma kernel_expansion (z : ℂ) (hz : ‖z‖ < 1) (w : ℂ) (hw : ‖w‖ = 1)
 
 /-- The expansion kernel_expansion is used to rewrite the integral. -/
 lemma integral_kernel_expansion
-    (μ : Measure (sphere (0 : ℂ) 1)) [IsProbabilityMeasure μ] (z : ℂ) (hz : ‖z‖ < 1) :
-    ∫ x, (x.val + z) / (x.val - z) ∂μ = 1 + 2 * ∑' n : ℕ,
-      z ^ (n + 1) * ∫ x, star (x.val ^ (n + 1)) ∂μ := by
-  have h_integral : ∫ x : (sphere (0 : ℂ) 1), ((x : ℂ) + z) / ((x : ℂ) - z) ∂μ =
+    (μ : ProbabilityMeasure (sphere (0 : ℂ) 1)) (z : ℂ) (hz : ‖z‖ < 1) :
+    ∫ x : (sphere (0 : ℂ) 1), (x + z) / (x - z) ∂μ = 1 + 2 * ∑' n : ℕ,
+      z ^ (n + 1) * ∫ x : (sphere (0 : ℂ) 1), star (x.val ^ (n + 1)) ∂μ := by
+  have h_integral : ∫ x : (sphere (0 : ℂ) 1), (x + z) / (x - z) ∂μ =
      ∫ x : (sphere (0 : ℂ) 1), (1 + 2 * ∑' n : ℕ, z ^ (n + 1) * star ((x : ℂ) ^ (n + 1))) ∂μ := by
     apply integral_congr_ae (by filter_upwards with x; apply kernel_expansion z hz; simp)
   rw [h_integral, integral_add, integral_const_mul] <;> norm_num
@@ -90,17 +91,17 @@ lemma integral_kernel_expansion
       · aesop
 
 /-- Equal moments with natural exponents imply equal moments with integer exponents. -/
-lemma moments_eq_integers (μ₁ μ₂ : Measure (sphere (0 : ℂ) 1))
-    [IsProbabilityMeasure μ₁] [IsProbabilityMeasure μ₂]
-    (h : ∀ n : ℕ, ∫ x, x.val ^ n ∂μ₁ = ∫ x, x.val ^ n ∂μ₂) :
-    ∀ n : ℤ, ∫ x, x.val ^ n ∂μ₁ = ∫ x, x.val ^ n ∂μ₂ := by
+lemma moments_eq_integers (μ₁ μ₂ : ProbabilityMeasure (sphere (0 : ℂ) 1))
+    (h : ∀ n : ℕ, ∫ x : (sphere (0 : ℂ) 1), x.val ^ n ∂μ₁ =
+      ∫ x : (sphere (0 : ℂ) 1), x.val ^ n ∂μ₂) :
+    ∀ n : ℤ, ∫ x : (sphere (0 : ℂ) 1), x.val ^ n ∂μ₁ = ∫ x : (sphere (0 : ℂ) 1), x.val ^ n ∂μ₂ := by
   -- For n < 0, let m = -n > 0. Then z^n = z^{-m} = (z^m)^{-1}.
   intro n
   by_cases h_neg : n < 0
   · obtain ⟨m, rfl⟩ : ∃ m : ℕ, n = -m := by
       exact ⟨Int.toNat (-n), by rw [Int.toNat_of_nonneg (neg_nonneg.mpr h_neg.le)] ; ring⟩
     -- Since |z|=1 for `z` in the unit circle, we have z^{-m} = conj{z^m}.
-    have h_inv : ∀ x : (sphere (0 : ℂ) 1), (x : ℂ) ^ (-m : ℤ) = starRingEnd ℂ (x ^ m) := by
+    have h_inv : ∀ x : (sphere (0 : ℂ) 1), x ^ (-m : ℤ) = starRingEnd ℂ (x ^ m) := by
       norm_num
       intro x hx
       rw [inv_eq_of_mul_eq_one_right]
@@ -261,7 +262,7 @@ lemma measure_eq_of_moments (μ₁ μ₂ : Measure (sphere (0 : ℂ) 1))
     · convert span_moments_dense
     · intro f hf
       have h_integrals : ∀ n : ℤ, ∫ x, x.val ^ n ∂μ₁ = ∫ x, x.val ^ n ∂μ₂ := by
-        exact fun n ↦ moments_eq_integers μ₁ μ₂ h n
+        exact fun n ↦ moments_eq_integers ⟨μ₁, inferInstance⟩ ⟨μ₂, inferInstance⟩ h n
       rw [Finsupp.mem_span_range_iff_exists_finsupp] at hf
       obtain ⟨c, rfl⟩ := hf; simp_all [Finsupp.sum]
       rw [integral_finset_sum, integral_finset_sum]
@@ -280,7 +281,6 @@ lemma measure_eq_of_moments (μ₁ μ₂ : Measure (sphere (0 : ℂ) 1))
         · filter_upwards with x
           have hx : ‖(x : ℂ)‖ = 1 := by simp
           simp [hx]
-
   /- Since the integrals of continuous functions with respect to `μ₁` and `μ₂` agree,
   we can conclude that the measures are equal. -/
   have h_eq : ∀ f : C((sphere (0 : ℂ) 1), ℝ), ∫ x, f x ∂μ₁ = ∫ x, f x ∂μ₂ := by
@@ -394,39 +394,47 @@ lemma coeffs_eq_of_series_eq (c1 c2 : ℕ → ℂ)
 /-- If two probability measures on the unit circle yield the same Herglotz–Riesz functions,
 then they are equal. -/
 theorem HerglotzRiesz_representation_uniqueness
-    (μ₁ : Measure (sphere (0 : ℂ) 1)) [IsProbabilityMeasure μ₁]
-    (μ₂ : Measure (sphere (0 : ℂ) 1)) [IsProbabilityMeasure μ₂]
-    (h : ∀ z ∈ (ball (0 : ℂ) 1), ∫ x, (x + z) / (x - z) ∂μ₁ = ∫ x, (x + z) / (x - z) ∂μ₂) :
+    (μ₁ μ₂ : ProbabilityMeasure (sphere (0 : ℂ) 1))
+    (h : ∀ z ∈ (ball (0 : ℂ) 1), ∫ x : (sphere (0 : ℂ) 1), (x + z) / (x - z) ∂μ₁ =
+      ∫ x : (sphere (0 : ℂ) 1), (x + z) / (x - z) ∂μ₂) :
     μ₁ = μ₂ := by
   let unitCircle := sphere (0 : ℂ) 1
   -- By Lemma `coeffs_eq_of_series_eq`, we can conclude that the coefficients are equal.
   have h_coeffs : ∀ k : ℕ, ∫ x : (sphere (0 : ℂ) 1), star (x.val ^ (k + 1)) ∂μ₁ =
-    ∫ x : unitCircle, star (x.val ^ (k + 1)) ∂μ₂ := by
+    ∫ x : (sphere (0 : ℂ) 1), star (x.val ^ (k + 1)) ∂μ₂ := by
     /- By Lemma `integral_kernel_expansion`, we can rewrite
     the integrals in terms of the coefficients. -/
-    have h_integral_expansion : ∀ z : ℂ, ‖z‖ < 1 → (∑' n : ℕ, z ^ (n + 1) * ∫ x : unitCircle,
-      star (x.val ^ (n + 1)) ∂μ₁) = (∑' n : ℕ, z ^ (n + 1) * ∫ x : unitCircle,
+    have h_integral_expansion : ∀ z : ℂ, ‖z‖ < 1 →
+      (∑' n : ℕ, z ^ (n + 1) * ∫ x : (sphere (0 : ℂ) 1),
+      star (x.val ^ (n + 1)) ∂μ₁) = (∑' n : ℕ, z ^ (n + 1) * ∫ x : (sphere (0 : ℂ) 1),
         star (x.val ^ (n + 1)) ∂μ₂) := by
       intro z hz
-      have h_integral_expansion : (∫ x : unitCircle, ((x.val + z) / (x.val - z)) ∂μ₁) =
-        1 + 2 * (∑' n : ℕ, z ^ (n + 1) * ∫ x : unitCircle, star (x.val ^ (n + 1)) ∂μ₁) := by
+      have h_integral_expansion : (∫ x : (sphere (0 : ℂ) 1), ((x.val + z) / (x.val - z)) ∂μ₁) =
+        1 + 2 * (∑' n : ℕ, z ^ (n + 1) * ∫ x : (sphere (0 : ℂ) 1),
+          star (x.val ^ (n + 1)) ∂μ₁) := by
         exact integral_kernel_expansion μ₁ z hz
-      have h_integral_expansion' : (∫ x : unitCircle, ((x.val + z) / (x.val - z)) ∂μ₂) =
-        1 + 2 * (∑' n : ℕ, z ^ (n + 1) * ∫ x : unitCircle, star (x.val ^ (n + 1)) ∂μ₂) := by
+      have h_integral_expansion' : (∫ x : (sphere (0 : ℂ) 1), ((x.val + z) / (x.val - z)) ∂μ₂) =
+        1 + 2 * (∑' n : ℕ, z ^ (n + 1) * ∫ x : (sphere (0 : ℂ) 1),
+          star (x.val ^ (n + 1)) ∂μ₂) := by
         exact integral_kernel_expansion μ₂ z hz
       have hz' : z ∈ ball 0 1 := by
         rw [Metric.mem_ball, Complex.dist_eq]
         simp [hz]
       linear_combination' h z hz' / 2 - h_integral_expansion / 2 + h_integral_expansion' / 2
-    have h_coeffs : ∀ n : ℕ, ‖∫ x : unitCircle, star (x.val ^ (n + 1)) ∂μ₁‖ ≤ 1 ∧
-      ‖∫ x : unitCircle, star (x.val ^ (n + 1)) ∂μ₂‖ ≤ 1 := by
+    have h_coeffs : ∀ n : ℕ, ‖∫ x : (sphere (0 : ℂ) 1), star (x.val ^ (n + 1)) ∂μ₁‖ ≤ 1 ∧
+      ‖∫ x : (sphere (0 : ℂ) 1), star (x.val ^ (n + 1)) ∂μ₂‖ ≤ 1 := by
       intro n
       refine ⟨?_, ?_⟩ <;> refine le_trans (norm_integral_le_integral_norm _) ?_ <;> norm_num
     apply_rules [coeffs_eq_of_series_eq]
     · exact ⟨1, fun n => h_coeffs n |>.1⟩
     · exact ⟨1, fun n => h_coeffs n |>.2⟩
-  apply_rules [measure_eq_of_moments]
-  ext (_ | k) <;> simp_all
-  convert congr_arg Star.star (h_coeffs k) using 1
-  · norm_num [← integral_conj]
-  · simp ; rw [← integral_conj] ; simp
+  have h : μ₁.toMeasure = μ₂.toMeasure := by
+    apply measure_eq_of_moments
+    apply_rules [measure_eq_of_moments]
+    ext (_ | k) <;> simp_all
+    convert congr_arg Star.star (h_coeffs k) using 1
+    · norm_num [← integral_conj]
+    · simp
+      rw [← integral_conj]
+      simp
+  exact Subtype.ext h
