@@ -2,14 +2,10 @@ import ComplexAnalysis.PoissonIntegral
 
 open  Complex InnerProductSpace Metric
 
-/-- **Harnack's inequality for positive harmonic functions.**
-A positive harmonic function on the unit disc with `u(0) = 1` satisfies
-two-sided estimates in terms of the distance to the boundary.
-
-TODO: remove the hypothesis h_f_zero : u 0 = 1
-      remove the hypothesis hc : ContinuousOn u (closedBall 0 1)
+/-- Harnack's inequality for a positive harmonic functions u on the unit disc
+with u(0) = 1 and assuming continuous extension to the closed unit disc.
 -/
-theorem harnack_inequality_closed_disc
+lemma harnack_ineq_normalized
     (u : ℂ → ℝ)
     (h_pos : ∀ z ∈ (ball (0 : ℂ) 1), 0 < u z)
     (h_f_zero : u 0 = 1)
@@ -36,11 +32,10 @@ theorem harnack_inequality_closed_disc
         simpa [abs_of_nonneg hr.1.le, norm_exp] using hr.2
     exact le_of_tendsto_of_tendsto tendsto_const_nhds ‹_› (
       Filter.eventually_of_mem h_boundary fun x hx => le_of_lt hx)
-
   have h_cont_exp : Continuous fun t : ℝ => cexp (I * t) := by
     continuity
 
-  -- Apply the Poisson integral formula.
+  -- Apply the Poisson integral formula to u.
   have h_poisson : u z = (1 / (2 * Real.pi)) * ∫ t in (0 : ℝ)..2 * Real.pi,
     (1 - ‖z‖^2) / ‖(exp (I * t)) - z‖^2 * u (exp (I * t)) := by
     exact poisson_integral_formula h_harmonic hc z hz
@@ -103,3 +98,60 @@ theorem harnack_inequality_closed_disc
   · field_simp
     ring
   · grind
+
+
+/-- **Harnack's inequality for positive harmonic functions.**
+A positive harmonic function on the unit disc with `u(0) = 1` satisfies
+two-sided estimates in terms of the distance to the boundary.
+
+Harnack's inequality for a positive harmonic functions u on the unit disc,
+assuming continuous extension to the closed unit disc.
+
+  TODO:    remove the hypothesis hc : ContinuousOn u (closedBall 0 1)
+-/
+theorem harnack_ineq
+    (u : ℂ → ℝ)
+    (h_pos : ∀ z ∈ (ball (0 : ℂ) 1), 0 < u z)
+    (h_harmonic : HarmonicOnNhd u (ball (0 : ℂ) 1))
+    (hc : ContinuousOn u (closedBall 0 1))
+    (z : ℂ) (hz : z ∈ ball (0 : ℂ) 1) :
+    (1 - ‖z‖) / (1 + ‖z‖) * u 0 ≤ u z ∧ u z ≤ u 0 * (1 + ‖z‖) / (1 - ‖z‖) := by
+  -- Normalize u
+  set v := fun w => u w / u 0 with hv
+  -- v satisfies the conditions of `harnack_ineq_normalized`
+  have hv_pos : ∀ w ∈ ball (0 : ℂ) 1, 0 < v w := by
+    intro w hw
+    simp [hv]
+    exact div_pos (h_pos w hw) (h_pos 0 (Metric.mem_ball_self zero_lt_one))
+  have hv_zero : v 0 = 1 := by
+    simp [hv]
+    exact div_self (ne_of_gt (h_pos 0 (Metric.mem_ball_self zero_lt_one)))
+  have hv_harmonic : HarmonicOnNhd v (ball 0 1) := by
+    intro w hw
+    change HarmonicAt (fun z => u z / u 0) w
+    have : (fun z => u z / u 0) = (1 / u 0) • u := by
+      ext; simp [smul_eq_mul]; ring
+    rw [this]
+    apply (h_harmonic w hw).const_smul
+  have hv_cont : ContinuousOn v (closedBall 0 1) := by
+    apply ContinuousOn.div hc continuousOn_const
+    intro w _
+    exact ne_of_gt (h_pos 0 (Metric.mem_ball_self zero_lt_one))
+
+  -- Apply `harnack_ineq_normalized` to v
+  have := harnack_ineq_normalized v hv_pos hv_zero hv_harmonic hv_cont z hz
+
+  -- Scale back
+  simp [hv] at this
+  have h0_ne : u 0 ≠ 0 := ne_of_gt (h_pos 0 (Metric.mem_ball_self zero_lt_one))
+  have h0_ge : u 0 > 0 := h_pos 0 (Metric.mem_ball_self zero_lt_one)
+
+
+  constructor
+  · calc (1 - ‖z‖) / (1 + ‖z‖) * u 0
+      _ ≤ (u z / u 0) * u 0 := by nlinarith [this.1]
+      _ = u z := by field_simp
+  · calc u z
+      = (u z / u 0) * u 0 := by field_simp [h0_ne]
+    _ ≤ ((1 + ‖z‖) / (1 - ‖z‖)) * u 0 := by nlinarith [this.2, h0_ge]
+    _ = u 0 * (1 + ‖z‖) / (1 - ‖z‖) := by ring

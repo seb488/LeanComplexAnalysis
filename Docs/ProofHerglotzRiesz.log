@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (MiKTeX 22.3) (preloaded format=pdflatex 2022.4.5)  14 JAN 2026 21:50
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (MiKTeX 22.3) (preloaded format=pdflatex 2022.4.5)  15 JAN 2026 14:02
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -573,7 +573,7 @@ Package rerunfilecheck Info: File `ProofHerglotzRiesz.out' has not changed.
  ) 
 Here is how much of TeX's memory you used:
  13423 strings out of 478582
- 229410 string characters out of 2842929
+ 229426 string characters out of 2842929
  527846 words of memory out of 3000000
  31393 multiletter control sequences out of 15000+600000
  484448 words of font info for 64 fonts, out of 8000000 for 9000
@@ -597,7 +597,7 @@ rograms/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/Besitzer/App
 Data/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/B
 esitzer/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msbm1
 0.pfb>
-Output written on ProofHerglotzRiesz.pdf (4 pages, 187741 bytes).
+Output written on ProofHerglotzRiesz.pdf (4 pages, 187731 bytes).
 PDF statistics:
  329 PDF objects out of 1000 (max. 8388607)
  33 named destinations out of 1000 (max. 500000)

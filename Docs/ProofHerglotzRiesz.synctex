@@ -1,5 +1,5 @@
 SyncTeX Version:1
-Input:1:C:\Users\Besitzer\Desktop\Older_Lean\LaTeX files\ProofHerglotzRiesz.tex
+Input:1:C:\Users\Besitzer\Desktop\ComplexAnalysis_Lean\Docs\ProofHerglotzRiesz.tex
 Input:2:C:\Users\Besitzer\AppData\Local\Programs\MiKTeX\tex\latex\base\article.cls
 Input:3:C:\Users\Besitzer\AppData\Local\Programs\MiKTeX\tex\latex\base\size11.clo
 Input:4:C:\Users\Besitzer\AppData\Local\Programs\MiKTeX\tex\latex\base\inputenc.sty
@@ -55,7 +55,7 @@ Input:53:C:\Users\Besitzer\AppData\Local\Programs\MiKTeX\tex\latex\thmtools\thm-
 Input:54:C:\Users\Besitzer\AppData\Local\Programs\MiKTeX\tex\latex\thmtools\thm-restate.sty
 Input:55:C:\Users\Besitzer\AppData\Local\Programs\MiKTeX\tex\latex\thmtools\thm-amsthm.sty
 Input:56:C:\Users\Besitzer\AppData\Local\Programs\MiKTeX\tex\latex\l3backend\l3backend-pdftex.def
-Input:57:C:\Users\Besitzer\Desktop\Older_Lean\LaTeX files\ProofHerglotzRiesz.aux
+Input:57:C:\Users\Besitzer\Desktop\ComplexAnalysis_Lean\Docs\ProofHerglotzRiesz.aux
 Input:58:C:\Users\Besitzer\AppData\Local\Programs\MiKTeX\tex\latex\graphics\graphicx.sty
 Input:59:C:\Users\Besitzer\AppData\Local\Programs\MiKTeX\tex\latex\graphics\graphics.sty
 Input:60:C:\Users\Besitzer\AppData\Local\Programs\MiKTeX\tex\latex\graphics\trig.sty
@@ -69,8 +69,8 @@ Input:67:C:\Users\Besitzer\AppData\Local\Programs\MiKTeX\tex\latex\graphics-cfg\
 Input:68:C:\Users\Besitzer\AppData\Local\Programs\MiKTeX\tex\latex\hyperref\nameref.sty
 Input:69:C:\Users\Besitzer\AppData\Local\Programs\MiKTeX\tex\latex\refcount\refcount.sty
 Input:70:C:\Users\Besitzer\AppData\Local\Programs\MiKTeX\tex\generic\gettitlestring\gettitlestring.sty
-Input:71:C:\Users\Besitzer\Desktop\Older_Lean\LaTeX files\ProofHerglotzRiesz.out
-Input:72:C:\Users\Besitzer\Desktop\Older_Lean\LaTeX files\ProofHerglotzRiesz.out
+Input:71:C:\Users\Besitzer\Desktop\ComplexAnalysis_Lean\Docs\ProofHerglotzRiesz.out
+Input:72:C:\Users\Besitzer\Desktop\ComplexAnalysis_Lean\Docs\ProofHerglotzRiesz.out
 Input:73:C:\Users\Besitzer\AppData\Local\Programs\MiKTeX\tex\latex\amsfonts\umsa.fd
 Input:74:C:\Users\Besitzer\AppData\Local\Programs\MiKTeX\tex\latex\amsfonts\umsb.fd
 Output:pdf
@@ -79,7 +79,7 @@ Unit:1
 X Offset:0
 Y Offset:0
 Content:
-!6665
+!6677
 {1
 [1,105:4736286,51663541:28738461,46927255,0
 h1,105:4736286,4736286:0,0,0
@@ -5837,48 +5837,33 @@ x1,258:6436939,33704607
 g1,258:6795749,33704607
 )
 x1,258:8311876,33704607
-k1,259:8589632,33704607:277756
-x1,259:9293178,33704607
-k1,259:9570934,33704607:277756
-x1,259:10765000,33704607
-x1,259:12231958,33704607
-k1,259:12519670,33704607:287712
-x1,259:14858304,33704607
-x1,259:15185825,33704607
-k1,259:15477170,33704607:291345
-x1,259:16006154,33704607
-x1,259:16388230,33704607
-x1,259:16752121,33704607
-x1,259:18062400,33704607
-k1,259:18353744,33704607:291344
-x1,259:18818366,33704607
-x1,259:19873670,33704607
-x1,259:21582302,33704607
-k1,259:21870014,33704607:287712
-x1,259:22900721,33704607
-x1,259:24129746,33704607
-k1,259:24407502,33704607:277756
-x1,259:24962594,33704607
-k1,259:25250306,33704607:287712
-x1,259:26796241,33704607
-x1,259:28068842,33704607
-k1,259:28346598,33704607:277756
-x1,259:29416920,33704607
-x1,259:30606334,33704607
-k1,259:30884090,33704607:277756
-x1,259:32162286,33704607
-x1,259:33236816,33704607
+k1,259:8529284,33704607:217408
+x1,259:9232830,33704607
+k1,259:9450238,33704607:217408
+x1,259:12111262,33704607
+k1,259:12332774,33704607:221512
+x1,259:14671408,33704607
+x1,259:14998929,33704607
+k1,259:15234867,33704607:235938
+x1,259:15763851,33704607
+x1,259:17820097,33704607
+k1,259:18056036,33704607:235939
+x1,259:18520658,33704607
+x1,259:21284594,33704607
+k1,259:21506106,33704607:221512
+x1,259:24324642,33704607
+k1,259:24542050,33704607:217408
+x1,259:26801786,33704607
+k1,259:27019194,33704607:217408
 x1,259:33474747,33704607
-k1,260:33474747,33704607:0
+k1,259:33474747,33704607:0
 )
-(1,260:6795749,34595897:26678998,538089,179365
-x1,260:10898576,34595897
-g1,259:11136507,34595897
-x1,259:13108693,34595897
-g1,259:13346624,34595897
-x1,259:14972038,34595897
-k1,260:33474746,34595897:18502708
-g1,260:33474746,34595897
+(1,260:6795749,34595897:26678998,494239,139502
+x1,260:8767935,34595897
+g1,259:9005866,34595897
+x1,259:10631280,34595897
+k1,260:33474748,34595897:22843468
+g1,260:33474748,34595897
 )
 (1,263:6795749,36077011:26678998,538089,179365
 (1,261:6795749,36077011:0,538089,179365
@@ -5966,11 +5951,11 @@ k1,269:33474747,51663541:13717222
 ]
 ]
 ]
-!25576
+!25185
 }4
-Input:75:C:\Users\Besitzer\Desktop\Older_Lean\LaTeX files\ProofHerglotzRiesz.aux
-!91
+Input:75:C:\Users\Besitzer\Desktop\ComplexAnalysis_Lean\Docs\ProofHerglotzRiesz.aux
+!94
 Postamble:
-Count:3674
+Count:3671
 !26
 Post scriptum:
