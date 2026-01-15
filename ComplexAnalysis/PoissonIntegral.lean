@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2025 [Your Name]. All rights reserved.
+Copyright (c) 2025 Sebastian Schleissinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: [Your Name], [Collaborator Name if applicable]
+Authors: Mihai Iancu, Sebastian Schleissinger
 -/
 module
 public import Mathlib.Analysis.Complex.Harmonic.Analytic
@@ -44,7 +44,7 @@ variable {z : ℂ} {r : ℝ} {f : ℂ → ℂ} {u : ℂ → ℝ}
 
 /-- Cauchy's integral formula for analytic functions on the unit disc,
     evaluated at scaled points `r * z` with `r ∈ (0,1)`. -/
-lemma cauchy_integral_formula_unitDisc
+private lemma cauchy_integral_formula_unitDisc
     (hf : AnalyticOn ℂ f (ball 0 1)) (hr : r ∈ Ioo 0 1) (hz : z ∈ (ball 0 1)) :
     f (r * z) = (1 / (2 * Real.pi)) * ∫ t in 0..2*Real.pi,
       f (r * exp (I * t)) * (exp (I * t) / (exp (I * t) - z)) := by
@@ -52,7 +52,7 @@ lemma cauchy_integral_formula_unitDisc
   have h_cauchy :
     f (r * z) = (1 / (2 * Real.pi * I)) * ∮ (ζ : ℂ) in C(0, 1), (f (r * ζ)) / (ζ - z) := by
     have := @Complex.circleIntegral_sub_inv_smul_of_differentiable_on_off_countable
-    -- Cauchy Integral Formula
+    -- We apply the Cauchy Integral Formula to the function `z ↦ f(rz)`.
     specialize @this ℂ _ _ _ 1 0 z (fun ζ => f (r * ζ)) {0}
     norm_num at this
     simp_all [div_eq_inv_mul]
@@ -73,33 +73,39 @@ lemma cauchy_integral_formula_unitDisc
           simp [abs_of_pos hr.1]
           calc r * ‖x‖ < r := by nlinarith [hr.1, hx]
           _ < 1 := hr.2))) (differentiableAt_id.const_mul _)
+  -- We convert the circle integral to the desired integral.
   convert h_cauchy using 1
   norm_num [circleIntegral, circleMap, mul_assoc, mul_comm, mul_left_comm, div_eq_mul_inv]
   norm_num [← mul_assoc]
 
-/-- Cauchy-Goursat theorem for the unit disc: the integral of an analytic function
+/-- Cauchy-Goursat theorem for the unit disc implies the integral of an analytic function
 against the conjugate Cauchy kernel vanishes. -/
-lemma goursat_vanishing_integral
+private lemma goursat_vanishing_integral
     (hf : AnalyticOn ℂ f (ball 0 1)) (hr : r ∈ Ioo 0 1) (hz : z ∈ (ball 0 1)) :
     ∫ t in 0..2*Real.pi, f (r * exp (I * t)) *
       (star z / (star (exp (I * t)) - star z)) = 0 := by
-  have h_cauchy : ∫ t in (0 : ℝ)..2 * Real.pi, f (r * exp (I * t)) *
+  -- We first that an equivalent integral vanishes, using the Cauchy-Goursat Theorem.
+  have h_goursat : ∫ t in (0 : ℝ)..2 * Real.pi, f (r * exp (I * t)) *
     (exp (I * t)) / (1 - star z * exp (I * t)) = 0 := by
-    have h_cauchy (g : ℂ → ℂ) (hg_analytic : AnalyticOn ℂ g (closedBall 0 1)) :
+    -- We prove that for any analytic function `g` on the closed unit disc,
+    -- the integral of `g(e^{it}) e^{it}` vanishes.
+    have h_goursat_g (g : ℂ → ℂ) (hg_analytic : AnalyticOn ℂ g (closedBall 0 1)) :
       ∫ t in (0 : ℝ)..2 * Real.pi, g (exp (I * t)) * exp (I * t) = 0 := by
-      have h_cauchy : ∫ t in (0 : ℝ)..2 * Real.pi, g (exp (I * t)) *
+      -- The above integral equals a circle integral.
+      have : ∫ t in (0 : ℝ)..2 * Real.pi, g (exp (I * t)) *
         exp (I * t) = (1 / I) * ∮ t in C(0, 1), g t := by
         norm_num [circleIntegral, circleMap, mul_comm]
         norm_num [mul_assoc, mul_comm, mul_left_comm]
         norm_num [← mul_assoc]
-      rw [h_cauchy]
-      have := @Complex.circleIntegral_eq_zero_of_differentiable_on_off_countable
-      -- Cauchy-Goursat Theorem for a disc
-      simpa using @this ℂ _ _ 1 zero_le_one g 0 ∅ (by norm_num) (
-        hg_analytic.continuousOn) (
-          by intro z hz; exact hg_analytic.differentiableOn.differentiableAt (
-            Metric.closedBall_mem_nhds_of_mem hz.1))
-    convert h_cauchy (fun w => f (r * w) / (1 - star z * w)) _ using 3
+      rw [this]
+      -- We apply the Cauchy-Goursat Theorem for a disc.
+      simpa using @Complex.circleIntegral_eq_zero_of_differentiable_on_off_countable
+                     ℂ _ _ 1 zero_le_one g 0 ∅ (by norm_num) (hg_analytic.continuousOn)
+                    (by intro z hz
+                        exact hg_analytic.differentiableOn.differentiableAt
+                                              (Metric.closedBall_mem_nhds_of_mem hz.1))
+    -- We apply h_goursat_g to the function `w ↦ f(rw) / (1 - star z * w)`.
+    convert h_goursat_g (fun w => f (r * w) / (1 - star z * w)) _ using 3
     · ring
     · refine AnalyticOn.div ?_ ?_ ?_
       · refine hf.comp ?_ ?_
@@ -107,27 +113,34 @@ lemma goursat_vanishing_integral
         · simp_all [Set.MapsTo]
           exact fun x hx => by rw [abs_of_pos hr.1] ; nlinarith [norm_nonneg x]
       · apply_rules [AnalyticOn.sub, AnalyticOn.mul, analyticOn_const, analyticOn_id]
-      · intro x hx; contrapose! hx; simp_all [Complex.ext_iff]
-        exact Real.lt_sqrt_of_sq_lt (
-          by nlinarith [sq_nonneg (z.re * x.im - z.im * x.re), Complex.normSq_apply z,
-            Complex.normSq_apply x, show Complex.normSq z < 1 from
-            by simpa [Complex.normSq_eq_norm_sq] using hz])
-  convert congr_arg (fun x : ℂ =>
-    x * star z) h_cauchy using 1 <;> norm_num [circleMap] ; ring_nf
-  rw [← intervalIntegral.integral_const_mul] ; congr ; ext t ; norm_num [
-    exp_neg, exp_re, exp_im, mul_comm] ; ring_nf
-  rw [show (- (starRingEnd ℂ z) + starRingEnd ℂ (exp (I * t))) =
-    (1 - exp (I * t) * starRingEnd ℂ z) /
-    exp (I * t) from ?_] ; focus norm_num ; ring
-  rw [eq_div_iff (exp_ne_zero _)] ; norm_num [Complex.ext_iff,
-    exp_re, exp_im] ; ring_nf
-  exact ⟨by rw [Real.sin_sq, Real.cos_sq] ; ring, trivial⟩
+      · intro x hx hxz
+        simp [Complex.ext_iff] at hxz
+        norm_num [Complex.normSq, Complex.norm_def] at hz hx
+        rw [Real.sqrt_lt'] at hz <;> nlinarith [sq_nonneg (z.re * x.im - z.im * x.re)]
+  -- We finish the proof by converting the integral in h_goursat back to the original integral.
+  convert congr_arg (fun x : ℂ => x * star z) h_goursat using 1 <;> norm_num
+  ring_nf
+  rw [← intervalIntegral.integral_const_mul]
+  congr
+  ext t
+  norm_num [exp_neg, exp_re, exp_im, mul_comm]
+  ring_nf
+  rw [show (-(starRingEnd ℂ z) + starRingEnd ℂ (exp (I * t))) =
+           (1 - exp (I * t) * starRingEnd ℂ z) / exp (I * t) from ?_]
+  · norm_num
+    ring
+  · rw [eq_div_iff (exp_ne_zero _)]
+    norm_num [Complex.ext_iff, exp_re, exp_im]
+    ring_nf
+    rw [Real.sin_sq, Real.cos_sq]
+    ring_nf
+    trivial
 
 
 /-- As `r → 1`, the Poisson integral of a continuous function `g` on the closed unit disc
 converges to the boundary integral. More precisely, for a sequence `r_n → 1` with
 `r_n ∈ (0,1)`, the integral against the real part of the Herglotz kernel converges. -/
-lemma poisson_integral_limit_to_boundary (g : ℂ → ℝ) (hz : z ∈ (ball 0 1))
+private lemma poisson_integral_limit_to_boundary (g : ℂ → ℝ) (hz : z ∈ (ball 0 1))
     (hc : ContinuousOn g (closedBall (0 : ℂ) 1)) (r : ℕ → ℝ)
     (hr : ∀ n, r n ∈ Ioo 0 1)
     (hr_lim : Filter.Tendsto r Filter.atTop (nhds 1)) :
@@ -136,11 +149,14 @@ lemma poisson_integral_limit_to_boundary (g : ℂ → ℝ) (hz : z ∈ (ball 0 1
         Filter.atTop (nhds ((1 / (2 * Real.pi)) * ∫ t in 0..2 * Real.pi,
           (((exp (I * t) + z) / (exp (I * t) - z)).re) * g (exp (I * t)))) := by
   field_simp
+  -- We apply the Lebesgue Dominated Convergence Theorem.
   apply_rules [Filter.Tendsto.div_const,
                 intervalIntegral.tendsto_integral_filter_of_dominated_convergence]
   rotate_right
+  -- We define the bound to be the supremum of the integrand.
   · exact fun x => (SupSet.sSup (Set.image (fun w => |((w + z) / (w - z)).re|)
-     (Metric.sphere 0 1)))* (SupSet.sSup (Set.image (fun w => |g w|) (closedBall (0 : ℂ) 1)))
+     (Metric.sphere 0 1))) * (SupSet.sSup (Set.image (fun w => |g w|) (closedBall (0 : ℂ) 1)))
+  -- We verify the measurability of the integrand.
   · filter_upwards with n
     refine Measurable.aestronglyMeasurable ?_
     refine Measurable.mul ?_ ?_
@@ -150,7 +166,9 @@ lemma poisson_integral_limit_to_boundary (g : ℂ → ℝ) (hz : z ∈ (ball 0 1
       · continuity
       · simp_all
         linarith [hr n, abs_of_pos (hr n |>.1)]
+  -- We verify that the integrand is eventually bounded by the bound.
   · refine Filter.Eventually.of_forall fun n => Filter.Eventually.of_forall fun x hx => ?_
+    -- We bound each factor of the integrand separately.
     have h_bound : |g (r n * exp (x * I))| ≤
       sSup (Set.image (fun w => |g w|) (closedBall (0 : ℂ) 1)) ∧
         |((exp (x * I) + z) / (exp (x * I) - z)).re| ≤
@@ -178,6 +196,7 @@ lemma poisson_integral_limit_to_boundary (g : ℂ → ℝ) (hz : z ∈ (ball 0 1
         · simp [Metric.sphere, dist_eq_norm]
         · simp
     rw [norm_mul]
+    -- We put the bounds together to obtain the desired bound.
     refine mul_le_mul ?_ ?_ ?_ ?_
     · rw [Real.norm_eq_abs]
       rw [mul_comm I (↑x : ℂ)]
@@ -191,7 +210,8 @@ lemma poisson_integral_limit_to_boundary (g : ℂ → ℝ) (hz : z ∈ (ball 0 1
       simp only [Set.mem_image] at hb
       obtain ⟨w, _, rfl⟩ := hb
       exact abs_nonneg _
-  · norm_num
+  · norm_num -- The bound is integrable.
+  -- We verify the pointwise convergence of the integrand.
   · refine Filter.Eventually.of_forall fun x hx => Filter.Tendsto.mul ?_ ?_
     · exact tendsto_const_nhds
     · apply_rules [Filter.Tendsto.comp (hc.continuousWithinAt _), tendsto_const_nhds]
@@ -209,7 +229,7 @@ lemma poisson_integral_limit_to_boundary (g : ℂ → ℝ) (hz : z ∈ (ball 0 1
 /-- For an analytic function `f` on the unit disc, `f(rz)` equals the integral
 of `f(re^{it})` against the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
-lemma poisson_formula_analytic_unitDisc
+private lemma poisson_formula_analytic_unitDisc
     (hf : AnalyticOn ℂ f (ball 0 1))
     (hr : r ∈ Ioo 0 1) (hz : z ∈ (ball 0 1)) :
     f (r * z) = (1 / (2 * Real.pi)) * ∫ t in (0 : ℝ)..2 * Real.pi,
@@ -272,6 +292,7 @@ lemma harmonic_representation_scaled_radius
     (hr : r ∈ Ioo 0 1) (hz : z ∈ (ball 0 1)) :
     u (r * z) = (1 / (2 * Real.pi)) * ∫ t in (0)..(2 * Real.pi),
       (((exp (I * t) + z) / (exp (I * t) - z))).re * (u (r * exp (I * t))) := by
+  -- We express `u` as the real part of an analytic function `f`. -/
   have hfu : ∃ (f : ℂ → ℂ), AnalyticOn ℂ f (ball 0 1) ∧
     EqOn (fun (z : ℂ) => (f z).re) u (ball 0 1) := by
     obtain ⟨f,hf⟩ := @harmonic_is_realOfHolomorphic u (0 : ℂ) 1 hu
@@ -282,6 +303,7 @@ lemma harmonic_representation_scaled_radius
     simp [abs_of_pos hr.1]
     have := mul_lt_mul_of_le_of_lt_of_pos_of_nonneg (hr.2.le) hz.out (hr.1) (by norm_num)
     simp_all
+  -- We replace `u(rz)` by `Re(f(rz))`.
   rw [← hf_eq hrz]
   have hrt (t : ℝ) : r * exp (I * t) ∈ (ball 0 1) := by
     simp [abs_of_pos hr.1]
@@ -296,6 +318,7 @@ lemma harmonic_representation_scaled_radius
   dsimp
   have := intervalIntegral.integral_congr (μ := MeasureTheory.volume) hrt
   rw [← this]
+  -- We apply the Poisson integral formula for analytic functions.
   have h_real : (f (r * z)).re = (1 / (2 * Real.pi)) * ∫ t in (0 : ℝ)..2 * Real.pi,
     ((f (r * exp (I * t)) * (((exp (I * t) + z) / (exp (I * t) - z)).re : ℂ)).re) := by
     convert congr_arg Complex.re (poisson_formula_analytic_unitDisc hf hr hz) using 1
@@ -321,7 +344,9 @@ lemma harmonic_representation_scaled_radius
           have : cexp (I * ↑t) = z := Complex.ext H.1 H.2
           rw [← this] at hz
           simp at hz
-  convert h_real using 3 ; norm_num [circleMap] ; ring_nf
+  convert h_real using 3
+  norm_num [circleMap]
+  ring_nf
   ac_rfl
 
 /-- The real part of the Herglotz–Riesz kernel is equal to the Poisson kernel. -/
@@ -334,7 +359,7 @@ lemma real_part_herglotz_kernel {x w : ℂ} (hx : ‖x‖ = 1) :
   · nlinarith
   · nlinarith
 
-/-- **Poisson integral formula for harmonic functions on the unit disc**
+/-- **Poisson integral formula for harmonic functions on the unit disc**:
 A function `u` harmonic on the unit disc and continuous on the closed unit disc
 satisfies `u(z) = (1/2π) ∫_0^{2π} (1 - |z|²) / |e^{it} - z|² u(e^{it}) dt`
 for `z` in the unit disc. -/
@@ -344,6 +369,7 @@ theorem poisson_integral_formula
     (z : ℂ) (hz : z ∈ (ball 0 1)) :
     u z = (1 / (2 * Real.pi)) * ∫ t in 0..(2 * Real.pi),
       (1 - ‖z‖^2) / ‖(exp (I * t)) - z‖^2 * (u (exp (I * t))) := by
+  -- We approximate `1` by a sequence `r_n` in `(0,1)`.
   let r : ℕ → ℝ := fun n => 1 - 1 / (n + 2)
   have hr (n : ℕ): r n ∈ Ioo 0 1 := by
     simp [r]
@@ -353,8 +379,10 @@ theorem poisson_integral_formula
     · linarith
   have hr_lim : Filter.Tendsto r Filter.atTop (nhds 1) := by
     exact le_trans (tendsto_const_nhds.sub
-      <| tendsto_const_nhds.div_atTop
-        <| Filter.tendsto_atTop_add_const_right _ _ tendsto_natCast_atTop_atTop) <| by norm_num
+                    <| tendsto_const_nhds.div_atTop
+                    <| Filter.tendsto_atTop_add_const_right _ _ tendsto_natCast_atTop_atTop)
+          <| by norm_num
+  -- We express `u(r_n z)` as the Poisson integral and then take the limit.
   have hu_lim := poisson_integral_limit_to_boundary u hz hc r hr hr_lim
   have h_poisson (n : ℕ) := harmonic_representation_scaled_radius hu (hr n) hz
   have hu_lim : Filter.Tendsto (fun n => u (r n * z))
@@ -362,6 +390,7 @@ theorem poisson_integral_formula
       (((exp (I * t) + z) / (exp (I * t) - z)).re) * u (exp (I * t)))) := by
     simp_rw [h_poisson]
     exact hu_lim
+  -- We show that `u (r_n z)` tends to `u z` as `n → ∞`.
   have hu_lim' : Filter.Tendsto (fun n => u (r n * z)) Filter.atTop (nhds (u z)) := by
     have h_cont : Filter.Tendsto (fun n => r n  * z) Filter.atTop (nhds z) := by
       simpa using Filter.Tendsto.mul (Complex.continuous_ofReal.continuousAt.tendsto.comp hr_lim)
@@ -374,6 +403,7 @@ theorem poisson_integral_formula
       use 0
       intro n _
       nlinarith [abs_of_pos (hr n).1,hr n]
+  -- We conclude by uniqueness of limits and by revealing the Poisson kernel.
   rw [← tendsto_nhds_unique hu_lim hu_lim']
   field_simp
   apply_rules [intervalIntegral.integral_congr_ae]
