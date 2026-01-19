@@ -332,7 +332,7 @@ with respect to any finite measure. -/
 lemma complex_kernel_integrable (μ : Measure (sphere (0 : ℂ) 1))
     [IsFiniteMeasure μ] (z : ℂ) (hz : z ∈ ball 0 1) :
     Integrable (fun w : (sphere (0 : ℂ) 1) => ((w : ℂ) + z) / ((w : ℂ) - z)) μ := by
-  /- The function f(w)=(w+z)(w-z) is continuous on the unit circle. -/
+  /- The function f(w)=(w+z)/(w-z) is continuous on the unit circle. -/
   have h_cont : Continuous (fun w : (sphere (0 : ℂ) 1) => ((w : ℂ) + z) / ((w : ℂ) - z)) := by
     refine Continuous.div ?_ ?_ ?_
     · fun_prop
