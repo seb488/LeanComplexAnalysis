@@ -189,7 +189,6 @@ private lemma poisson_integral_limit_to_boundary (g : ℂ → ℝ) (hz : z ∈ (
                 simp only [Metric.mem_sphere, Complex.dist_eq, sub_zero] at hw
                 have : ‖z‖ < 1 := by simpa using hz
                 linarith))
-
         exact IsCompact.bddAbove (isCompact_sphere 0 1 |> IsCompact.image_of_continuousOn <| h_cont)
       · use (exp (x * I))
         constructor
@@ -318,7 +317,7 @@ lemma harmonic_representation_scaled_radius
   dsimp
   have := intervalIntegral.integral_congr (μ := MeasureTheory.volume) hrt
   rw [← this]
-  -- We apply the Poisson integral formula for analytic functions.
+  -- We apply the Poisson integral formula for analytic functions on the unit disc.
   have h_real : (f (r * z)).re = (1 / (2 * Real.pi)) * ∫ t in (0 : ℝ)..2 * Real.pi,
     ((f (r * exp (I * t)) * (((exp (I * t) + z) / (exp (I * t) - z)).re : ℂ)).re) := by
     convert congr_arg Complex.re (poisson_formula_analytic_unitDisc hf hr hz) using 1
