@@ -77,9 +77,9 @@ open Complex InnerProductSpace MeasureTheory Metric Set Topology
 /-- The Herglotz-Riesz kernel is integrable on the unit circle. -/
 lemma herglotz_integrable (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
     (w : ℂ) (hw : w ∈ ball 0 1) :
-    Integrable (fun x : (sphere (0 : ℂ) 1) => (x + w) / (x - w)) μ := by
+    Integrable (fun x : sphere (0 : ℂ) 1 => (x + w) / (x - w)) μ := by
   have h_bounded : ∃ C : ℝ, ∀ x ∈ μ.toMeasure.support, ‖(x + w) / (x - w)‖ ≤ C := by
-    have h_cont : ContinuousOn (fun x : ℂ => (x + w) / (x - w)) (Metric.sphere 0 1) := by
+    have h_cont : ContinuousOn (fun x : ℂ => (x + w) / (x - w)) (sphere 0 1) := by
       exact continuousOn_of_forall_continuousAt
         fun x hx => ContinuousAt.div (continuousAt_id.add continuousAt_const)
           (continuousAt_id.sub continuousAt_const) (sub_ne_zero_of_ne <| by aesop)
@@ -97,14 +97,14 @@ lemma herglotz_integrable (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
 /-- The Herglotz-Riesz representation produces a ℂ differentiable function. -/
 lemma herglotz_hasDerivAt (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
     (w₀ : ℂ) (hw₀ : ‖w₀‖ < 1) :
-    HasDerivAt (fun w : ℂ  => ∫ x : (sphere (0 : ℂ) 1), (x + w) / (x - w) ∂μ)
-      (∫ x : (sphere (0 : ℂ) 1), 2 * x / (x - w₀) ^ 2 ∂μ) w₀ := by
+    HasDerivAt (fun w : ℂ  => ∫ x : sphere (0 : ℂ) 1, (x + w) / (x - w) ∂μ)
+      (∫ x : sphere (0 : ℂ) 1, 2 * x / (x - w₀) ^ 2 ∂μ) w₀ := by
   have h_diff_quot : Filter.Tendsto
-    (fun w => (∫ x : (sphere (0 : ℂ) 1), ((x + w) / (x - w) - (x + w₀) / (x - w₀)) ∂μ) / (w - w₀))
-      (nhdsWithin w₀ {w₀}ᶜ) (nhds (∫ x : (sphere (0 : ℂ) 1), 2 * x / (x - w₀)^2 ∂μ)) := by
+    (fun w => (∫ x : sphere (0 : ℂ) 1, ((x + w) / (x - w) - (x + w₀) / (x - w₀)) ∂μ) / (w - w₀))
+      (nhdsWithin w₀ {w₀}ᶜ) (nhds (∫ x : sphere (0 : ℂ) 1, 2 * x / (x - w₀)^2 ∂μ)) := by
     have h_diff_quot : Filter.Tendsto
-      (fun w => ∫ x : (sphere (0 : ℂ) 1), ((x + w) / (x - w) - (x + w₀) / (x - w₀)) / (w - w₀) ∂μ)
-        (nhdsWithin w₀ {w₀}ᶜ) (nhds (∫ x : (sphere (0 : ℂ) 1), 2 * x / (x - w₀)^2 ∂μ)) := by
+      (fun w => ∫ x : sphere (0 : ℂ) 1, ((x + w) / (x - w) - (x + w₀) / (x - w₀)) / (w - w₀) ∂μ)
+        (nhdsWithin w₀ {w₀}ᶜ) (nhds (∫ x : sphere (0 : ℂ) 1, 2 * x / (x - w₀)^2 ∂μ)) := by
       refine MeasureTheory.tendsto_integral_filter_of_dominated_convergence ?_ ?_ ?_ ?_ ?_
       · use fun x => 8 / (1 - ‖w₀‖) ^ 2
       · refine Filter.eventually_of_mem self_mem_nhdsWithin fun n hn =>
@@ -171,13 +171,13 @@ lemma herglotz_hasDerivAt (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
     mem_nhdsWithin_of_mem_nhds (Metric.ball_mem_nhds _ (sub_pos.mpr hw₀))] with w hw₁ hw₂
   simp_all [div_eq_inv_mul, slope_def_field]
   have h_integrable :
-    MeasureTheory.Integrable (fun x : (sphere (0 : ℂ) 1) => ((x : ℂ) - w)⁻¹ * ((x : ℂ) + w)) μ
-      ∧ MeasureTheory.Integrable (fun x : (sphere (0 : ℂ) 1) =>
+    MeasureTheory.Integrable (fun x : sphere (0 : ℂ) 1 => ((x : ℂ) - w)⁻¹ * ((x : ℂ) + w)) μ
+      ∧ MeasureTheory.Integrable (fun x : sphere (0 : ℂ) 1 =>
         ((x : ℂ) - w₀)⁻¹ * ((x : ℂ) + w₀)) μ := by
     have h_integrable2 (w : ℂ) (hw : ‖w‖ < 1) :
-      MeasureTheory.Integrable (fun x : (sphere (0 : ℂ) 1) =>
+      MeasureTheory.Integrable (fun x : sphere (0 : ℂ) 1 =>
         ((x : ℂ) - w)⁻¹ * ((x : ℂ) + w)) μ := by
-      have h_integrable3 : MeasureTheory.Integrable (fun x : (sphere (0 : ℂ) 1) =>
+      have h_integrable3 : MeasureTheory.Integrable (fun x : sphere (0 : ℂ) 1 =>
         ((x : ℂ) + w) / ((x : ℂ) - w)) μ := by
           apply herglotz_integrable μ w
           simp [hw]
@@ -189,8 +189,9 @@ lemma herglotz_hasDerivAt (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
 /-- Every Herglotz–Riesz representation is analytic, maps 0 to 1 and the unit disc
 into the right half-plane. -/
 theorem HerglotzRiesz_realPos (μ : ProbabilityMeasure (sphere (0 : ℂ) 1)) :
-    let p : ℂ → ℂ := fun z => ∫ x : (sphere (0 : ℂ) 1), (x + z) / (x - z) ∂μ
-    AnalyticOn ℂ p (ball 0 1) ∧ p 0 = 1 ∧ MapsTo p (ball 0 1) {w : ℂ | 0 < w.re} := by
+    let p : ℂ → ℂ := fun z => ∫ x : sphere (0 : ℂ) 1, (x + z) / (x - z) ∂μ
+    AnalyticOn ℂ p (ball (0 : ℂ) 1) ∧ p 0 = 1 ∧
+    MapsTo p (ball (0 : ℂ) 1) {w : ℂ | 0 < w.re} := by
   refine ⟨?_, ?_, ?_⟩
   · apply_rules [DifferentiableOn.analyticOn]
     · refine fun z hz => DifferentiableAt.differentiableWithinAt ?_
@@ -202,13 +203,13 @@ theorem HerglotzRiesz_realPos (μ : ProbabilityMeasure (sphere (0 : ℂ) 1)) :
     · exact isOpen_ball
   · simp
   · have h_real_part (z : ℂ) (hz : z ∈ ball 0 1) :
-      0 < Complex.re (∫ x : (sphere (0 : ℂ) 1), ((x + z) / (x - z)) ∂μ) := by
+      0 < Complex.re (∫ x : sphere (0 : ℂ) 1, ((x + z) / (x - z)) ∂μ) := by
       have h_real_part (x : ℂ) (hx : ‖x‖ = 1) : 0 < Complex.re ((x + z) / (x - z)) := by
         norm_num [Complex.div_re]
         rw [← add_div, lt_div_iff₀] <;> norm_num [Complex.normSq, Complex.norm_def] at *
         · rw [Real.sqrt_lt'] at hz <;> nlinarith
         · rw [Real.sqrt_lt'] at hz <;> nlinarith [sq_nonneg (x.re * z.im - x.im * z.re)]
-      have h_integral_pos : 0 < ∫ x : (sphere (0 : ℂ) 1), Complex.re ((x + z) / (x - z)) ∂μ := by
+      have h_integral_pos : 0 < ∫ x : sphere (0 : ℂ) 1, Complex.re ((x + z) / (x - z)) ∂μ := by
         rw [integral_pos_iff_support_of_nonneg_ae]
         · simp_all [Function.support]
           rw [show {x : ↑ (sphere (0 : ℂ) 1) | ¬ ((x + z) / (x - z) |> Complex.re) = 0} =
@@ -226,9 +227,9 @@ theorem HerglotzRiesz_realPos (μ : ProbabilityMeasure (sphere (0 : ℂ) 1)) :
                 (Continuous.measurable (by continuity))))
           · exact Filter.Eventually.of_forall fun x => Complex.abs_re_le_norm _
       convert h_integral_pos using 1
-      have h_integral_re (f : (sphere (0 : ℂ) 1) → ℂ) (hf : Integrable f μ) :
-        ∫ x : (sphere (0 : ℂ) 1), Complex.re (f x) ∂μ = Complex.re (
-          ∫ x : (sphere (0 : ℂ) 1), f x ∂μ) := by exact (by convert integral_re hf)
+      have h_integral_re (f : sphere (0 : ℂ) 1 → ℂ) (hf : Integrable f μ) :
+        ∫ x : sphere (0 : ℂ) 1, Complex.re (f x) ∂μ = Complex.re (
+          ∫ x : sphere (0 : ℂ) 1, f x ∂μ) := by exact (by convert integral_re hf)
       rw [h_integral_re]
       exact herglotz_integrable μ z hz
     exact fun z hz => h_real_part z hz
@@ -245,11 +246,11 @@ abbrev C_unit_circle := C(↥(sphere (0 : ℂ) 1), ℝ)
 
 /-- The Poisson kernel function for a fixed z in the unit disc, viewed as a
 continuous function on the unit circle. -/
-noncomputable def poisson_kernel_func (z : ℂ) (hz : z ∈ (ball 0 1)) : C_unit_circle :=
+noncomputable def poisson_kernel_func (z : ℂ) (hz : z ∈ ball 0 1) : C_unit_circle :=
   ⟨fun w => ((w : ℂ) + z) / ((w : ℂ) - z) |> Complex.re, by
     /- The denominator w - z is never zero for w on the unit circle and
      z in the unit disc. -/
-    have h_denom_ne_zero : ∀ w : (sphere (0 : ℂ) 1), w - z ≠ 0 := by
+    have h_denom_ne_zero : ∀ w : sphere (0 : ℂ) 1, w - z ≠ 0 := by
       intro w hw; simp_all [sub_eq_zero]
       rw [← hw] at hz
       have hw_norm : ‖(w : ℂ)‖ = 1 := by simp
@@ -259,7 +260,7 @@ noncomputable def poisson_kernel_func (z : ℂ) (hz : z ∈ (ball 0 1)) : C_unit
         continuous_subtype_val.sub continuous_const) fun w => h_denom_ne_zero w)⟩
 
 /-- `circleMap` takes values on the unit circle. -/
-lemma circleMap_mem_unit_circle (t : ℝ) : circleMap 0 1 t ∈ (sphere (0 : ℂ) 1) := by
+lemma circleMap_mem_unit_circle (t : ℝ) : circleMap 0 1 t ∈ sphere (0 : ℂ) 1 := by
   apply circleMap_mem_sphere
   norm_num
 
@@ -331,9 +332,9 @@ def K_weak : Set (WeakDual ℝ C_unit_circle) := K
 with respect to any finite measure. -/
 lemma complex_kernel_integrable (μ : Measure (sphere (0 : ℂ) 1))
     [IsFiniteMeasure μ] (z : ℂ) (hz : z ∈ ball 0 1) :
-    Integrable (fun w : (sphere (0 : ℂ) 1) => ((w : ℂ) + z) / ((w : ℂ) - z)) μ := by
+    Integrable (fun w : sphere (0 : ℂ) 1 => ((w : ℂ) + z) / ((w : ℂ) - z)) μ := by
   /- The function f(w)=(w+z)/(w-z) is continuous on the unit circle. -/
-  have h_cont : Continuous (fun w : (sphere (0 : ℂ) 1) => ((w : ℂ) + z) / ((w : ℂ) - z)) := by
+  have h_cont : Continuous (fun w : sphere (0 : ℂ) 1 => ((w : ℂ) + z) / ((w : ℂ) - z)) := by
     refine Continuous.div ?_ ?_ ?_
     · fun_prop
     · fun_prop
@@ -350,7 +351,7 @@ lemma complex_kernel_integrable (μ : Measure (sphere (0 : ℂ) 1))
 the integral of the Herglotz–Riesz kernel. -/
 lemma integral_poisson_eq_re_integral (μ : Measure (sphere (0 : ℂ) 1))
     [IsFiniteMeasure μ] (z : ℂ) (hz : z ∈ ball 0 1) :
-    ∫ w, (poisson_kernel_func z hz) w ∂μ = (∫ w : (sphere (0 : ℂ) 1),
+    ∫ w, (poisson_kernel_func z hz) w ∂μ = (∫ w : sphere (0 : ℂ) 1,
       ((w : ℂ) + z) / ((w : ℂ) - z) ∂μ).re := by
   convert (integral_re _)
   any_goals tauto
@@ -358,9 +359,9 @@ lemma integral_poisson_eq_re_integral (μ : Measure (sphere (0 : ℂ) 1))
   · convert complex_kernel_integrable μ z hz using 1
 
 /-- `u_n p` is positive on the unit circle when `p` takes value in the right half-plane`. -/
-lemma u_n_pos (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ) (hp : MapsTo p (ball 0 1) {w : ℂ | 0 < w.re})
-    (hr : r n ∈ Ioo 0 1) (z : ℂ) (hz : z ∈ (sphere 0 1)) : 0 < u_n p r n z := by
-  have h_rnz_in_D : (r n : ℂ) * z ∈ Metric.ball 0 1 := by
+lemma u_n_pos (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ) (hp : MapsTo p (ball (0 : ℂ) 1) {w : ℂ | 0 < w.re})
+    (hr : r n ∈ Ioo 0 1) (z : ℂ) (hz : z ∈ sphere 0 1) : 0 < u_n p r n z := by
+  have h_rnz_in_D : (r n : ℂ) * z ∈ ball 0 1 := by
     simp
     have hz_norm : ‖z‖ = 1 := by simp [Metric.sphere] at hz; exact hz
     rw [abs_of_pos hr.1, hz_norm] ; linarith [hr.2]
@@ -368,7 +369,7 @@ lemma u_n_pos (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ) (hp : MapsTo p (ball
 
 /-- The mean value property for `u_n p` at 0. -/
 lemma u_n_mean_value (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ)
-    (hp_analytic : AnalyticOn ℂ p (ball 0 1))
+    (hp_analytic : AnalyticOn ℂ p (ball (0 : ℂ) 1))
     (hp0 : p 0 = 1)
     (hr : r n ∈ Ioo 0 1) :
     (1 / (2 * Real.pi)) * ∫ t in 0..2*Real.pi, u_n p r n (circleMap 0 1 t) = 1 := by
@@ -378,7 +379,7 @@ lemma u_n_mean_value (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ)
     p (r n * circleMap 0 1 t) = p 0 := by
     /- Since `p` is analytic on the unit disc and r_n is in (0, 1),
     the function `z ↦ p(r_n z)` is analytic on the closed unit disc. -/
-    have h_analytic : AnalyticOn ℂ (fun z => p (r n * z)) (closedBall 0 1) := by
+    have h_analytic : AnalyticOn ℂ (fun z => p (r n * z)) (closedBall (0 : ℂ) 1) := by
       apply_rules [hp_analytic.comp, AnalyticOn.mul, analyticOn_id, analyticOn_const]
       intro z hz
       exact lt_of_le_of_lt (
@@ -389,7 +390,7 @@ lemma u_n_mean_value (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ)
     specialize @this (fun z => p (r n * z)) ?_ ?_ <;> norm_num at *
     · exact h_analytic.continuousOn
     · intro z hz hz'; exact h_analytic.differentiableOn.differentiableAt (
-        Metric.closedBall_mem_nhds_of_mem (by aesop))
+        closedBall_mem_nhds_of_mem (by aesop))
     · simp_all [div_eq_mul_inv, mul_assoc, mul_comm, mul_left_comm, circleIntegral]
       simp_all [mul_left_comm (circleMap 0 1 _), mul_comm, ne_of_gt (Real.pi_pos)]
   -- Taking the real part of both sides of the mean value property, we get the desired result.
@@ -445,10 +446,9 @@ lemma u_limit_at_z (p : ℂ → ℂ) (r_seq : ℕ → ℝ)
 lemma harmonic_of_analytic_real
     (u : ℂ → ℝ)
     (p : ℂ → ℂ)
-    (hp : AnalyticOn ℂ p (ball 0 1))
-    (h_real : ∀ z ∈ ball 0 1, (p z).re = u z) :
-    InnerProductSpace.HarmonicOnNhd u (ball 0 1) := by
-  have h_harmonic : ∀ x ∈ ball 0 1, InnerProductSpace.HarmonicAt (fun z => (p z).re) x := by
+    (hp : AnalyticOn ℂ p (ball (0 : ℂ) 1))
+    (h_real : ∀ z ∈ ball (0 : ℂ) 1, (p z).re = u z) : HarmonicOnNhd u (ball (0 : ℂ) 1) := by
+  have h_harmonic : ∀ x ∈ ball (0 : ℂ) 1, HarmonicAt (fun z => (p z).re) x := by
     intro x hx
     have hx': ‖x‖ < 1 := by simpa using hx
     have h_analytic : AnalyticAt ℂ p x := by
@@ -456,23 +456,23 @@ lemma harmonic_of_analytic_real
       apply IsOpen.mem_nhds
       · exact isOpen_ball
       · exact hx
-    have h_harmonic : InnerProductSpace.HarmonicAt (fun z => (p z).re) x := by
+    have h_harmonic : HarmonicAt (fun z => (p z).re) x := by
       exact AnalyticAt.harmonicAt_re h_analytic
     exact h_harmonic
   intros x hx
   have h_eq : ∀ᶠ z in nhds x, u z = (p z).re := by
     exact Filter.eventually_of_mem (IsOpen.mem_nhds (Metric.isOpen_ball) hx) fun z hz =>
       h_real z hz ▸ rfl
-  exact (InnerProductSpace.harmonicAt_congr_nhds h_eq).mpr (h_harmonic x hx)
+  exact (harmonicAt_congr_nhds h_eq).mpr (h_harmonic x hx)
 
 /-- The value of `u` at `r_n * z` is equal to the functional
 `Λ_n` applied to the Poisson kernel at `z`. -/
 lemma u_approx_eq_Lambda (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ)
-    (hp_analytic : AnalyticOn ℂ p (ball 0 1))
+    (hp_analytic : AnalyticOn ℂ p (ball (0 : ℂ) 1))
     (hr : r n ∈ Ioo 0 1)
     (z : ℂ) (hz : z ∈ ball 0 1) :
     u p (r n * z) = Λ_n_val p r n (poisson_kernel_func z hz) := by
-  have : InnerProductSpace.HarmonicOnNhd (u p) (ball 0 1) := by
+  have : HarmonicOnNhd (u p) (ball (0 : ℂ) 1) := by
     refine harmonic_of_analytic_real (u p) p hp_analytic ?_
     simp [u]
   convert harmonic_representation_scaled_radius this hr hz using 1
@@ -482,7 +482,7 @@ lemma u_approx_eq_Lambda (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ)
   ext t
   rw [mul_comm (↑t : ℂ) I]
 
-lemma K_eq_polar : K_weak = WeakDual.polar ℝ (Metric.ball 0 1) := by
+lemma K_eq_polar : K_weak = WeakDual.polar ℝ (ball (0 : C_unit_circle) 1) := by
   ext Λ
   simp [K_weak, K, WeakDual.polar, Metric.ball, dist_eq_norm]
   constructor
@@ -492,11 +492,11 @@ lemma K_eq_polar : K_weak = WeakDual.polar ℝ (Metric.ball 0 1) := by
 /-- We apply the Banach-Alaoglu theorem to show that `K` is compact in the weak* topology. -/
 lemma K_weak_compact : CompactSpace K_weak := by
   rw [K_eq_polar]
-  have h_nhds : Metric.ball (0 : C_unit_circle) 1 ∈ 𝓝 0 := by
+  have h_nhds : ball (0 : C_unit_circle) 1 ∈ 𝓝 0 := by
     rw [Metric.mem_nhds_iff]
     use 1
     simp
-  have h_compact : IsCompact (WeakDual.polar ℝ (Metric.ball (0 : C_unit_circle) 1)) :=
+  have h_compact : IsCompact (WeakDual.polar ℝ (ball (0 : C_unit_circle) 1)) :=
     WeakDual.isCompact_polar ℝ h_nhds
   rw [isCompact_iff_compactSpace] at h_compact
   exact h_compact
@@ -685,7 +685,7 @@ lemma riesz_rep (Λ : WeakDual ℝ C_unit_circle)
   it is a positive linear functional on C_c(∂𝔻, ℝ). -/
   have h_ext : ∃ (Λ_c : CompactlySupportedContinuousMap (sphere (0 : ℂ) 1) ℝ →ₚ[ℝ] ℝ),
     ∀ (f : CompactlySupportedContinuousMap (sphere (0 : ℂ) 1) ℝ),
-      Λ_c f = Λ (ContinuousMap.mk (fun z : (sphere (0 : ℂ) 1) => f z)) := by
+      Λ_c f = Λ (ContinuousMap.mk (fun z : sphere (0 : ℂ) 1 => f z)) := by
     refine ⟨?_, ?_⟩
   -- Define the positive linear functional
     · exact { toFun := fun f => Λ ⟨fun z => f z, f.continuous⟩
@@ -706,7 +706,7 @@ lemma riesz_rep (Λ : WeakDual ℝ C_unit_circle)
   · constructor ; norm_num [RealRMK.rieszMeasure]
   · intro f
     obtain ⟨f_c, hf_c⟩ : ∃ f_c : CompactlySupportedContinuousMap (sphere (0 : ℂ) 1) ℝ,
-      ∀ z : (sphere (0 : ℂ) 1), f_c z = f z := by
+      ∀ z : sphere (0 : ℂ) 1, f_c z = f z := by
       refine ⟨⟨f, ?_⟩, ?_⟩
       · rw [hasCompactSupport_iff_eventuallyEq]
         simp [Filter.EventuallyEq]
@@ -765,7 +765,7 @@ lemma u_eq_limit_Lambda (p : ℂ → ℂ) (r : ℕ → ℝ)
       Filter.Tendsto (fun k => (Λ_seq p r hp_analytic hr (phi k)) f)
         Filter.atTop (nhds (∫ z, f z ∂μ)))
     (z : ℂ) (hz : z ∈ ball 0 1) :
-    u p z = (∫ w : (sphere (0 : ℂ) 1), ((w : ℂ) + z) / ((w : ℂ) - z) ∂μ).re := by
+    u p z = (∫ w : sphere (0 : ℂ) 1, ((w : ℂ) + z) / ((w : ℂ) - z) ∂μ).re := by
   -- Applying `u_approx_eq_Lambda` to the limit expression.
   have h_lambda_limit : Filter.Tendsto (fun k => u p (r (phi k) * z)) Filter.atTop (
     nhds (∫ w, (poisson_kernel_func z hz w) ∂μ)) := by
@@ -784,7 +784,7 @@ lemma analytic_unique_of_real_part
     (f g : ℂ → ℂ)
     (hf : AnalyticOn ℂ f (ball (0 : ℂ) 1))
     (hg : AnalyticOn ℂ g (ball (0 : ℂ) 1))
-    (h_re : ∀ z ∈ (ball (0 : ℂ) 1), (f z).re = (g z).re)
+    (h_re : ∀ z ∈ ball (0 : ℂ) 1, (f z).re = (g z).re)
     (h_zero : f 0 = g 0) :
     EqOn f g (ball (0 : ℂ) 1) := by
   -- Let `h(z) = f(z) - g(z)`. We need to show that `h(z) = 0` for all z in the unit disc.
@@ -902,7 +902,7 @@ theorem HerglotzRiesz_representation_existence (p : ℂ → ℂ)
     (hp0 : p 0 = 1)
     (hp_map : MapsTo p (ball (0 : ℂ) 1) {w : ℂ | 0 < w.re}) :
     ∃ μ : ProbabilityMeasure (sphere (0 : ℂ) 1),
-    ∀ z ∈ (ball (0 : ℂ) 1), p z = ∫ x : (sphere (0 : ℂ) 1), (x + z) / (x - z) ∂μ := by
+    ∀ z ∈ ball (0 : ℂ) 1, p z = ∫ x : sphere (0 : ℂ) 1, (x + z) / (x - z) ∂μ := by
   let r : ℕ → ℝ := fun n => 1 - 1 / (n + 2)
   have hr : ∀ n, r n ∈ Ioo 0 1 := by
     intro n ; simp [r] ; constructor
@@ -914,8 +914,8 @@ theorem HerglotzRiesz_representation_existence (p : ℂ → ℂ)
   obtain ⟨hq_analytic,hq0,_⟩ := HerglotzRiesz_realPos μ
   dsimp at *
   /- We apply `u_eq_limit_Lambda`. -/
-  have h_u_eq_limit_Lambda : ∀ z ∈ (ball (0 : ℂ) 1), u p z =
-    (∫ w : (sphere (0 : ℂ) 1), ((w : ℂ) + z) / ((w : ℂ) - z) ∂μ).re := by
+  have h_u_eq_limit_Lambda : ∀ z ∈ ball (0 : ℂ) 1, u p z =
+    (∫ w : sphere (0 : ℂ) 1, ((w : ℂ) + z) / ((w : ℂ) - z) ∂μ).re := by
     apply_rules [u_eq_limit_Lambda]
     · exact le_trans (tendsto_const_nhds.sub
       <| tendsto_const_nhds.div_atTop
@@ -936,8 +936,8 @@ theorem HerglotzRiesz_representation_existence (p : ℂ → ℂ)
       · exact Continuous.integrable_of_hasCompactSupport (by continuity) (
           by exact HasCompactSupport.of_compactSpace f_neg)
   -- By `analytic_unique_of_real_part`, `p(z) = q(z)` for all `z` in the unit disc.
-  have h_p_eq_q : ∀ z ∈ (ball (0 : ℂ) 1),
-    p z = ∫ w : (sphere (0 : ℂ) 1), ((w : ℂ) + z) / ((w : ℂ) - z) ∂μ := by
+  have h_p_eq_q : ∀ z ∈ ball (0 : ℂ) 1,
+    p z = ∫ w : sphere (0 : ℂ) 1, ((w : ℂ) + z) / ((w : ℂ) - z) ∂μ := by
     apply_rules [analytic_unique_of_real_part]
     rw [hp0]
     exact hq0.symm
@@ -952,7 +952,7 @@ theorem HerglotzRiesz_representation_analytic
     (p : ℂ → ℂ) (hp_analytic : AnalyticOn ℂ p (ball (0 : ℂ) 1)) (hp0 : p 0 = 1)
     (h_real_pos : MapsTo p (ball (0 : ℂ) 1) {w : ℂ | 0 < w.re}) :
     ∃! μ : ProbabilityMeasure (sphere (0 : ℂ) 1),
-    ∀ z ∈ (ball (0 : ℂ) 1), p z = ∫ x : (sphere (0 : ℂ) 1), (x + z) / (x - z) ∂μ := by
+    ∀ z ∈ ball (0 : ℂ) 1, p z = ∫ x : sphere (0 : ℂ) 1, (x + z) / (x - z) ∂μ := by
     -- Existence
     obtain ⟨μ, hμ_rep⟩ :=
      HerglotzRiesz_representation_existence p hp_analytic hp0 h_real_pos
@@ -965,29 +965,29 @@ theorem HerglotzRiesz_representation_analytic
       symm
       refine HerglotzRiesz_representation_uniqueness μ ν ?_
       intro z hz
-      calc ∫ x : (sphere (0 : ℂ) 1), (x + z) / (x - z) ∂μ
+      calc ∫ x : sphere (0 : ℂ) 1, (x + z) / (x - z) ∂μ
             = p z := (hμ_rep z hz).symm
-        _ = ∫ x : (sphere (0 : ℂ) 1), (x + z) / (x - z) ∂ν := hν z hz
+        _ = ∫ x : sphere (0 : ℂ) 1, (x + z) / (x - z) ∂ν := hν z hz
 
 /- Every harmonic function `u` on the unit disc with `u(0) = 1` and
 `u(z) > 0` for all `z` admits a unique Herglotz–Riesz integral representation. -/
 theorem HerglotzRiesz_representation_harmonic
-    (f : ℂ → ℝ)
-    (h_pos : ∀ z ∈ (ball (0 : ℂ) 1), 0 < f z)
-    (h_u_zero : f 0 = 1) (h_harmonic : HarmonicOnNhd f (ball (0 : ℂ) 1)) :
+    (u : ℂ → ℝ)
+    (h_pos : ∀ z ∈ ball (0 : ℂ) 1, 0 < u z)
+    (h_u_zero : u 0 = 1) (h_harmonic : HarmonicOnNhd u (ball (0 : ℂ) 1)) :
     ∃! μ : ProbabilityMeasure (sphere (0 : ℂ) 1),
-    ∀ z ∈ (ball (0 : ℂ) 1), f z = ∫ x : (sphere (0 : ℂ) 1),  (1 - ‖z‖^2) / ‖x - z‖^2 ∂μ := by
+    ∀ z ∈ ball (0 : ℂ) 1, u z = ∫ x : sphere (0 : ℂ) 1,  (1 - ‖z‖^2) / ‖x - z‖^2 ∂μ := by
 
   let unitDisc := ball (0 : ℂ) 1
   let unitCircle := sphere (0 : ℂ) 1
   have exists_analytic_of_harmonic_unitDisc (g : ℂ → ℝ) (hg : HarmonicOnNhd g unitDisc) :
     ∃ F : ℂ → ℂ, AnalyticOn ℂ F unitDisc ∧ (∀ z ∈ unitDisc, (F z).re = g z) ∧ F 0 = g 0 := by
-    have h_ball : unitDisc = Metric.ball (0 : ℂ) 1 := by
+    have h_ball : unitDisc = ball (0 : ℂ) 1 := by
       ext z; simp [unitDisc, Metric.mem_ball, dist_zero_right]
     rw [h_ball] at hg
     obtain ⟨G, hG_analytic, hG_real⟩ := harmonic_is_realOfHolomorphic hg
     -- Convert AnalyticOnNhd to AnalyticOn
-    have hG_on : AnalyticOn ℂ G (Metric.ball 0 1) := by
+    have hG_on : AnalyticOn ℂ G (ball (0 : ℂ) 1) := by
       apply AnalyticOnNhd.analyticOn hG_analytic
     let c := (G 0).im
     let F := fun z => G z - I * c
@@ -1005,8 +1005,8 @@ theorem HerglotzRiesz_representation_harmonic
       · simp [Complex.sub_im, Complex.mul_im, Complex.I_re, Complex.I_im, c]
 
   obtain ⟨F, hF_analytic, hF_re⟩ : ∃ F : ℂ → ℂ, AnalyticOn ℂ F unitDisc ∧
-    (∀ z ∈ unitDisc, (F z).re = f z) ∧ (F 0) = f 0 := by
-    exact exists_analytic_of_harmonic_unitDisc f h_harmonic
+    (∀ z ∈ unitDisc, (F z).re = u z) ∧ (F 0) = u 0 := by
+    exact exists_analytic_of_harmonic_unitDisc u h_harmonic
 
   have h_real_pos : MapsTo F unitDisc {w : ℂ | 0 < w.re} := by
     intro z hz
@@ -1018,7 +1018,7 @@ theorem HerglotzRiesz_representation_harmonic
   obtain ⟨μ, h_rep⟩ := HerglotzRiesz_representation_existence F hF_analytic hF0 h_real_pos
 
   -- Taking the real part and using `real_part_herglotz_kernel`, we get
-  have h_real_part : ∀ z ∈ unitDisc, f z = ∫ x : unitCircle, (1 - ‖z‖^2) / ‖(x : ℂ) - z‖^2 ∂μ := by
+  have h_real_part : ∀ z ∈ unitDisc, u z = ∫ x : unitCircle, (1 - ‖z‖^2) / ‖(x : ℂ) - z‖^2 ∂μ := by
     have h_real_part' : ∀ z ∈ unitDisc, (F z).re = ∫ x : unitCircle, ((x + z) / (x - z)).re ∂μ := by
       intro z hz; rw [h_rep z hz] ; rw [← integral_re_add_im]
       · aesop

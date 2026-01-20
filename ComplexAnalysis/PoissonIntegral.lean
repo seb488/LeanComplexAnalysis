@@ -45,7 +45,7 @@ variable {z : ℂ} {r : ℝ} {f : ℂ → ℂ} {u : ℂ → ℝ}
 /-- Cauchy's integral formula for analytic functions on the unit disc,
     evaluated at scaled points `r * z` with `r ∈ (0,1)`. -/
 private lemma cauchy_integral_formula_unitDisc
-    (hf : AnalyticOn ℂ f (ball 0 1)) (hr : r ∈ Ioo 0 1) (hz : z ∈ (ball 0 1)) :
+    (hf : AnalyticOn ℂ f (ball 0 1)) (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
     f (r * z) = (1 / (2 * Real.pi)) * ∫ t in 0..2*Real.pi,
       f (r * exp (I * t)) * (exp (I * t) / (exp (I * t) - z)) := by
   norm_num at *
@@ -81,10 +81,10 @@ private lemma cauchy_integral_formula_unitDisc
 /-- Cauchy-Goursat theorem for the unit disc implies the integral of an analytic function
 against the conjugate Cauchy kernel vanishes. -/
 private lemma goursat_vanishing_integral
-    (hf : AnalyticOn ℂ f (ball 0 1)) (hr : r ∈ Ioo 0 1) (hz : z ∈ (ball 0 1)) :
+    (hf : AnalyticOn ℂ f (ball 0 1)) (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
     ∫ t in 0..2*Real.pi, f (r * exp (I * t)) *
       (star z / (star (exp (I * t)) - star z)) = 0 := by
-  -- We first that an equivalent integral vanishes, using the Cauchy-Goursat Theorem.
+  -- We show that an equivalent integral vanishes, using the Cauchy-Goursat Theorem.
   have h_goursat : ∫ t in (0 : ℝ)..2 * Real.pi, f (r * exp (I * t)) *
     (exp (I * t)) / (1 - star z * exp (I * t)) = 0 := by
     -- We prove that for any analytic function `g` on the closed unit disc,
@@ -140,7 +140,7 @@ private lemma goursat_vanishing_integral
 /-- As `r → 1`, the Poisson integral of a continuous function `g` on the closed unit disc
 converges to the boundary integral. More precisely, for a sequence `r_n → 1` with
 `r_n ∈ (0,1)`, the integral against the real part of the Herglotz kernel converges. -/
-private lemma poisson_integral_limit_to_boundary (g : ℂ → ℝ) (hz : z ∈ (ball 0 1))
+private lemma poisson_integral_limit_to_boundary (g : ℂ → ℝ) (hz : z ∈ ball 0 1)
     (hc : ContinuousOn g (closedBall (0 : ℂ) 1)) (r : ℕ → ℝ)
     (hr : ∀ n, r n ∈ Ioo 0 1)
     (hr_lim : Filter.Tendsto r Filter.atTop (nhds 1)) :
@@ -155,7 +155,7 @@ private lemma poisson_integral_limit_to_boundary (g : ℂ → ℝ) (hz : z ∈ (
   rotate_right
   -- We define the bound to be the supremum of the integrand.
   · exact fun x => (SupSet.sSup (Set.image (fun w => |((w + z) / (w - z)).re|)
-     (Metric.sphere 0 1))) * (SupSet.sSup (Set.image (fun w => |g w|) (closedBall (0 : ℂ) 1)))
+     (sphere 0 1))) * (SupSet.sSup (Set.image (fun w => |g w|) (closedBall (0 : ℂ) 1)))
   -- We verify the measurability of the integrand.
   · filter_upwards with n
     refine Measurable.aestronglyMeasurable ?_
@@ -230,7 +230,7 @@ of `f(re^{it})` against the real part of the Herglotz kernel, where `r ∈ (0,1)
 and `z` is in the unit disc. -/
 private lemma poisson_formula_analytic_unitDisc
     (hf : AnalyticOn ℂ f (ball 0 1))
-    (hr : r ∈ Ioo 0 1) (hz : z ∈ (ball 0 1)) :
+    (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
     f (r * z) = (1 / (2 * Real.pi)) * ∫ t in (0 : ℝ)..2 * Real.pi,
       f (r * exp (I * t)) * (((exp (I * t) + z) / (exp (I * t) - z)).re) := by
   have h_add : f (r * z) = (1 / (2 * Real.pi)) * (∫ t in (0 : ℝ)..2 * Real.pi,
@@ -288,7 +288,7 @@ of `u(r e^{it})` times the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
 lemma harmonic_representation_scaled_radius
     (hu : HarmonicOnNhd u (ball 0 1))
-    (hr : r ∈ Ioo 0 1) (hz : z ∈ (ball 0 1)) :
+    (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
     u (r * z) = (1 / (2 * Real.pi)) * ∫ t in (0)..(2 * Real.pi),
       (((exp (I * t) + z) / (exp (I * t) - z))).re * (u (r * exp (I * t))) := by
   -- We express `u` as the real part of an analytic function `f`. -/
@@ -298,13 +298,13 @@ lemma harmonic_representation_scaled_radius
     use f
     exact ⟨hf.1.analyticOn, hf.2⟩
   obtain ⟨f, hf, hf_eq⟩ := hfu
-  have hrz : r * z ∈ (ball 0 1) := by
+  have hrz : r * z ∈ ball 0 1 := by
     simp [abs_of_pos hr.1]
     have := mul_lt_mul_of_le_of_lt_of_pos_of_nonneg (hr.2.le) hz.out (hr.1) (by norm_num)
     simp_all
   -- We replace `u(rz)` by `Re(f(rz))`.
   rw [← hf_eq hrz]
-  have hrt (t : ℝ) : r * exp (I * t) ∈ (ball 0 1) := by
+  have hrt (t : ℝ) : r * exp (I * t) ∈ ball 0 1 := by
     simp [abs_of_pos hr.1]
     exact hr.2
   have hrt : EqOn
@@ -365,7 +365,7 @@ for `z` in the unit disc. -/
 theorem poisson_integral_formula
     (hu : HarmonicOnNhd u (ball 0 1))
     (hc : ContinuousOn u (closedBall 0 1))
-    (z : ℂ) (hz : z ∈ (ball 0 1)) :
+    (z : ℂ) (hz : z ∈ ball 0 1) :
     u z = (1 / (2 * Real.pi)) * ∫ t in 0..(2 * Real.pi),
       (1 - ‖z‖^2) / ‖(exp (I * t)) - z‖^2 * (u (exp (I * t))) := by
   -- We approximate `1` by a sequence `r_n` in `(0,1)`.
