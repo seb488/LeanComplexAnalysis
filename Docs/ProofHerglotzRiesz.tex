@@ -211,7 +211,7 @@ p(z) = \int_{\partial\D} \frac{\zeta + z}{\zeta - z} \, d\mu(\zeta), \quad \text
 \begin{proof}
 \textbf{Existence.} Let $\mu$ be given by \Cref{lem:measure}. Let $z \in \D$. Using \Cref{lem:measure,lem:herglotz_kernel,lem:poisson}, we have
 \begin{align*}
-\int_{\partial\D} \Re \frac{e^{it} + z}{e^{it} - z} \, d\mu(\zeta) 
+\int_{\partial\D} \Re \frac{\zeta + z}{\zeta - z} \, d\mu(\zeta) 
 &= \lim_{k\to\infty} \frac{1}{2\pi} \int_0^{2\pi} \Re \frac{e^{it} + z}{e^{it} - z} \cdot u(r_{n_k} e^{it}) \, dt \\
 &= \lim_{k\to\infty} u(r_{n_k} z) = u(z).
 \end{align*}
