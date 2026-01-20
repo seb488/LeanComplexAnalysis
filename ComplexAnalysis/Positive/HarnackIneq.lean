@@ -1,6 +1,7 @@
 module
 
 public import ComplexAnalysis.PoissonIntegral
+public import Mathlib.Analysis.InnerProductSpace.Harmonic.Constructions
 
 /-!
 # Harnack's inequality
@@ -16,18 +17,18 @@ for all `z` in the unit disc.
 
 public section
 
-open  Complex InnerProductSpace Metric
+open  Complex InnerProductSpace Metric Set
 
 /-- Harnack's inequality for a positive harmonic functions u on the unit disc
 with u(0) = 1 and assuming continuous extension to the closed unit disc.
 -/
 private lemma harnack_ineq_cont_normalized
     (u : ℂ → ℝ)
-    (h_pos : ∀ z ∈ (ball (0 : ℂ) 1), 0 < u z)
+    (h_pos : ∀ z ∈ ball (0 : ℂ) 1, 0 < u z)
     (h_f_zero : u 0 = 1)
     (h_harmonic : HarmonicOnNhd u (ball (0 : ℂ) 1))
     (hc : ContinuousOn u (closedBall 0 1))
-    (z : ℂ) (hz : z ∈ ball (0 : ℂ) 1) :
+    (z : ℂ) (hz : z ∈ ball 0 1) :
     (1 - ‖z‖) / (1 + ‖z‖) ≤ u z ∧ u z ≤ (1 + ‖z‖) / (1 - ‖z‖) := by
   have h_boundary : ∀ t : ℝ, 0 ≤ t → t ≤ 2 * Real.pi → u (exp (I * t)) ≥ 0 := by
     intros t ht_nonneg ht_le_two_pi
@@ -119,10 +120,10 @@ Removing the normalization at `0` from Lemma `harnack_ineq_normalized_cont`.
 -/
 private lemma harnack_ineq_cont
     (u : ℂ → ℝ)
-    (h_pos : ∀ z ∈ (ball (0 : ℂ) 1), 0 < u z)
+    (h_pos : ∀ z ∈ ball (0 : ℂ) 1, 0 < u z)
     (h_harmonic : HarmonicOnNhd u (ball (0 : ℂ) 1))
     (hc : ContinuousOn u (closedBall 0 1))
-    (z : ℂ) (hz : z ∈ ball (0 : ℂ) 1) :
+    (z : ℂ) (hz : z ∈ ball 0 1) :
     (1 - ‖z‖) / (1 + ‖z‖) * u 0 ≤ u z ∧ u z ≤ u 0 * (1 + ‖z‖) / (1 - ‖z‖) := by
   -- Normalize u
   set v := fun w => u w / u 0 with hv
@@ -130,10 +131,10 @@ private lemma harnack_ineq_cont
   have hv_pos : ∀ w ∈ ball (0 : ℂ) 1, 0 < v w := by
     intro w hw
     simp [hv]
-    exact div_pos (h_pos w hw) (h_pos 0 (Metric.mem_ball_self zero_lt_one))
+    exact div_pos (h_pos w hw) (h_pos 0 (mem_ball_self zero_lt_one))
   have hv_zero : v 0 = 1 := by
     simp [hv]
-    exact div_self (ne_of_gt (h_pos 0 (Metric.mem_ball_self zero_lt_one)))
+    exact div_self (ne_of_gt (h_pos 0 (mem_ball_self zero_lt_one)))
   have hv_harmonic : HarmonicOnNhd v (ball 0 1) := by
     intro w hw
     change HarmonicAt (fun z => u z / u 0) w
@@ -144,14 +145,13 @@ private lemma harnack_ineq_cont
   have hv_cont : ContinuousOn v (closedBall 0 1) := by
     apply ContinuousOn.div hc continuousOn_const
     intro w _
-    exact ne_of_gt (h_pos 0 (Metric.mem_ball_self zero_lt_one))
-
+    exact ne_of_gt (h_pos 0 (mem_ball_self zero_lt_one))
   -- Apply `harnack_ineq_cont_normalized` to v
   have := harnack_ineq_cont_normalized v hv_pos hv_zero hv_harmonic hv_cont z hz
   -- Scale back
   simp [hv] at this
-  have h0_ne : u 0 ≠ 0 := ne_of_gt (h_pos 0 (Metric.mem_ball_self zero_lt_one))
-  have h0_ge : u 0 > 0 := h_pos 0 (Metric.mem_ball_self zero_lt_one)
+  have h0_ne : u 0 ≠ 0 := ne_of_gt (h_pos 0 (mem_ball_self zero_lt_one))
+  have h0_ge : u 0 > 0 := h_pos 0 (mem_ball_self zero_lt_one)
   constructor
   · calc (1 - ‖z‖) / (1 + ‖z‖) * u 0
       _ ≤ (u z / u 0) * u 0 := by nlinarith [this.1]
@@ -161,136 +161,67 @@ private lemma harnack_ineq_cont
     _ ≤ ((1 + ‖z‖) / (1 - ‖z‖)) * u 0 := by nlinarith [this.2, h0_ge]
     _ = u 0 * (1 + ‖z‖) / (1 - ‖z‖) := by ring
 
-/-
-Identity for bilinear forms on the complex plane involving multiplication by a complex number.
--/
-lemma bilinear_form_identity
-    (B : ℂ →L[ℝ] ℂ →L[ℝ] ℝ)
-    (c : ℂ) :
-    B c c + B (c * I) (c * I) = ‖c‖^2 * (B 1 1 + B I I) := by
-      -- First, expand both sides using the bilinearity of B.
-      have h_expand : B c c + B (c * Complex.I) (c * Complex.I) =
-        c.re * c.re * B 1 1 + c.re * c.im * B 1 Complex.I + c.im * c.re * B Complex.I 1 +
-          c.im * c.im * B Complex.I Complex.I + c.re * c.re * B Complex.I Complex.I -
-            c.re * c.im * B Complex.I 1 - c.im * c.re * B 1 Complex.I + c.im * c.im * B 1 1 := by
-        have h_expand : ∀ (x y : ℝ), B (x * 1 + y * Complex.I) (x * 1 + y * Complex.I) =
-          x * x * B 1 1 + x * y * B 1 Complex.I + y * x * B Complex.I 1 +
-            y * y * B Complex.I Complex.I := by
-          intro x y; simp [mul_assoc, mul_comm, ContinuousLinearMap.map_add] ; ring_nf
-          have := B.map_smul (x : ℝ) 1
-          have := B.map_smul (y : ℝ) Complex.I
-          simp_all [mul_assoc, mul_comm, sq] ; ring_nf
-          have := B 1 |>.map_smul (x : ℝ) 1; have := B 1 |>.map_smul (y : ℝ) Complex.I
-          have := B Complex.I |>.map_smul (x : ℝ) 1
-          have := B Complex.I |>.map_smul (y : ℝ) Complex.I
-          simp_all [mul_assoc, mul_comm, mul_left_comm, sq] ; ring
-        convert congr_arg₂ (· + ·) (h_expand c.re c.im) (h_expand (-c.im) c.re) using 1 <;> ring;
-        congr <;> norm_num [Complex.ext_iff];
-      norm_num [Complex.normSq, Complex.sq_norm] ; linear_combination h_expand;
-
-/-
-Chain rule for the second derivative of `u(c * z)`.
--/
-lemma fderiv_two_comp_mul_left
-    (u : ℂ → ℝ) (c : ℂ) (x : ℂ)
-    (h : ContDiffAt ℝ 2 u (c * x)) :
-    ∀ (h1 h2 : ℂ), (fderiv ℝ (fderiv ℝ (fun z => u (c * z))) x) h1 h2 =
-    (fderiv ℝ (fderiv ℝ u) (c * x)) (c * h1) (c * h2) := by
-      have h_chain : fderiv ℝ (fderiv ℝ (fun z => u (c * z))) x =
-        (fderiv ℝ (fun z => fderiv ℝ u (c * z) ∘L (ContinuousLinearMap.smulRight (
-          1 : ℂ →L[ℝ] ℂ) c))) x := by
-        refine Filter.EventuallyEq.fderiv_eq ?_;
-        have h_deriv : ∀ᶠ z in nhds x, DifferentiableAt ℝ u (c * z) := by
-          have h_diff : ∀ᶠ z in nhds x, ContDiffAt ℝ 1 u (c * z) := by
-            have h_chain : ∀ᶠ z in nhds x, ContDiffAt ℝ 2 u (c * z) := by
-              have h_cont_diff : ∀ᶠ z in nhds (c * x), ContDiffAt ℝ 2 u z := by
-                exact h.eventually (by norm_num);
-              exact h_cont_diff.filter_mono (Continuous.tendsto' (by continuity) _ _ (by aesop));
-            exact h_chain.mono fun z hz => hz.of_le <| by norm_num;
-          exact h_diff.mono fun z hz => hz.differentiableAt le_rfl;
-        filter_upwards [h_deriv] with z hz;
-        exact HasFDerivAt.fderiv (hz.hasFDerivAt.comp z (
-          hasFDerivAt_id z |> HasFDerivAt.const_mul <| c)) ▸ by ext; simp [mul_comm]
-      erw [h_chain, fderiv_clm_comp] <;> norm_num [mul_comm c];
-      · rw [show (fun z => fderiv ℝ u (z * c)) =
-          (fderiv ℝ u) ∘ (fun z => z * c) by ext; rfl, fderiv_comp] <;> norm_num;
-        · rw [fderiv_mul_const];
-          · simp [mul_comm];
-          · exact differentiableAt_id;
-        · have h_diff : ContDiffAt ℝ 1 (fderiv ℝ u) (x * c) := by
-            rw [mul_comm];
-            exact h.fderiv_right (by norm_num);
-          exact h_diff.differentiableAt (by norm_num);
-      · have h_diff : DifferentiableAt ℝ (fun z => fderiv ℝ u z) (x * c) := by
-          have h_diff : ContDiffAt ℝ 1 (fun z => fderiv ℝ u z) (x * c) := by
-            have h_diff : ContDiffAt ℝ 2 u (x * c) := by
-              rwa [mul_comm];
-            exact h_diff.fderiv_right (by norm_num);
-          exact h_diff.differentiableAt (by norm_num);
-        exact h_diff.comp x (differentiableAt_id.mul_const c)
-
-/-
-The Laplacian of `u(c * z)` is `|c|^2` times the Laplacian of `u` at `c * z`.
--/
-lemma laplacian_comp_mul_left
-    (u : ℂ → ℝ) (c : ℂ) (x : ℂ)
-    (h : ContDiffAt ℝ 2 u (c * x)) :
-    Δ (fun z => u (c * z)) x = ‖c‖^2 * Δ u (c * x) := by
-      -- Use `laplacian_eq_iteratedFDeriv_complexPlane` to write the Laplacians as sums
-      -- of second derivatives.
-      have h_laplace_eq_sum : ∀ (v : ℂ → ℝ) (y : ℂ), ContDiffAt ℝ 2 v y → Δ v y =
-        (fderiv ℝ (fderiv ℝ v) y) 1 1 + (fderiv ℝ (fderiv ℝ v) y) I I := by
-        simp [laplacian_eq_iteratedFDeriv_complexPlane]
-        simp [iteratedFDeriv_succ_apply_right]
+/-- The scaled version of a harmonic function. -/
+private lemma harmonic_scaling
+    (u : ℂ → ℝ)
+    (hu : HarmonicOnNhd u (ball (0 : ℂ) 1))
+    (r : ℝ) (hr : r ∈ Set.Ioo 0 1) :
+    let v : ℂ → ℝ := fun w => u (r * w)
+    HarmonicOnNhd v (ball (0 : ℂ) 1):= by
+      intro v
+      simp_all only [Set.mem_Ioo]
+      have hfu : ∃ (f : ℂ → ℂ), AnalyticOn ℂ f (ball 0 1) ∧
+        EqOn (fun (z : ℂ) => (f z).re) u (ball 0 1) := by
+        obtain ⟨f,hf⟩ := @harmonic_is_realOfHolomorphic u (0 : ℂ) 1 hu
+        use f
+        exact ⟨hf.1.analyticOn, hf.2⟩
+      obtain ⟨f, hf, hf_eq⟩ := hfu
+      have hv_analytic : AnalyticOn ℂ (fun w => f (r * w)) (ball 0 1) := by
+        apply_rules [DifferentiableOn.analyticOn]
+        · exact DifferentiableOn.comp (hf.differentiableOn)
+                  (DifferentiableOn.mul (differentiableOn_const _) differentiableOn_id)
+                  fun x hx => by simpa [abs_of_pos hr.1]
+                              using by nlinarith [abs_le.mp (Complex.abs_re_le_norm x),
+                                                  abs_le.mp (Complex.abs_im_le_norm x),
+                                                  mem_ball_zero_iff.mp hx]
+        · exact isOpen_ball
+      have hv_harmonic : ∀ w ∈ ball 0 1, HarmonicAt (fun w => (f (r * w)).re) w := by
+        intro w hw
+        have hv_analytic_at_w : AnalyticAt ℂ (fun w => f (r * w)) w := by
+          apply_rules [DifferentiableOn.analyticAt, hv_analytic.differentiableOn]
+          exact isOpen_ball.mem_nhds hw
+        exact AnalyticAt.harmonicAt_re hv_analytic_at_w
+      have hv_eq : ∀ w ∈ ball 0 1, v w = (f (r * w)).re := by
+        intro w hw
+        specialize hf_eq (show (r : ℂ) * w ∈ ball 0 1 from
+                          by simpa [abs_of_pos hr.1]
+                          using by nlinarith [norm_nonneg w,
+                                              show (‖w‖ : ℝ) < 1 from by simpa using hw])
         aesop
-      -- Apply the chain rule for the second derivative of `u(c * z)`.
-      have h_chain_rule : ∀ (h1 h2 : ℂ), (fderiv ℝ (fderiv ℝ (fun z => u (c * z))) x) h1 h2 =
-        (fderiv ℝ (fderiv ℝ u) (c * x)) (c * h1) (c * h2) := by
-          exact fun h1 h2 ↦ fderiv_two_comp_mul_left u c x h h1 h2
-      rw [h_laplace_eq_sum]
-      · have := bilinear_form_identity (fderiv ℝ (fderiv ℝ u) (c * x)) c; aesop
-      · exact h.comp x (contDiffAt_const.mul contDiffAt_id)
+      intro w hw;
+      have hv_harmonic_at_w : ∀ᶠ w in nhds w, v w = (f (r * w)).re := by
+        exact Filter.mem_of_superset (IsOpen.mem_nhds isOpen_ball hw) hv_eq
+      exact (harmonicAt_congr_nhds hv_harmonic_at_w).mpr (hv_harmonic w hw)
 
-/-
-Scaled version of Harnack's inequality for a smaller radius r < 1.
--/
+
+/-- Scaled version of Harnack's inequality for a smaller radius r < 1. -/
 private lemma harnack_ineq_aux
     (u : ℂ → ℝ)
-    (h_pos : ∀ z ∈ (ball (0 : ℂ) 1), 0 < u z)
+    (h_pos : ∀ z ∈ ball (0 : ℂ) 1, 0 < u z)
     (h_harmonic : HarmonicOnNhd u (ball (0 : ℂ) 1))
     (r : ℝ) (hr : r ∈ Set.Ioo 0 1)
     (z : ℂ) (hz : ‖z‖ < r) :
     (r - ‖z‖) / (r + ‖z‖) * u 0 ≤ u z ∧ u z ≤ u 0 * (r + ‖z‖) / (r - ‖z‖) := by
       -- Define the function v as v(w) = u(rw) and show that it is harmonic on the unit disk.
       set v : ℂ → ℝ := fun w => u (r * w)
-      have hv_harmonic : HarmonicOnNhd v (Metric.ball (0 : ℂ) 1) := by
-        have hv_harmonic : ∀ w ∈ (Metric.ball (0 : ℂ) 1), ContDiffAt ℝ 2 u (r * w) := by
-          intro w hw
-          have := h_harmonic
-          have := this (r * w) ?_
-          · unfold InnerProductSpace.HarmonicAt at this; aesop
-          · simpa [abs_of_pos hr.1] using
-              by nlinarith [hr.1, hr.2, norm_nonneg w, show ‖w‖ < 1 from by simpa using hw]
-        /- By definition of v, we know that its Laplacian is r^2 times
-        the Laplacian of u at rw. -/
-        have hv_laplacian : ∀ w ∈ (Metric.ball (0 : ℂ) 1), Δ v w = r^2 * Δ u (r * w) := by
-          intro w hw; convert laplacian_comp_mul_left u r w (
-            hv_harmonic w hw) using 1 ; norm_num [sq, mul_assoc, mul_left_comm]
-        refine fun w hw => ?_
-        simp_all [InnerProductSpace.HarmonicAt, InnerProductSpace.HarmonicOnNhd]
-        refine ⟨?_, ?_⟩
-        · exact ContDiffAt.comp w (hv_harmonic w hw) (contDiffAt_const.mul contDiffAt_id)
-        · filter_upwards [IsOpen.mem_nhds (isOpen_lt continuous_norm continuous_const) hw] with x hx
-          rw [hv_laplacian x hx, h_harmonic (r * x) (
-            by simpa [abs_of_pos hr.1] using by nlinarith [norm_nonneg x]) |>.2.self_of_nhds]
-          aesop
+      have hv_harmonic : HarmonicOnNhd v (ball (0 : ℂ) 1) := harmonic_scaling u h_harmonic r hr
       -- Apply the normalized Harnack's inequality to v at w = z/r.
       have hv_ineq : (1 - ‖z / r‖) / (1 + ‖z / r‖) * v 0 ≤ v (z / r) ∧
         v (z / r) ≤ v 0 * (1 + ‖z / r‖) / (1 - ‖z / r‖) := by
         /- Since v is harmonic on the unit disk and continuous on its closure,
         we can apply Harnack's inequality. -/
-        have hv_cont : ContinuousOn v (Metric.closedBall 0 1) := by
-          refine ContinuousOn.comp (t:= Metric.ball 0 1) ?_ ?_ ?_
+        have hv_cont : ContinuousOn v (closedBall 0 1) := by
+          refine ContinuousOn.comp (t:= ball 0 1) ?_ ?_ ?_
           · intro z hz
             have := h_harmonic z hz
             exact this.1.continuousAt.continuousWithinAt
@@ -324,9 +255,9 @@ two-sided estimates in terms of the distance to the boundary.
 -/
 theorem harnack_ineq
     (u : ℂ → ℝ)
-    (h_pos : ∀ z ∈ (ball (0 : ℂ) 1), 0 < u z)
+    (h_pos : ∀ z ∈ ball (0 : ℂ) 1, 0 < u z)
     (h_harmonic : HarmonicOnNhd u (ball (0 : ℂ) 1))
-    (z : ℂ) (hz : z ∈ ball (0 : ℂ) 1) :
+    (z : ℂ) (hz : z ∈ ball 0 1) :
     (1 - ‖z‖) / (1 + ‖z‖) * u 0 ≤ u z ∧ u z ≤ u 0 * (1 + ‖z‖) / (1 - ‖z‖) := by
   refine ⟨?_, ?_⟩
   · -- For any r ∈  (‖z‖, 1), we can apply `harnack_ineq_aux` to get the inequality.
