@@ -262,7 +262,7 @@ lemma square_root_transform_deriv2 (f : ℂ → ℂ) (hf : f ∈ classS) (g : �
         intro z hz; rw [Filter.EventuallyEq.deriv_eq (Filter.eventuallyEq_of_mem (
           IsOpen.mem_nhds isOpen_ball hz) fun x hx => h_diff x hx)]
         norm_num [mul_assoc, mul_comm, mul_left_comm, hg.1.differentiableOn.differentiableAt (
-          isOpen_ball.mem_nhds hz)] ; ring
+          isOpen_ball.mem_nhds hz)] ; ring_nf
         convert HasDerivAt.deriv (HasDerivAt.mul (
           HasDerivAt.mul (hg.1.differentiableOn.differentiableAt (
             isOpen_ball.mem_nhds hz) |> DifferentiableAt.hasDerivAt) (show HasDerivAt (deriv g) (
@@ -276,7 +276,7 @@ lemma square_root_transform_deriv2 (f : ℂ → ℂ) (hf : f ∈ classS) (g : �
            isOpen_ball.mem_nhds hz) |> DifferentiableAt.hasDerivAt
       exact Filter.EventuallyEq.deriv_eq (Filter.eventuallyEq_of_mem (
         ball_mem_nhds _ zero_lt_one) h_g''_zero)
-    rw [h_g''_zero] ; norm_num [hg.2.2.1, hg.2.2.2] ; ring
+    rw [h_g''_zero] ; norm_num [hg.2.2.1, hg.2.2.2] ; ring_nf
     have h_g''_zero : DifferentiableAt ℂ (deriv g) 0 ∧ DifferentiableAt ℂ (deriv (deriv g)) 0 := by
       have h_g''_zero : AnalyticOn ℂ (deriv g) (ball 0 1) := by
         apply_rules [DifferentiableOn.analyticOn, hg.1.differentiableOn]
@@ -307,7 +307,7 @@ lemma square_root_transform_deriv2 (f : ℂ → ℂ) (hf : f ∈ classS) (g : �
     have h_f''_def : ∀ z ∈ ball 0 1, deriv (fun z => deriv (fun z => f (z ^ 2)) z) z =
       2 * deriv f (z ^ 2) + 4 * z ^ 2 * deriv (deriv f) (z ^ 2) := by
       intro z hz; rw [Filter.EventuallyEq.deriv_eq (Filter.eventuallyEq_of_mem (
-        IsOpen.mem_nhds (isOpen_ball) hz) fun x hx => h_f'_def x hx)] ; ring
+        IsOpen.mem_nhds (isOpen_ball) hz) fun x hx => h_f'_def x hx)] ; ring_nf
       convert HasDerivAt.deriv (HasDerivAt.mul (HasDerivAt.mul (hasDerivAt_id z) (
         HasDerivAt.comp z (show HasDerivAt (deriv f) _ _ from hasDerivAt_deriv_iff.mpr ?_) (
           hasDerivAt_pow 2 z))) (hasDerivAt_const _ _)) using 1 <;> norm_num ; focus ring
