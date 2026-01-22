@@ -17,8 +17,8 @@ public import Mathlib.RingTheory.FractionalIdeal.Basic
 public import Mathlib.NumberTheory.Real.Irrational
 public import Mathlib.Tactic
 
-public import ComplexAnalysis.PoissonIntegral
-public import ComplexAnalysis.Positive.HerglotzRieszUnique
+public import ComplexAnalysis.Harmonic.PoissonIntegral
+public import ComplexAnalysis.Harmonic.Positive.HerglotzRieszUnique
 
 /-!
 # The Herglotz–Riesz Representation Theorem

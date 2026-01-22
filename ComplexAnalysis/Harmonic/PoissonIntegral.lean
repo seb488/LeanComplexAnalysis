@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2025 Sebastian Schleissinger. All rights reserved.
+Copyright (c) 2025 [Your Name]. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Mihai Iancu, Sebastian Schleissinger
+Authors: [Your Name], [Collaborator Name if applicable]
 -/
 module
 public import Mathlib.Analysis.Complex.Harmonic.Analytic

@@ -1,6 +1,10 @@
+/-
+Copyright (c) 2025 [Your Name]. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: [Your Name], [Collaborator Name if applicable]
+-/
 module
-
-public import ComplexAnalysis.PoissonIntegral
+public import ComplexAnalysis.Harmonic.PoissonIntegral
 public import Mathlib.Analysis.InnerProductSpace.Harmonic.Constructions
 
 /-!
