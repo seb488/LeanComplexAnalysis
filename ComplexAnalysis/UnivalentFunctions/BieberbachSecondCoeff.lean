@@ -1,9 +1,9 @@
 /-
 Provided we know Grönwall's area theorem, we prove that:
 
-* If f is in S, f(z) = z + a₂ * z^2 + a₃ * z^2, ..., then |a₂^2 - a₃| ≤ 1; `coeff_bound_of_S_two_three`.
+- If f is in S, f(z) = z + a₂ * z^2 + a₃ * z^2, ..., then |a₂^2 - a₃| ≤ 1; `coeff_bound_of_S_two_three`.
 
-* Bieberbach's theorem: If f is in S, f(z) = z + a₂ * z^2 + ..., then |a₂| ≤ 2; `bieberbach_second_coeff`.
+- Bieberbach's theorem: If f is in S, f(z) = z + a₂ * z^2 + ..., then |a₂| ≤ 2; `bieberbach_second_coeff`.
 -/
 
 import Mathlib.Analysis.Analytic.Basic

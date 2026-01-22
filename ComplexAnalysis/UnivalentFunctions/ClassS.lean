@@ -3,11 +3,11 @@ We define the class S of normalized univalent functions on the unit disc and the
 univalent functions on the exterior of the closed unit disk with the expansion
 g(z) = z + b₀ + b₁/z + ... at infinity. We then prove:
 
-* For any function f in S, its square root transform g(z) = sqrt(f(z^2))
+- For any function f in S, its square root transform g(z) = sqrt(f(z^2))
 is also in S; `square_root_transform_in_S`. This involves proving the existence of an analytic
 square root of f(z)/z and verifying the properties of the transformed function.
 
-* If f is in class S, then g(z) = 1/f(1/z) is in the class Σ; `inv_f_inv_in_Sigma`.
+- If f is in class S, then g(z) = 1/f(1/z) is in the class Σ; `inv_f_inv_in_Sigma`.
 -/
 
 import Mathlib.Analysis.Analytic.Basic
