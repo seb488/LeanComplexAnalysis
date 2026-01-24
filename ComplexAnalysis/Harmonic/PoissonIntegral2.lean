@@ -40,11 +40,6 @@ public section
 
 open Complex Metric Real Set
 
---#count_heartbeats
-
-#check mul_le_of_le_one_left
-#check IntervalIntegrable.integral_smul π
-
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
          {z : ℂ} {r : ℝ} {f : ℂ → E} {u : ℂ → ℝ}
 
@@ -86,15 +81,15 @@ theorem cauchy_integral_formula_unitDisc
     exact
       Eq.symm
         (circleIntegral.integral_smul
-              (1 / (2 * ↑π * I)) (fun z_1 ↦ (1 / (z_1 - z)) • f (↑r * z_1)) 0 1)
+              (1 / (2 * ↑π * I)) (fun ζ ↦ (1 / (ζ - z)) • f (↑r * ζ)) 0 1)
   have : (1 / (2 * π)) • ∫ (t : ℝ) in 0..2 * π,
       (cexp (I * ↑t) / (cexp (I * ↑t) - z)) • f (↑r * cexp (I * ↑t)) =
      ∫ (t : ℝ) in 0..2 * π, (1 / (2 * π)) •
       (cexp (I * ↑t) / (cexp (I * ↑t) - z)) • f (↑r * cexp (I * ↑t)) := by
       exact
         Eq.symm
-          (intervalIntegral.integral_smul (1 / (2 * π)) fun x ↦
-            (cexp (I * ↑x) / (cexp (I * ↑x) - z)) • f (↑r * cexp (I * ↑x)))
+          (intervalIntegral.integral_smul (1 / (2 * π)) fun t ↦
+            (cexp (I * ↑t) / (cexp (I * ↑t) - z)) • f (↑r * cexp (I * ↑t)))
   rw [this,h_cauchy]
   simp only [circleIntegral]
   congr 1
