@@ -49,15 +49,15 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E
 theorem cauchy_integral_formula_unitDisc
     (hf : AnalyticOn ℂ f (ball 0 1)) (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
     f (r * z) = (1 / (2 * π)) • ∫ t in 0..2*π,
-                                 (exp (I * t) / (exp (I * t) - z)) • (f (r * exp (I * t))) := by
-  have hrx (x : ℂ) (hx : ‖x‖ ≤ 1) : ‖r * x‖ < 1 := by
+                (exp (I * t) / (exp (I * t) - z)) • (f (r * exp (I * t))) := by
+  have (x : ℂ) (hx : ‖x‖ ≤ 1) : ‖r * x‖ < 1 := by
       #count_heartbeats! in simp only [Complex.norm_mul, norm_real, norm_eq_abs, abs_of_pos hr.1]
       have := mul_le_of_le_one_left (LT.lt.le hr.1) hx
       rw [mul_comm] at this
       exact LE.le.trans_lt this hr.2
   have hfr_diff (x : ℂ) (hx : ‖x‖ ≤ 1) : DifferentiableAt ℂ (fun ζ => f (r * ζ)) x :=
      DifferentiableAt.comp x (hf.differentiableOn.differentiableAt (isOpen_ball.mem_nhds
-                    (by simp only [mem_ball, Complex.dist_eq, sub_zero, hrx x hx])))
+                    (by simp only [mem_ball, Complex.dist_eq, sub_zero, this x hx])))
                              (differentiableAt_id.const_mul _)
   have hfr_cont : ContinuousOn (fun ζ => f (r* ζ)) (closedBall 0 1) := by
       intro x hx
@@ -65,7 +65,6 @@ theorem cauchy_integral_formula_unitDisc
       exact (DifferentiableAt.continuousAt (hfr_diff x hx)).continuousWithinAt
   have h_cauchy : -- We apply the Cauchy Integral Formula to the function `z ↦ f(rz)`.
     f (r * z) = (1 / (2 * π * I)) • ∮ (ζ : ℂ) in C(0, 1), (1 / (ζ - z)) • f (r * ζ)  := by
-    have : z ∈ ball 0 1 \ ∅ := by simp only [diff_empty, hz]
     have := @circleIntegral_sub_inv_smul_of_differentiable_on_off_countable
                _ _ _ _ 1 0 z (fun ζ => f (r * ζ)) ∅ (by norm_num) hz hfr_cont
     simp only [div_eq_inv_mul, mul_one]
@@ -78,24 +77,19 @@ theorem cauchy_integral_formula_unitDisc
   have h_cauchy :
     f (r * z) =  ∮ (ζ : ℂ) in C(0, 1), (1 / (2 * π * I)) • (1 / (ζ - z)) • f (r * ζ)  := by
     rw [h_cauchy]
-    exact
-      Eq.symm
-        (circleIntegral.integral_smul
+    exact Eq.symm (circleIntegral.integral_smul
               (1 / (2 * ↑π * I)) (fun ζ ↦ (1 / (ζ - z)) • f (↑r * ζ)) 0 1)
   have : (1 / (2 * π)) • ∫ (t : ℝ) in 0..2 * π,
       (cexp (I * ↑t) / (cexp (I * ↑t) - z)) • f (↑r * cexp (I * ↑t)) =
      ∫ (t : ℝ) in 0..2 * π, (1 / (2 * π)) •
-      (cexp (I * ↑t) / (cexp (I * ↑t) - z)) • f (↑r * cexp (I * ↑t)) := by
-      exact
-        Eq.symm
-          (intervalIntegral.integral_smul (1 / (2 * π)) fun t ↦
-            (cexp (I * ↑t) / (cexp (I * ↑t) - z)) • f (↑r * cexp (I * ↑t)))
+      (cexp (I * ↑t) / (cexp (I * ↑t) - z)) • f (↑r * cexp (I * ↑t)) :=
+        Eq.symm (intervalIntegral.integral_smul (1 / (2 * π)) fun t ↦
+                (cexp (I * ↑t) / (cexp (I * ↑t) - z)) • f (↑r * cexp (I * ↑t)))
   rw [this,h_cauchy]
   simp only [circleIntegral]
   congr 1
   ext t
-  have : f (↑r * circleMap 0 1 t) = f (↑r * cexp (I * ↑t)) := by
-    norm_num [circleMap, mul_comm]
+  have : f (↑r * circleMap 0 1 t) = f (↑r * cexp (I * ↑t)) := by norm_num [circleMap, mul_comm]
   rw [this]
   simp only [← smul_assoc]
   have : (deriv (circleMap 0 1) t • (1 / (2 * ↑π * I))) • (1 / (circleMap 0 1 t - z)) =
