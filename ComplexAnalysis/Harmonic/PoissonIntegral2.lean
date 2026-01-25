@@ -52,7 +52,7 @@ theorem cauchy_integral_formula_unitDisc [CompleteSpace E]
     f (r * z) = (1 / (2 * π)) • ∫ t in 0..2*π,
                 (exp (I * t) / (exp (I * t) - z)) • (f (r * exp (I * t))) := by
   have (x : ℂ) (hx : ‖x‖ ≤ 1) : ‖r * x‖ < 1 := by
-      #count_heartbeats! in simp only [Complex.norm_mul, norm_real, norm_eq_abs, abs_of_pos hr.1]
+      simp only [Complex.norm_mul, norm_real, norm_eq_abs, abs_of_pos hr.1]
       have := mul_le_of_le_one_left (LT.lt.le hr.1) hx
       rw [mul_comm] at this
       exact LE.le.trans_lt this hr.2
@@ -71,7 +71,7 @@ theorem cauchy_integral_formula_unitDisc [CompleteSpace E]
     simp only [div_eq_inv_mul, mul_one]
     rw [this]
     · simp only [smul_smul,inv_mul_cancel₀ two_pi_I_ne_zero]
-      exact Eq.symm (MulAction.one_smul (f (↑r * z)))
+      exact Eq.symm (MulAction.one_smul (f (r * z)))
     · intro x hx
       simp only [diff_empty,mem_ball,Complex.dist_eq, sub_zero] at hx
       exact hfr_diff x (LT.lt.le hx)
@@ -79,27 +79,32 @@ theorem cauchy_integral_formula_unitDisc [CompleteSpace E]
     f (r * z) =  ∮ (ζ : ℂ) in C(0, 1), (1 / (2 * π * I)) • (1 / (ζ - z)) • f (r * ζ)  := by
     rw [h_cauchy]
     exact Eq.symm (circleIntegral.integral_smul
-              (1 / (2 * ↑π * I)) (fun ζ ↦ (1 / (ζ - z)) • f (↑r * ζ)) 0 1)
+              (1 / (2 * π * I)) (fun ζ ↦ (1 / (ζ - z)) • f (r * ζ)) 0 1)
   have : (1 / (2 * π)) • ∫ (t : ℝ) in 0..2 * π,
-      (cexp (I * ↑t) / (cexp (I * ↑t) - z)) • f (↑r * cexp (I * ↑t)) =
+      (cexp (I * t) / (cexp (I * t) - z)) • f (r * cexp (I * t)) =
      ∫ (t : ℝ) in 0..2 * π, (1 / (2 * π)) •
-      (cexp (I * ↑t) / (cexp (I * ↑t) - z)) • f (↑r * cexp (I * ↑t)) :=
+      (cexp (I * t) / (cexp (I * t) - z)) • f (r * cexp (I * t)) :=
         Eq.symm (intervalIntegral.integral_smul (1 / (2 * π)) fun t ↦
-                (cexp (I * ↑t) / (cexp (I * ↑t) - z)) • f (↑r * cexp (I * ↑t)))
+                (cexp (I * t) / (cexp (I * t) - z)) • f (r * cexp (I * t)))
   rw [this,h_cauchy]
   simp only [circleIntegral]
   congr 1
   ext t
-  have : f (↑r * circleMap 0 1 t) = f (↑r * cexp (I * ↑t)) := by simp [circleMap, mul_comm]
+  have : f (r * circleMap 0 1 t) = f (r * cexp (I * t)) := by simp [circleMap, mul_comm]
   rw [this]
   simp only [← smul_assoc]
-  have : (deriv (circleMap 0 1) t • (1 / (2 * ↑π * I))) • (1 / (circleMap 0 1 t - z)) =
-         ((1 / (2 * π)) • (cexp (I * ↑t) / (cexp (I * ↑t) - z))) := by
+  have : (deriv (circleMap 0 1) t • (1 / (2 * π * I))) • (1 / (circleMap 0 1 t - z)) =
+         ((1 / (2 * π)) • (cexp (I * t) / (cexp (I * t) - z))) := by
           simp [circleMap, deriv_circleMap]
           ring_nf
           rw [I_sq]
           ring_nf
   rw [this]
+
+lemma goursat_vanishing_integral
+    (hf : AnalyticOn ℂ f (ball 0 1)) (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
+    ∫ t in 0..2*Real.pi,  (star z / (star (exp (I * t)) - star z)) • f (r * exp (I * t)) = 0 := by
+       sorry
 
 #count_heartbeats in
 /-- For a sequence `r_n → 1` with `r_n ∈ (0,1)`,
@@ -113,7 +118,7 @@ theorem tendsto_integral_boundary_unitDisc_of_continuousOn
     Tendsto (fun n => ∫ t in 0..2 * π, (k (exp (I * t))) • f (r n * exp (I * t)))
            atTop (𝓝 (∫ t in 0..2 * π, (k (exp (I * t))) • f (exp (I * t)))) := by
   -- -- We apply the Lebesgue Dominated Convergence Theorem.
-  have hrn (n : ℕ) (t : ℝ) : ↑(r n) * cexp (↑t * I) ∈ closedBall 0 1  := by
+  have hrn (n : ℕ) (t : ℝ) : (r n) * cexp (t * I) ∈ closedBall 0 1  := by
       rw [mem_closedBall, dist_zero_right, norm_mul, norm_real,
             norm_eq_abs, norm_exp_ofReal_mul_I, mul_one, abs_of_pos (hr n).1]
       exact LT.lt.le (hr n).2
@@ -121,8 +126,8 @@ theorem tendsto_integral_boundary_unitDisc_of_continuousOn
                 intervalIntegral.tendsto_integral_filter_of_dominated_convergence]
   rotate_right
   -- We define the bound to be the supremum of the integrand.
-  · exact fun x => (SupSet.sSup (Set.image (fun ζ => ‖k ζ‖) (sphere 0 1))) *
-                   (SupSet.sSup (Set.image (fun w => ‖f w‖) (closedBall (0 : ℂ) 1)))
+  · exact fun x => (SupSet.sSup (image (fun ζ => ‖k ζ‖) (sphere 0 1))) *
+                   (SupSet.sSup (image (fun w => ‖f w‖) (closedBall 0 1)))
   -- We verify the measurability of the integrand.
   · apply Eventually.of_forall
     intro n
@@ -137,8 +142,8 @@ theorem tendsto_integral_boundary_unitDisc_of_continuousOn
   · refine Filter.Eventually.of_forall fun n => Filter.Eventually.of_forall fun t ht => ?_
     -- We bound each factor of the integrand separately.
     have h_bound :
-        ‖f (r n * exp (t * I))‖ ≤ sSup (Set.image (fun w => ‖f w‖) (closedBall (0 : ℂ) 1)) ∧
-        ‖k (exp (t * I))‖ ≤ sSup (Set.image (fun w => ‖k w‖) (sphere 0 1)) := by
+        ‖f (r n * exp (t * I))‖ ≤ sSup (image (fun w => ‖f w‖) (closedBall (0 : ℂ) 1)) ∧
+        ‖k (exp (t * I))‖ ≤ sSup (image (fun w => ‖k w‖) (sphere 0 1)) := by
       refine ⟨le_csSup ?_ ?_, le_csSup ?_ ?_⟩
       · exact IsCompact.bddAbove (isCompact_closedBall (0 : ℂ) 1 |>.image_of_continuousOn hf.norm)
       · exact ⟨_, hrn n t, rfl⟩
@@ -146,18 +151,18 @@ theorem tendsto_integral_boundary_unitDisc_of_continuousOn
       · use (exp (t * I))
         constructor
         · simp [Metric.sphere, dist_eq_norm]
-        · simp
+        · rfl
     rw [mul_comm]
     have hmul_bds: ‖(k (exp (t * I)))‖  * ‖f (r n * exp (t * I))‖ ≤
-      (sSup (Set.image (fun ζ => ‖k ζ‖) (sphere 0 1))) *
-      (sSup (Set.image (fun w => ‖f w‖) (closedBall (0 : ℂ) 1))):= by
-         apply mul_le_mul h_bound.2 h_bound.1 (norm_nonneg (f (↑(r n) * cexp (↑t * I))))
+      (sSup (image (fun ζ => ‖k ζ‖) (sphere 0 1))) *
+      (sSup (image (fun w => ‖f w‖) (closedBall (0 : ℂ) 1))):= by
+         apply mul_le_mul h_bound.2 h_bound.1 (norm_nonneg (f ((r n) * cexp (t * I))))
          apply sSup_nonneg
          rintro _ ⟨_,⟨_,hx⟩⟩
          simp_rw [← hx, norm_nonneg]
-    have hmul_norm : ‖k (cexp (↑t * I)) • f (↑(r n) * cexp (↑t * I))‖ ≤
-      ‖k (cexp (↑t * I))‖ * ‖f (↑(r n) * cexp (↑t * I))‖ := by rw [norm_smul]
-    exact Std.IsPreorder.le_trans _ _ _ hmul_norm hmul_bds
+    have hmul_norm : ‖k (cexp (t * I)) • f ((r n) * cexp (t * I))‖ ≤
+      ‖k (cexp (t * I))‖ * ‖f ((r n) * cexp (t * I))‖ := by rw [norm_smul]
+    exact le_trans hmul_norm hmul_bds
   · simp only [ne_eq, enorm_ne_top, not_false_eq_true, intervalIntegrable_const]
   -- We verify the pointwise convergence of the integrand.
   · refine Eventually.of_forall fun x hx => Tendsto.smul tendsto_const_nhds ?_
@@ -170,3 +175,62 @@ theorem tendsto_integral_boundary_unitDisc_of_continuousOn
         intro n
         simpa [mul_comm] using hrn n x
     · rw [mem_closedBall,dist_zero_right,mul_comm,norm_exp_ofReal_mul_I]
+
+#count_heartbeats in
+/-- For an analytic function `f` on the unit disc, `f(rz)` equals the integral
+of `f(re^{it})` against the real part of the Herglotz kernel, where `r ∈ (0,1)`
+and `z` is in the unit disc. -/
+theorem poisson_formula_analytic_unitDisc [CompleteSpace E]
+    (hf : AnalyticOn ℂ f (ball 0 1))
+    (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
+    f (r * z) = (1 / (2 * π)) • ∫ t in 0..2*π,
+       (((exp (I * t) + z) / (exp (I * t) - z)).re) • f (r * exp (I * t)) := by
+  have h_add : f (r * z) = (1 / (2 * π)) • ∫ t in 0..2*π,
+                           (exp (I * t) / (exp (I * t) - z)) • f (r * exp (I * t))  +
+                           (star z / (star (exp (I * t)) - star z)) • f (r * exp (I * t)) := by
+    have hr_exp (t : ℝ) : r * cexp (I * t) ∈ ball 0 1 := by
+        simp only [mem_ball,Complex.dist_eq,sub_zero, norm_mul,
+                   norm_real,norm_eq_abs, abs_of_pos hr.1]
+        simpa [mul_comm,norm_exp_ofReal_mul_I] using hr.2
+    have h_exp_ball (t : ℝ)  : ¬(cexp (I * t) ∈ ball 0 1) := by
+      by_contra hzx
+      rw [mem_ball,dist_zero_right,mul_comm, norm_exp_ofReal_mul_I] at hzx
+      exact (lt_self_iff_false 1).mp hzx
+    /- We add the integrals from `cauchy_integral_formula_unitDisc`
+      and `goursat_vanishing_integral` to obtain the desired formula. -/
+    rw [intervalIntegral.integral_add]
+    · rw [cauchy_integral_formula_unitDisc hf hr hz, goursat_vanishing_integral hf hr hz, add_zero]
+    · apply ContinuousOn.intervalIntegrable
+      refine ContinuousOn.smul ?_ ?_
+      · refine ContinuousOn.div (Continuous.continuousOn (by fun_prop))
+                                (Continuous.continuousOn (by fun_prop)) ?_
+        intro t _
+        by_contra hzx
+        rw [sub_eq_zero] at hzx
+        rw [← hzx] at hz
+        exact h_exp_ball t hz
+      · refine hf.continuousOn.comp (Continuous.continuousOn (by fun_prop)) ?_
+        intro t _
+        exact hr_exp t
+    · apply ContinuousOn.intervalIntegrable
+      refine ContinuousOn.smul ?_ ?_
+      · refine ContinuousOn.div (Continuous.continuousOn continuous_const)
+                                (Continuous.continuousOn (by fun_prop)) ?_
+        intro t _
+        by_contra hzx
+        rw [sub_eq_zero] at hzx
+        simp only [star_inj] at hzx
+        rw [← hzx] at hz
+        exact h_exp_ball t hz
+      · refine hf.continuousOn.comp (by fun_prop) ?_
+        intro t _
+        exact hr_exp t
+  convert h_add using 3
+  ext t
+  rw [← add_smul]
+  have : (exp (I * t) / (exp (I * t) - z)) + (star z / (star (exp (I * t)) - star z)) =
+         ((exp (I * t) + z) / (exp (I * t) - z)).re := by
+    simp [Complex.ext_iff, div_eq_mul_inv, normSq]
+    grind
+  rw [this]
+  rfl
