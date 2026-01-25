@@ -1,4 +1,4 @@
-/-
+ /-
 Copyright (c) 2025 [Your Name]. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: [Your Name], [Collaborator Name if applicable]
@@ -38,8 +38,9 @@ lemma moments_eq_integers (μ₁ μ₂ : ProbabilityMeasure (sphere (0 : ℂ) 1)
       exact ⟨Int.toNat (-n), by rw [Int.toNat_of_nonneg (neg_nonneg.mpr h_neg.le)]; ring⟩
     -- Since |z|=1 for `z` in the unit circle, we have z^{-m} = conj{z^m}.
     have h_inv : ∀ x : sphere (0 : ℂ) 1, x ^ (-m : ℤ) = starRingEnd ℂ (x ^ m) := by
-      norm_num
+      simp only [mem_sphere_zero_iff_norm, Subtype.forall]
       intro x hx
+      rw [zpow_neg]
       rw [inv_eq_of_mul_eq_one_right]
       simp [← mul_pow, mul_conj, normSq_eq_norm_sq, hx]
     /- Since |z|=1 for `z` in the unit circle, we have ∫ z^{-m} dμⱼ = ∫ conj{z^m} dμⱼ, j=1,2. -/
@@ -47,13 +48,16 @@ lemma moments_eq_integers (μ₁ μ₂ : ProbabilityMeasure (sphere (0 : ℂ) 1)
       starRingEnd ℂ (∫ x : sphere (0 : ℂ) 1, (x : ℂ) ^ m ∂μ₁) ∧ ∫ x : sphere (0 : ℂ) 1,
         (x : ℂ) ^ (-m : ℤ) ∂μ₂ = starRingEnd ℂ (∫ x : sphere (0 : ℂ) 1, (x : ℂ) ^ m ∂μ₂) := by
       simp only [h_inv, integral_conj]; simp
-    aesop
-  · cases n <;> aesop
+    rw [h_inv_integral.1, h_inv_integral.2, h]
+  · have hn : 0 ≤ n := by omega
+    lift n to ℕ using hn
+    simp only [zpow_natCast]
+    exact h n
 
 /-- The power function is continuous on the unit circle. -/
 lemma continuous_zpow_on_unit_circle (n : ℤ) :
     Continuous (fun x : sphere (0 : ℂ) 1 => x.val ^ n) := by
-  fun_prop (disch := norm_num)
+  #count_heartbeats! in fun_prop (disch := norm_num) --alternative: continuity
 
 /-- The span of moments is dense in the space of continuous functions on the unit circle. -/
 lemma span_moments_dense : (Submodule.span ℂ (Set.range (fun n : ℤ => ContinuousMap.mk (
@@ -75,16 +79,18 @@ lemma span_moments_dense : (Submodule.span ℂ (Set.range (fun n : ℤ => Contin
       intro A hA hA'
       have := @ContinuousMap.starSubalgebra_topologicalClosure_eq_top_of_separatesPoints ℂ
         (sphere (0 : ℂ) 1)
-      simp_all [SetLike.ext_iff]
+      #count_heartbeats! in simp [SetLike.ext_iff] at this hA hA'
       convert this A _ using 2
       · intro x y hxy
-        have hx_norm : ‖(x : ℂ)‖ = 1 := by simp
-        have hy_norm : ‖(y : ℂ)‖ = 1 := by simp
-        specialize hA x.1 hx_norm y.1 hy_norm; aesop
+        have hx_norm : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
+        have hy_norm : ‖(y : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp y.2
+        specialize hA x.1 hx_norm y.1 hy_norm
+        obtain ⟨f, hf_mem, hf_ne⟩ := hA (Subtype.coe_ne_coe.mpr hxy)
+        exact ⟨f, ⟨f, hf_mem, rfl⟩, hf_ne⟩
     apply h_stone_weierstrass A
-    · simp
-      intro a ha b hb hab; use ContinuousMap.mk (fun x : sphere (0 : ℂ) 1 => x.val)
-      simp_all
+    · rintro ⟨a, ha⟩ ⟨b, hb⟩ hab
+      use ContinuousMap.mk (fun x : sphere (0 : ℂ) 1 => x.val)
+      refine ⟨?_, fun h => hab (Subtype.ext h)⟩
       exact Algebra.subset_adjoin (Set.mem_insert _ _)
     · intro c
       convert Subalgebra.algebraMap_mem _ c
@@ -105,7 +111,8 @@ lemma span_moments_dense : (Submodule.span ℂ (Set.range (fun n : ℤ => Contin
   | add => exact AddMemClass.add_mem ‹_› ‹_›
   | mul =>
     rename_i hx hy
-    norm_num at *
+    simp only [SetLike.mem_coe] at hx hy ⊢
+    rw [Submodule.mem_toAddSubmonoid] at hx hy ⊢
     rw [Finsupp.mem_span_range_iff_exists_finsupp] at hx hy
     obtain ⟨c₁, hc₁⟩ := hx; obtain ⟨c₂, hc₂⟩ := hy; rw [← hc₁, ← hc₂]
     simp [Finsupp.sum, Finset.sum_mul _ _ _]
@@ -122,17 +129,21 @@ lemma span_moments_dense : (Submodule.span ℂ (Set.range (fun n : ℤ => Contin
      -- By the properties of exponents, we can combine the terms on the left-hand side.
       have h_exp : ∀ x : sphere (0 : ℂ) 1, (x.val ^ i) * (x.val ^ j) = x.val ^ (i + j) := by
         intros x
-        have hx : ‖(x : ℂ)‖ = 1 := by simp
+        have hx : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
         rw [zpow_add₀]
         exact norm_ne_zero_iff.mp (by simp [hx])
       ext x; simp [h_exp, mul_assoc, mul_left_comm, smul_smul]
     refine Submodule.smul_mem _ _ (Submodule.subset_span ⟨i + j, ?_⟩)
-    ext x; simp; rw [zpow_add₀]
+    ext x
+    simp [ContinuousMap.mul_apply]
+    rw [zpow_add₀]
     unfold sphere at x
     obtain ⟨x, hx⟩ := x
     dsimp at hx
     convert (zero_lt_one (α := ℝ)).trans_eq hx.symm using 1
-    simp
+    constructor
+    · intro _ ; rw [hx] ; exact zero_lt_one
+    · intro _ ; rw [← dist_pos, hx] ; exact zero_lt_one
   | star =>
     rename_i h₁ h₂ h₃
     refine Submodule.span_induction ?_ ?_ ?_ ?_ h₃
@@ -140,14 +151,16 @@ lemma span_moments_dense : (Submodule.span ℂ (Set.range (fun n : ℤ => Contin
       intro f n hn
       refine Submodule.subset_span ⟨-n, ?_⟩
       ext ⟨y, hy⟩
-      have hy' : ‖y‖ = 1 := by simpa [sphere, dist_eq_norm] using hy
+      have hy' : ‖y‖ = 1 := by exact mem_sphere_zero_iff_norm.mp hy
       simp [hn y hy']
       rw [← hn y hy', inv_def]
       simp [normSq_eq_norm_sq, hy']
     · simp [star_zero]
-    · simp
+    · simp only [star_add, SetLike.mem_coe]
       exact fun x y hx hy hx' hy' => Submodule.add_mem _ hx' hy'
-    · simp +contextual [Submodule.smul_mem]
+    · intro a x hx hsx
+      rw [star_smul]
+      exact Submodule.smul_mem _ _ hsx
 
 /-- If two finite measures agree on a dense subspace of continuous functions,
 then they agree on all continuous functions. -/
@@ -200,14 +213,14 @@ lemma measure_eq_of_moments (μ₁ μ₂ : Measure (sphere (0 : ℂ) 1))
         · norm_num
         · exact Continuous.aestronglyMeasurable (continuous_zpow_on_unit_circle n)
         · filter_upwards with x
-          have hx : ‖(x : ℂ)‖ = 1 := by simp
+          have hx : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
           simp [hx]
       · intro n hn; apply_rules [Integrable.const_mul, integrable_const]
         refine Integrable.mono' (g := fun _ => 1) ?_ ?_ ?_
         · norm_num
         · exact Continuous.aestronglyMeasurable (continuous_zpow_on_unit_circle n)
         · filter_upwards with x
-          have hx : ‖(x : ℂ)‖ = 1 := by simp
+          have hx : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
           simp [hx]
   -- The integrals of real continuous functions with respect to `μ₁` and `μ₂` agree.
   have h_eq : ∀ f : C((sphere (0 : ℂ) 1), ℝ), ∫ x, f x ∂μ₁ = ∫ x, f x ∂μ₂ := by
