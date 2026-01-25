@@ -40,11 +40,10 @@ public section
 
 open Complex Metric Real Set Filter Topology
 
-
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
          {z : ℂ} {r : ℝ} {f : ℂ → E} {u : ℂ → ℝ}
 
-#count_heartbeats in
+set_option maxHeartbeats 15000 in
 /-- Cauchy's integral formula for analytic functions on the unit disc,
     evaluated at scaled points `r * z` with `r ∈ (0,1)`. -/
 theorem cauchy_integral_formula_unitDisc [CompleteSpace E]
@@ -95,10 +94,10 @@ theorem cauchy_integral_formula_unitDisc [CompleteSpace E]
   simp only [← smul_assoc]
   have : (deriv (circleMap 0 1) t • (1 / (2 * π * I))) • (1 / (circleMap 0 1 t - z)) =
          ((1 / (2 * π)) • (cexp (I * t) / (cexp (I * t) - z))) := by
-          simp [circleMap, deriv_circleMap]
-          ring_nf
-          rw [I_sq]
-          ring_nf
+    simp [circleMap, deriv_circleMap]
+    ring_nf
+    rw [I_sq]
+    ring_nf
   rw [this]
 
 lemma goursat_vanishing_integral
@@ -106,7 +105,7 @@ lemma goursat_vanishing_integral
     ∫ t in 0..2*Real.pi,  (star z / (star (exp (I * t)) - star z)) • f (r * exp (I * t)) = 0 := by
        sorry
 
-#count_heartbeats in
+set_option maxHeartbeats 18000 in
 /-- For a sequence `r_n → 1` with `r_n ∈ (0,1)`,
 the integral of `t ↦ k(e^{it}) f(r_n * e^{it})` on [0 , 2π] converges to
 the integral of `t ↦ k(e^{it}) f(e^{it})` on [0 , 2π],
@@ -176,7 +175,7 @@ theorem tendsto_integral_boundary_unitDisc_of_continuousOn
         simpa [mul_comm] using hrn n x
     · rw [mem_closedBall,dist_zero_right,mul_comm,norm_exp_ofReal_mul_I]
 
-#count_heartbeats in
+set_option maxHeartbeats 18000 in
 /-- For an analytic function `f` on the unit disc, `f(rz)` equals the integral
 of `f(re^{it})` against the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
@@ -237,7 +236,7 @@ theorem poisson_formula_analytic_unitDisc [CompleteSpace E]
 
 open InnerProductSpace
 
-#count_heartbeats in
+set_option maxHeartbeats 11000 in
 /-- For a harmonic function `u` on the unit disc, `u(rz)` equals the integral
 of `u(r e^{it})` times the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
@@ -295,7 +294,7 @@ theorem harmonic_representation_scaled_radius
                    norm_real,norm_eq_abs, abs_of_pos hr.1]
       simpa [mul_comm,norm_exp_ofReal_mul_I] using hr.2
 
-#count_heartbeats in
+set_option maxHeartbeats 3000 in
 /-- The real part of the Herglotz–Riesz kernel is equal to the Poisson kernel. -/
 theorem real_part_herglotz_kernel (x w : ℂ) (hx : ‖x‖ = 1) :
     ((x + w) / (x - w)).re = (1 - ‖w‖^2) / ‖x - w‖^2 := by
