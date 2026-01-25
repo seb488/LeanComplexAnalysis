@@ -36,6 +36,8 @@ The proof follows from the
 harmonic function, Poisson integral, analytic function, unit disc
 -/
 
+set_option Elab.async false
+
 public section
 
 open Complex Metric Real Set Filter Topology
@@ -43,7 +45,7 @@ open Complex Metric Real Set Filter Topology
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
          {z : ℂ} {r : ℝ} {f : ℂ → E} {u : ℂ → ℝ}
 
-set_option maxHeartbeats 15000 in
+#count_heartbeats in
 /-- Cauchy's integral formula for analytic functions on the unit disc,
     evaluated at scaled points `r * z` with `r ∈ (0,1)`. -/
 theorem cauchy_integral_formula_unitDisc [CompleteSpace E]
@@ -105,7 +107,7 @@ lemma goursat_vanishing_integral
     ∫ t in 0..2*Real.pi,  (star z / (star (exp (I * t)) - star z)) • f (r * exp (I * t)) = 0 := by
        sorry
 
-set_option maxHeartbeats 18000 in
+#count_heartbeats in
 /-- For a sequence `r_n → 1` with `r_n ∈ (0,1)`,
 the integral of `t ↦ k(e^{it}) f(r_n * e^{it})` on [0 , 2π] converges to
 the integral of `t ↦ k(e^{it}) f(e^{it})` on [0 , 2π],
@@ -175,7 +177,7 @@ theorem tendsto_integral_boundary_unitDisc_of_continuousOn
         simpa [mul_comm] using hrn n x
     · rw [mem_closedBall,dist_zero_right,mul_comm,norm_exp_ofReal_mul_I]
 
-set_option maxHeartbeats 18000 in
+#count_heartbeats in
 /-- For an analytic function `f` on the unit disc, `f(rz)` equals the integral
 of `f(re^{it})` against the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
@@ -236,7 +238,7 @@ theorem poisson_formula_analytic_unitDisc [CompleteSpace E]
 
 open InnerProductSpace
 
-set_option maxHeartbeats 11000 in
+#count_heartbeats in
 /-- For a harmonic function `u` on the unit disc, `u(rz)` equals the integral
 of `u(r e^{it})` times the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
@@ -294,7 +296,7 @@ theorem harmonic_representation_scaled_radius
                    norm_real,norm_eq_abs, abs_of_pos hr.1]
       simpa [mul_comm,norm_exp_ofReal_mul_I] using hr.2
 
-set_option maxHeartbeats 3000 in
+#count_heartbeats in
 /-- The real part of the Herglotz–Riesz kernel is equal to the Poisson kernel. -/
 theorem real_part_herglotz_kernel (x w : ℂ) (hx : ‖x‖ = 1) :
     ((x + w) / (x - w)).re = (1 - ‖w‖^2) / ‖x - w‖^2 := by
