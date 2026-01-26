@@ -45,7 +45,7 @@ open Complex Metric Real Set Filter Topology
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
          {z : ℂ} {r : ℝ} {f : ℂ → E} {u : ℂ → ℝ}
 
-#count_heartbeats in
+--#count_heartbeats in
 /-- Cauchy's integral formula for analytic functions on the unit disc,
     evaluated at scaled points `r * z` with `r ∈ (0,1)`. -/
 theorem cauchy_integral_formula_unitDisc [CompleteSpace E]
@@ -102,12 +102,86 @@ theorem cauchy_integral_formula_unitDisc [CompleteSpace E]
     ring_nf
   rw [this]
 
+--#count_heartbeats in
 lemma goursat_vanishing_integral
     (hf : AnalyticOn ℂ f (ball 0 1)) (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
     ∫ t in 0..2*Real.pi,  (star z / (star (exp (I * t)) - star z)) • f (r * exp (I * t)) = 0 := by
-       sorry
+  -- Algebraic identity for the Goursat integrand.
+  have goursat_integrand_eq (z : ℂ) (t : ℝ) :
+      star z / (star (exp (I * t)) - star z) =  (I * exp (I * t)) *
+      (star z / (I * (1 - star z * exp (I * t)))) := by
+    sorry
+  -- Use `goursat_integrand_eq` to rewrite the integrand.
+  have h_integrand : ∀ t : ℝ, (star z / (star (exp (I * t)) - star z)) • (f (r * exp (I * t))) =
+      (I * exp (I * t)) • ((star z / (I * (1 - star z * exp (I * t)))) •
+      (f (r * exp (I * t)))) := by
+    intro t
+    rw [goursat_integrand_eq]
+    simp only [mul_assoc, mul_smul]
+  -- Let $g(w) = (star z / (I * (1 - star z * w))) • f (r * w)$.
+  set g : ℂ → E := fun w => (star z / (I * (1 - star z * w))) • (f (r * w))
+  have aux_denom_ne_zero {w : ℂ} (hw : w ∈ closedBall 0 1) : I * (1 - star z * w) ≠ 0 := by
+    apply mul_ne_zero I_ne_zero
+    intro h
+    have hz_norm : ‖z‖ < 1 := by rw [mem_ball_zero_iff] at hz ; exact hz
+    have hw_norm : ‖w‖ ≤ 1 := mem_closedBall_zero_iff.mp hw
+    have : ‖star z * w‖ < 1 := by
+      calc ‖star z * w‖ ≤ ‖star z‖ * ‖w‖ := norm_mul_le _ _
+        _ = ‖z‖ * ‖w‖ := by rw [norm_star]
+        _ < 1 := by nlinarith [norm_nonneg z, norm_nonneg w]
+    rw [sub_eq_zero] at h
+    rw [<-h] at this
+    rw [norm_one] at this
+    exact absurd this (lt_irrefl 1)
+  /- By Cauchy's integral theorem, the integral of an
+   analytic function over a closed contour is zero. -/
+  have h_cauchy : (∮ w in C(0, 1), g w) = 0 := by
+    apply circleIntegral_eq_zero_of_differentiable_on_off_countable
+    · exact zero_le_one
+    · exact Set.countable_empty
+    · refine ContinuousOn.smul ?_ ?_
+      · refine continuousOn_of_forall_continuousAt fun w hw =>
+          ContinuousAt.div continuousAt_const ?_ ?_
+        · exact ContinuousAt.mul continuousAt_const (ContinuousAt.sub continuousAt_const (
+            ContinuousAt.mul continuousAt_const continuousAt_id))
+        · exact aux_denom_ne_zero hw
+      · refine ContinuousOn.comp hf.continuousOn ?_ ?_;
+        · exact continuousOn_const.mul continuousOn_id;
+        · exact fun x hx => by simpa [abs_of_nonneg hr.1.le] using lt_of_le_of_lt (
+          mul_le_of_le_one_right hr.1.le (mem_closedBall_zero_iff.mp hx)) hr.2;
+    · intro w hw
+      refine DifferentiableAt.smul ?_ ?_
+      · refine DifferentiableAt.div ?_ ?_ ?_
+        · exact differentiableAt_const _
+        · apply DifferentiableAt.const_mul
+          refine DifferentiableAt.sub (differentiableAt_const (1 : ℂ)) ?_
+          exact DifferentiableAt.mul (differentiableAt_const (star z)) differentiableAt_id
+        · exact aux_denom_ne_zero (ball_subset_closedBall hw.1)
+      · refine DifferentiableAt.comp w ?_ ?_
+        · refine hf.differentiableOn.differentiableAt (Metric.isOpen_ball.mem_nhds ?_)
+          rw [mem_ball_zero_iff]
+          have hw1 : ‖w‖ < 1 := mem_ball_zero_iff.mp hw.1
+          calc ‖↑r * w‖  = ‖(r:ℂ)‖ * ‖w‖ := norm_mul _ _
+            _ = |r| * ‖w‖ := by rw [← @RCLike.norm_ofReal ℂ _] ; rfl
+            _ = r * ‖w‖ := by rw [abs_of_pos hr.1]
+            _ < r * 1 := mul_lt_mul_of_pos_left hw1 hr.1
+            _ = r := mul_one r
+            _ < 1 := hr.2
+        · exact differentiableAt_id.const_mul _;
+ -- #count_heartbeats! in simp_all [circleIntegral, mul_assoc, mul_comm, mul_left_comm]
+  convert h_cauchy using 3
+  rw [circleIntegral_def_Icc]
+  rw [intervalIntegral.integral_of_le]
+  · congr 1
+    · apply MeasureTheory.Measure.restrict_congr_set
+      exact MeasureTheory.Ioc_ae_eq_Icc
+    · funext θ
+      simp only [circleMap_zero, deriv_circleMap]
+      rw [smul_smul, h_integrand θ]
+      sorry
+  · exact mul_nonneg zero_le_two Real.pi_pos.le
 
-#count_heartbeats in
+--#count_heartbeats in
 /-- For a sequence `r_n → 1` with `r_n ∈ (0,1)`,
 the integral of `t ↦ k(e^{it}) f(r_n * e^{it})` on [0 , 2π] converges to
 the integral of `t ↦ k(e^{it}) f(e^{it})` on [0 , 2π],
@@ -177,7 +251,7 @@ theorem tendsto_integral_boundary_unitDisc_of_continuousOn
         simpa [mul_comm] using hrn n x
     · rw [mem_closedBall,dist_zero_right,mul_comm,norm_exp_ofReal_mul_I]
 
-#count_heartbeats in
+--#count_heartbeats in
 /-- For an analytic function `f` on the unit disc, `f(rz)` equals the integral
 of `f(re^{it})` against the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
@@ -238,7 +312,7 @@ theorem poisson_formula_analytic_unitDisc [CompleteSpace E]
 
 open InnerProductSpace
 
-#count_heartbeats in
+--#count_heartbeats in
 /-- For a harmonic function `u` on the unit disc, `u(rz)` equals the integral
 of `u(r e^{it})` times the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
@@ -296,7 +370,7 @@ theorem harmonic_representation_scaled_radius
                    norm_real,norm_eq_abs, abs_of_pos hr.1]
       simpa [mul_comm,norm_exp_ofReal_mul_I] using hr.2
 
-#count_heartbeats in
+--#count_heartbeats in
 /-- The real part of the Herglotz–Riesz kernel is equal to the Poisson kernel. -/
 theorem real_part_herglotz_kernel (x w : ℂ) (hx : ‖x‖ = 1) :
     ((x + w) / (x - w)).re = (1 - ‖w‖^2) / ‖x - w‖^2 := by
