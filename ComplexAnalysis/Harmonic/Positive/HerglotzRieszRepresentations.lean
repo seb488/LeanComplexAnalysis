@@ -69,11 +69,11 @@ Herglotz theorem, Herglotz–Riesz theorem, Poisson integral, positive harmonic 
 positive real part, unit disc
 -/
 public section
-
+set_option Elab.async false
 open Complex InnerProductSpace MeasureTheory Metric Set Topology
 
 /-! ## Properties of Herglotz–Riesz functions-/
-
+--#count_heartbeats in
 /-- The Herglotz-Riesz kernel is integrable on the unit circle. -/
 lemma herglotz_integrable (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
     (w : ℂ) (hw : w ∈ ball 0 1) :
@@ -82,11 +82,19 @@ lemma herglotz_integrable (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
     have h_cont : ContinuousOn (fun x : ℂ => (x + w) / (x - w)) (sphere 0 1) := by
       exact continuousOn_of_forall_continuousAt
         fun x hx => ContinuousAt.div (continuousAt_id.add continuousAt_const)
-          (continuousAt_id.sub continuousAt_const) (sub_ne_zero_of_ne <| by aesop)
+          (continuousAt_id.sub continuousAt_const) (sub_ne_zero_of_ne <| by
+              have hx' : ‖x‖ = 1 := by simpa [sphere, mem_sphere_iff_norm] using hx
+              have hw' : ‖w‖ < 1 := by simpa [ball, mem_ball] using hw
+              intro h
+              have : ‖x‖ < 1 := by rw [h] ; exact hw'
+              rw [hx'] at this
+              exact absurd this (lt_irrefl 1))
     obtain ⟨C, hC⟩ := IsCompact.exists_bound_of_continuousOn (isCompact_sphere 0 1) h_cont
-    use C ; aesop
+    use C ; intro x; intro hx
+    apply hC x
+    exact x.2
   refine MeasureTheory.Integrable.mono' (g := fun _ => h_bounded.choose) ?_ ?_ ?_
-  · norm_num
+  · exact integrable_const h_bounded.choose
   · have h_measurable : Measurable (fun x : ℂ => (x + w) / (x - w)) := by
       exact Measurable.mul (measurable_id.add_const _) (Measurable.inv (measurable_id.sub_const _))
     exact h_measurable.aestronglyMeasurable.comp_measurable measurable_subtype_coe
@@ -94,6 +102,7 @@ lemma herglotz_integrable (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
       show μ.toMeasure (μ.toMeasure.supportᶜ) = 0 by simp)] with x hx using
         h_bounded.choose_spec x <| by simpa using hx
 
+--#count_heartbeats in --99000
 /-- The Herglotz-Riesz representation produces a ℂ differentiable function. -/
 lemma herglotz_hasDerivAt (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
     (w₀ : ℂ) (hw₀ : ‖w₀‖ < 1) :
@@ -186,6 +195,7 @@ lemma herglotz_hasDerivAt (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
       h_integrable2 w₀ hw₀⟩
   exact Or.inl <| MeasureTheory.integral_sub h_integrable.1 h_integrable.2
 
+#count_heartbeats in --33000 -> 24000
 /-- Every Herglotz–Riesz representation is analytic, maps 0 to 1 and the unit disc
 into the right half-plane. -/
 theorem HerglotzRiesz_realPos (μ : ProbabilityMeasure (sphere (0 : ℂ) 1)) :
@@ -205,17 +215,31 @@ theorem HerglotzRiesz_realPos (μ : ProbabilityMeasure (sphere (0 : ℂ) 1)) :
   · have h_real_part (z : ℂ) (hz : z ∈ ball 0 1) :
       0 < Complex.re (∫ x : sphere (0 : ℂ) 1, ((x + z) / (x - z)) ∂μ) := by
       have h_real_part (x : ℂ) (hx : ‖x‖ = 1) : 0 < Complex.re ((x + z) / (x - z)) := by
-        norm_num [Complex.div_re]
-        rw [← add_div, lt_div_iff₀] <;> norm_num [Complex.normSq, Complex.norm_def] at *
-        · rw [Real.sqrt_lt'] at hz <;> nlinarith
-        · rw [Real.sqrt_lt'] at hz <;> nlinarith [sq_nonneg (x.re * z.im - x.im * z.re)]
+        rw [Complex.div_re]
+        rw [← add_div, lt_div_iff₀]
+        · rw [zero_mul]
+          have : (x + z).re * (x - z).re + (x + z).im * (x - z).im = normSq x - normSq z := by
+            rw [normSq_apply, normSq_apply]
+            rw [add_re, add_im, sub_re, sub_im]
+            ring_nf
+          rw [this]
+          rw [normSq_eq_norm_sq, hx, normSq_eq_norm_sq]
+          simp
+          rw [mem_ball_zero_iff] at hz
+          exact hz
+        · rw [normSq_pos]
+          intro h
+          have : x = z := sub_eq_zero.mp h
+          rw [this] at hx
+          linarith [mem_ball_zero_iff.mp hz]
       have h_integral_pos : 0 < ∫ x : sphere (0 : ℂ) 1, Complex.re ((x + z) / (x - z)) ∂μ := by
         rw [integral_pos_iff_support_of_nonneg_ae]
-        · simp_all [Function.support]
+        · simp only [Function.support]
           rw [show {x : ↑ (sphere (0 : ℂ) 1) | ¬ ((x + z) / (x - z) |> Complex.re) = 0} =
             Set.univ from Set.eq_univ_iff_forall.mpr fun x =>
              ne_of_gt <| h_real_part x <| by simp]
-          aesop
+          simp only [measure_univ]
+          exact zero_lt_one
         · filter_upwards
           intro x
           have h_norm : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
@@ -358,6 +382,7 @@ lemma integral_poisson_eq_re_integral (μ : Measure (sphere (0 : ℂ) 1))
   · exact rfl
   · convert complex_kernel_integrable μ z hz using 1
 
+--#count_heartbeats in
 /-- `u_n p` is positive on the unit circle when `p` takes value in the right half-plane`. -/
 lemma u_n_pos (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ) (hp : MapsTo p (ball (0 : ℂ) 1) {w : ℂ | 0 < w.re})
     (hr : r n ∈ Ioo 0 1) (z : ℂ) (hz : z ∈ sphere 0 1) : 0 < u_n p r n z := by
@@ -365,7 +390,7 @@ lemma u_n_pos (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ) (hp : MapsTo p (ball
     simp
     have hz_norm : ‖z‖ = 1 := by exact mem_sphere_zero_iff_norm.mp hz
     rw [abs_of_pos hr.1, hz_norm] ; linarith [hr.2]
-  generalize_proofs at *; aesop
+  aesop
 
 /-- The mean value property for `u_n p` at 0. -/
 lemma u_n_mean_value (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ)
@@ -969,6 +994,7 @@ theorem HerglotzRiesz_representation_analytic
             = p z := (hμ_rep z hz).symm
         _ = ∫ x : sphere (0 : ℂ) 1, (x + z) / (x - z) ∂ν := hν z hz
 
+--#count_heartbeats in --36000
 /- Every harmonic function `u` on the unit disc with `u(0) = 1` and
 `u(z) > 0` for all `z` admits a unique Herglotz–Riesz integral representation. -/
 theorem HerglotzRiesz_representation_harmonic
@@ -1021,7 +1047,7 @@ theorem HerglotzRiesz_representation_harmonic
   have h_real_part : ∀ z ∈ unitDisc, u z = ∫ x : unitCircle, (1 - ‖z‖^2) / ‖(x : ℂ) - z‖^2 ∂μ := by
     have h_real_part' : ∀ z ∈ unitDisc, (F z).re = ∫ x : unitCircle, ((x + z) / (x - z)).re ∂μ := by
       intro z hz; rw [h_rep z hz] ; rw [← integral_re_add_im]
-      · aesop
+      · #count_heartbeats! in aesop  --todo
       refine Integrable.mono' (g := fun x => 2 / (1 - ‖z‖)) ?_ ?_ ?_
       · norm_num [integrable_const_iff]
       · refine Measurable.aestronglyMeasurable ?_; fun_prop
