@@ -113,7 +113,7 @@ lemma herglotz_hasDerivAt (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
       · have h_bound : ∀ x ∈ μ.toMeasure.support, ∀ n, ‖n - w₀‖ < (1 - ‖w₀‖) / 2 →
           ‖((x + n) / (x - n) - (x + w₀) / (x - w₀)) / (n - w₀)‖ ≤ 8 / (1 - ‖w₀‖)^2 := by
           intros x hx n hn
-          have h_norm : ‖(x : ℂ)‖ = 1 := by simp
+          have h_norm : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
           have h_bound : ‖((x + n) / (x - n) - (x + w₀) / (x - w₀)) / (n - w₀)‖ ≤
             8 / (1 - ‖w₀‖)^2 := by
             have h_denom : ‖x - n‖ ≥ (1 - ‖w₀‖) / 2 ∧ ‖x - w₀‖ ≥ (1 - ‖w₀‖) := by
@@ -150,7 +150,7 @@ lemma herglotz_hasDerivAt (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
           Filter.Tendsto (fun n => ((x + n) / (x - n) - (x + w₀) / (x - w₀)) / (n - w₀))
             (nhdsWithin w₀ {w₀}ᶜ) (nhds (2 * x / (x - w₀) ^ 2)) := by
           intro x hx
-          have h_norm : ‖(x : ℂ)‖ = 1 := by simp
+          have h_norm : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
           have h_lim : HasDerivAt (fun n : ℂ => (x + n) / (x - n))
             (2 * x / (x - w₀) ^ 2) w₀ := by
             convert HasDerivAt.div (HasDerivAt.add (hasDerivAt_const _ _) (hasDerivAt_id w₀))
@@ -218,7 +218,7 @@ theorem HerglotzRiesz_realPos (μ : ProbabilityMeasure (sphere (0 : ℂ) 1)) :
           aesop
         · filter_upwards
           intro x
-          have h_norm : ‖(x : ℂ)‖ = 1 := by simp
+          have h_norm : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
           apply le_of_lt (h_real_part x h_norm)
         · refine Integrable.mono' (g:= fun x => ‖(x + z) / (x - z)‖) ?_ ?_ ?_
           · exact Integrable.norm (herglotz_integrable μ z hz)
@@ -253,7 +253,7 @@ noncomputable def poisson_kernel_func (z : ℂ) (hz : z ∈ ball 0 1) : C_unit_c
     have h_denom_ne_zero : ∀ w : sphere (0 : ℂ) 1, w - z ≠ 0 := by
       intro w hw; simp_all [sub_eq_zero]
       rw [← hw] at hz
-      have hw_norm : ‖(w : ℂ)‖ = 1 := by simp
+      have hw_norm : ‖(w : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp w.2
       linarith [hw_norm, hz]
     exact Complex.continuous_re.comp (Continuous.div (
       continuous_subtype_val.add continuous_const) (
@@ -363,7 +363,7 @@ lemma u_n_pos (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ) (hp : MapsTo p (ball
     (hr : r n ∈ Ioo 0 1) (z : ℂ) (hz : z ∈ sphere 0 1) : 0 < u_n p r n z := by
   have h_rnz_in_D : (r n : ℂ) * z ∈ ball 0 1 := by
     simp
-    have hz_norm : ‖z‖ = 1 := by simp [Metric.sphere] at hz; exact hz
+    have hz_norm : ‖z‖ = 1 := by exact mem_sphere_zero_iff_norm.mp hz
     rw [abs_of_pos hr.1, hz_norm] ; linarith [hr.2]
   generalize_proofs at *; aesop
 
@@ -450,7 +450,7 @@ lemma harmonic_of_analytic_real
     (h_real : ∀ z ∈ ball (0 : ℂ) 1, (p z).re = u z) : HarmonicOnNhd u (ball (0 : ℂ) 1) := by
   have h_harmonic : ∀ x ∈ ball (0 : ℂ) 1, HarmonicAt (fun z => (p z).re) x := by
     intro x hx
-    have hx': ‖x‖ < 1 := by simpa using hx
+    have hx': ‖x‖ < 1 := by rw [mem_ball_zero_iff] at hx ; exact hx
     have h_analytic : AnalyticAt ℂ p x := by
       apply_rules [DifferentiableOn.analyticAt, hp.differentiableOn]
       apply IsOpen.mem_nhds
@@ -1025,10 +1025,10 @@ theorem HerglotzRiesz_representation_harmonic
       refine Integrable.mono' (g := fun x => 2 / (1 - ‖z‖)) ?_ ?_ ?_
       · norm_num [integrable_const_iff]
       · refine Measurable.aestronglyMeasurable ?_; fun_prop
-      · have hz' : ‖z‖ < 1 := by simpa [unitDisc, Metric.mem_ball, dist_eq_norm] using hz
+      · have hz' : ‖z‖ < 1 := by rw [mem_ball_zero_iff] at hz ; exact hz
         simp_all
         refine Filter.Eventually.of_forall fun x => ?_
-        have hx : ‖(x : ℂ)‖ = 1 := by simp
+        have hx : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
         gcongr <;> norm_num [hx]
         · exact hz'
         · exact le_trans (norm_add_le _ _) (by linarith [hx, hz'])
@@ -1036,7 +1036,7 @@ theorem HerglotzRiesz_representation_harmonic
     have h_real_part_eq : ∀ z ∈ unitDisc, ∀ x : unitCircle,
       ((x + z) / (x - z)).re = (1 - ‖z‖^2) / ‖(x : ℂ) - z‖^2 := by
       intros z hz x;
-      have hx : ‖(x : ℂ)‖ = 1 := by simp
+      have hx : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
       exact real_part_herglotz_kernel hx
     exact fun z hz => by rw [← hF_re.1 z hz, h_real_part' z hz, integral_congr_ae (
       Filter.Eventually.of_forall fun x => h_real_part_eq z hz x)]
@@ -1056,7 +1056,7 @@ theorem HerglotzRiesz_representation_harmonic
     have h_fg_equal : ∀ z ∈ unitDisc, F z = g z := by
       apply analytic_unique_of_real_part F g hF_analytic hg_analytic
       · intro z hz
-        have hz' : ‖z‖ < 1 := by simpa [unitDisc, Metric.mem_ball, dist_eq_norm] using hz
+        have hz' : ‖z‖ < 1 := by rw [mem_ball_zero_iff] at hz ; exact hz
         have hg_real_part : (g z).re = ∫ x : unitCircle, (1 - ‖z‖^2) / ‖(x : ℂ) - z‖^2 ∂ν := by
           have hg_real_part' : (g z).re = ∫ x : unitCircle, ((x + z) / (x - z)).re ∂ν := by
             have h_integrable : Integrable (fun x : unitCircle => ((x + z) / (x - z))) ν := by
@@ -1066,7 +1066,7 @@ theorem HerglotzRiesz_representation_harmonic
                 fun_prop
               · filter_upwards with x
                 rw [norm_div]
-                have hx : ‖(x : ℂ)‖ = 1 := by simp
+                have hx : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
                 gcongr
                 · exact sub_pos_of_lt (by simpa using hz')
                 · exact le_trans (norm_add_le _ _) (by linarith[hz', hx])
@@ -1076,7 +1076,7 @@ theorem HerglotzRiesz_representation_harmonic
           rw [hg_real_part']
           refine integral_congr_ae ?_
           filter_upwards with x
-          have hx : ‖(x : ℂ)‖ = 1 := by simp
+          have hx : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
           exact real_part_herglotz_kernel hx
         rw [hF_re.1 z hz, hg_real_part, hν z hz]
       · rw [hF_re.2, h_u_zero] ; exact hg0.symm
