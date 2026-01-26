@@ -36,12 +36,15 @@ The proof follows from the
 harmonic function, Poisson integral, analytic function, unit disc
 -/
 
+set_option Elab.async false
+
 public section
 
 open Set Complex Metric
 
 variable {z : ℂ} {r : ℝ} {f : ℂ → ℂ} {u : ℂ → ℝ}
 
+#count_heartbeats in
 /-- Cauchy's integral formula for analytic functions on the unit disc,
     evaluated at scaled points `r * z` with `r ∈ (0,1)`. -/
 private lemma cauchy_integral_formula_unitDisc
@@ -78,6 +81,7 @@ private lemma cauchy_integral_formula_unitDisc
   norm_num [circleIntegral, circleMap, mul_assoc, mul_comm, mul_left_comm, div_eq_mul_inv]
   norm_num [← mul_assoc]
 
+#count_heartbeats in
 /-- Cauchy-Goursat theorem for the unit disc implies the integral of an analytic function
 against the conjugate Cauchy kernel vanishes. -/
 private lemma goursat_vanishing_integral
@@ -136,7 +140,7 @@ private lemma goursat_vanishing_integral
     ring_nf
     trivial
 
-
+#count_heartbeats in
 /-- As `r → 1`, the Poisson integral of a continuous function `g` on the closed unit disc
 converges to the boundary integral. More precisely, for a sequence `r_n → 1` with
 `r_n ∈ (0,1)`, the integral against the real part of the Herglotz kernel converges. -/
@@ -225,6 +229,7 @@ private lemma poisson_integral_limit_to_boundary (g : ℂ → ℝ) (hz : z ∈ b
         · rw [abs_of_pos (hr b).1]; linarith [(hr b).2]
       · simp
 
+#count_heartbeats in
 /-- For an analytic function `f` on the unit disc, `f(rz)` equals the integral
 of `f(re^{it})` against the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
@@ -283,6 +288,7 @@ private lemma poisson_formula_analytic_unitDisc
 
 open InnerProductSpace
 
+#count_heartbeats in
 /-- For a harmonic function `u` on the unit disc, `u(rz)` equals the integral
 of `u(r e^{it})` times the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
@@ -348,6 +354,7 @@ lemma harmonic_representation_scaled_radius
   ring_nf
   ac_rfl
 
+#count_heartbeats in
 /-- The real part of the Herglotz–Riesz kernel is equal to the Poisson kernel. -/
 lemma real_part_herglotz_kernel {x w : ℂ} (hx : ‖x‖ = 1) :
     ((x + w) / (x - w)).re = (1 - ‖w‖^2) / ‖x - w‖^2 := by
@@ -358,6 +365,7 @@ lemma real_part_herglotz_kernel {x w : ℂ} (hx : ‖x‖ = 1) :
   · nlinarith
   · nlinarith
 
+#count_heartbeats in
 /-- **Poisson integral formula for harmonic functions on the unit disc**:
 A function `u` harmonic on the unit disc and continuous on the closed unit disc
 satisfies `u(z) = (1/2π) ∫_0^{2π} (1 - |z|²) / |e^{it} - z|² u(e^{it}) dt`

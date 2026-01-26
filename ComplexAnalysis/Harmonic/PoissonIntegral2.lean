@@ -36,10 +36,11 @@ The proof follows from the
 harmonic function, Poisson integral, analytic function, unit disc
 -/
 
+set_option Elab.async false
+
 public section
 
 open Complex Metric Real Set Filter Topology
-
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
          {z : ℂ} {r : ℝ} {f : ℂ → E} {u : ℂ → ℝ}
@@ -95,10 +96,10 @@ theorem cauchy_integral_formula_unitDisc [CompleteSpace E]
   simp only [← smul_assoc]
   have : (deriv (circleMap 0 1) t • (1 / (2 * π * I))) • (1 / (circleMap 0 1 t - z)) =
          ((1 / (2 * π)) • (cexp (I * t) / (cexp (I * t) - z))) := by
-          simp [circleMap, deriv_circleMap]
-          ring_nf
-          rw [I_sq]
-          ring_nf
+    simp [circleMap, deriv_circleMap]
+    ring_nf
+    rw [I_sq]
+    ring_nf
   rw [this]
 
 lemma goursat_vanishing_integral
@@ -234,3 +235,76 @@ theorem poisson_formula_analytic_unitDisc [CompleteSpace E]
     grind
   rw [this]
   rfl
+
+open InnerProductSpace
+
+#count_heartbeats in
+/-- For a harmonic function `u` on the unit disc, `u(rz)` equals the integral
+of `u(r e^{it})` times the real part of the Herglotz kernel, where `r ∈ (0,1)`
+and `z` is in the unit disc. -/
+theorem harmonic_representation_scaled_radius
+    (hu : HarmonicOnNhd u (ball 0 1))
+    (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
+    u (r * z) = (1 / (2 * Real.pi)) * ∫ t in (0)..(2 * Real.pi),
+      (((exp (I * t) + z) / (exp (I * t) - z))).re * (u (r * exp (I * t))) := by
+  -- We express `u` as the real part of an analytic function `f`. -/
+  have hfu : ∃ (f : ℂ → ℂ), AnalyticOn ℂ f (ball 0 1) ∧
+    EqOn (fun (z : ℂ) => (f z).re) u (ball 0 1) := by
+    obtain ⟨f,hf⟩ := @harmonic_is_realOfHolomorphic u (0 : ℂ) 1 hu
+    use f
+    exact ⟨hf.1.analyticOn, hf.2⟩
+  obtain ⟨f, hf, hf_eq⟩ := hfu
+  have hrz : r * z ∈ ball 0 1 := by
+    simp only [mem_ball, dist_zero_right, norm_mul, norm_real, norm_eq_abs, abs_of_pos hr.1]
+    rw [mem_ball, dist_zero_right] at hz
+    nlinarith [hr.1, hr.2, hz]
+  -- We replace `u(rz)` by `Re(f(rz))`.
+  rw [← hf_eq hrz]
+  have hrt (t : ℝ) : r * exp (I * t) ∈ ball 0 1 := by
+    simp only [mem_ball, dist_zero_right, norm_mul, norm_real, norm_eq_abs, abs_of_pos hr.1,
+               norm_exp_I_mul_ofReal, mul_one, hr.2]
+  have hrt : EqOn
+    (fun t : ℝ => ((exp (I * t) + z) / (exp (I * t) - z)).re *(f (r * exp (I * t))).re)
+    (fun t : ℝ => ((exp (I * t) + z) / (exp (I * t) - z)).re * u (r * exp (I * t)))
+    (uIcc 0 (2 * Real.pi)) := by
+    intro t _
+    simp only [← hf_eq (hrt t)]
+  rw [← intervalIntegral.integral_congr hrt]
+  dsimp
+  rw [congr_arg Complex.re (poisson_formula_analytic_unitDisc hf hr hz)]
+  rw [smul_re,smul_eq_mul]
+  apply congrArg (fun x => 1 / (2 * π) * x)
+  simp only [intervalIntegral.integral_of_le Real.two_pi_pos.le]
+  symm
+  convert integral_re _ using 1
+  any_goals tauto
+  · simp only [real_smul, RCLike.mul_re, RCLike.re_to_complex, ofReal_re, RCLike.im_to_complex,
+               ofReal_im, zero_mul, sub_zero]
+  · refine ContinuousOn.integrableOn_Icc ?_ |> fun h => h.mono_set <| Set.Ioc_subset_Icc_self
+    refine ContinuousOn.smul ?_ ?_
+    · refine Continuous.continuousOn ?_
+      refine Complex.continuous_re.comp ?_
+      refine Continuous.div (by fun_prop) (by fun_prop) ?_
+      intro t hexpz
+      rw [sub_eq_zero] at hexpz
+      rw [← hexpz] at hz
+      rw [mem_ball,dist_zero_right,mul_comm, norm_exp_ofReal_mul_I] at hz
+      exact (lt_self_iff_false 1).mp hz
+    · refine hf.continuousOn.comp (Continuous.continuousOn (by fun_prop)) ?_
+      intro t _
+      simp only [mem_ball,Complex.dist_eq,sub_zero, norm_mul,
+                   norm_real,norm_eq_abs, abs_of_pos hr.1]
+      simpa [mul_comm,norm_exp_ofReal_mul_I] using hr.2
+
+#count_heartbeats in
+/-- The real part of the Herglotz–Riesz kernel is equal to the Poisson kernel. -/
+theorem real_part_herglotz_kernel (x w : ℂ) (hx : ‖x‖ = 1) :
+    ((x + w) / (x - w)).re = (1 - ‖w‖^2) / ‖x - w‖^2 := by
+  rw [Complex.div_re, normSq_eq_norm_sq (x - w)]
+  calc (x + w).re * (x - w).re / ‖x - w‖ ^ 2 + (x + w).im * (x - w).im / ‖x - w‖ ^ 2
+   _ = ((x.re + w.re) * (x.re - w.re) + (x.im + w.im) * (x.im - w.im)) / ‖x - w‖ ^ 2 := by
+        simp only [add_re, sub_re, add_im, sub_im, add_div]
+   _ = ((x.re * x.re + x.im * x.im) - (w.re * w.re + w.im * w.im)) / ‖x - w‖ ^ 2 := by ring_nf
+   _ = ((normSq x) - (normSq w)) / ‖x - w‖ ^ 2 := by simp only [normSq_apply]
+   _ = (‖x‖ ^ 2 - ‖w‖ ^ 2) / ‖x - w‖ ^ 2 := by simp only [normSq_eq_norm_sq]
+   _ = (1 - ‖w‖ ^ 2) / ‖x - w‖ ^ 2 := by rw [hx, one_pow 2]
