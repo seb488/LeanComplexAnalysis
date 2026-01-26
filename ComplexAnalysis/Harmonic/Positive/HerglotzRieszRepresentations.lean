@@ -195,7 +195,7 @@ lemma herglotz_hasDerivAt (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
       h_integrable2 w₀ hw₀⟩
   exact Or.inl <| MeasureTheory.integral_sub h_integrable.1 h_integrable.2
 
-#count_heartbeats in --33000 -> 24000
+#count_heartbeats in --33000 -> 11000
 /-- Every Herglotz–Riesz representation is analytic, maps 0 to 1 and the unit disc
 into the right half-plane. -/
 theorem HerglotzRiesz_realPos (μ : ProbabilityMeasure (sphere (0 : ℂ) 1)) :
@@ -242,13 +242,21 @@ theorem HerglotzRiesz_realPos (μ : ProbabilityMeasure (sphere (0 : ℂ) 1)) :
           exact zero_lt_one
         · filter_upwards
           intro x
-          have h_norm : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
+          have h_norm : ‖(x : ℂ)‖ = 1 := mem_sphere_zero_iff_norm.mp x.2
           apply le_of_lt (h_real_part x h_norm)
         · refine Integrable.mono' (g:= fun x => ‖(x + z) / (x - z)‖) ?_ ?_ ?_
           · exact Integrable.norm (herglotz_integrable μ z hz)
-          · exact Measurable.aestronglyMeasurable (Measurable.comp (Complex.measurable_re)
-              (Measurable.div (Continuous.measurable (by continuity))
-                (Continuous.measurable (by continuity))))
+          · apply Continuous.aestronglyMeasurable
+            apply continuous_re.comp
+            apply Continuous.div
+            · exact continuous_subtype_val.add continuous_const
+            · exact continuous_subtype_val.sub continuous_const
+            · intro x h
+              have : x = z := sub_eq_zero.mp h
+              have hx : ‖(x : ℂ)‖ = 1 := by simp
+              have hz : ‖z‖ < 1 := by simpa [ball] using hz
+              rw [this] at hx
+              nlinarith
           · exact Filter.Eventually.of_forall fun x => Complex.abs_re_le_norm _
       convert h_integral_pos using 1
       have h_integral_re (f : sphere (0 : ℂ) 1 → ℂ) (hf : Integrable f μ) :
