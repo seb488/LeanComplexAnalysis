@@ -24,9 +24,9 @@ identical on the unit disc, then `μ₁` = `μ₂`.
 -/
 
 public section
-
+set_option Elab.async false
 open MeasureTheory Metric Complex
-
+--#count_heartbeats in 4500
 /-- Equal moments with natural exponents imply equal moments with integer exponents. -/
 lemma moments_eq_integers (μ₁ μ₂ : ProbabilityMeasure (sphere (0 : ℂ) 1))
     (h : ∀ n : ℕ, ∫ x : sphere (0 : ℂ) 1, x.val ^ n ∂μ₁ = ∫ x : sphere (0 : ℂ) 1, x.val ^ n ∂μ₂) :
@@ -54,11 +54,14 @@ lemma moments_eq_integers (μ₁ μ₂ : ProbabilityMeasure (sphere (0 : ℂ) 1)
     simp only [zpow_natCast]
     exact h n
 
+
+--#count_heartbeats in -- 15000
 /-- The power function is continuous on the unit circle. -/
 lemma continuous_zpow_on_unit_circle (n : ℤ) :
     Continuous (fun x : sphere (0 : ℂ) 1 => x.val ^ n) := by
-  #count_heartbeats! in fun_prop (disch := norm_num) --alternative: continuity
+  #count_heartbeats! in fun_prop (disch := simp)
 
+--#count_heartbeats in
 /-- The span of moments is dense in the space of continuous functions on the unit circle. -/
 lemma span_moments_dense : (Submodule.span ℂ (Set.range (fun n : ℤ => ContinuousMap.mk (
     fun x : sphere (0 : ℂ) 1 => x.val ^ n)
@@ -162,6 +165,7 @@ lemma span_moments_dense : (Submodule.span ℂ (Set.range (fun n : ℤ => Contin
       rw [star_smul]
       exact Submodule.smul_mem _ _ hsx
 
+--#count_heartbeats in
 /-- If two finite measures agree on a dense subspace of continuous functions,
 then they agree on all continuous functions. -/
 lemma integral_eq_on_dense_set {X : Type*} [TopologicalSpace X] [CompactSpace X]
@@ -188,11 +192,18 @@ lemma integral_eq_on_dense_set {X : Type*} [TopologicalSpace X] [CompactSpace X]
   such that `f_n` converges to `f` uniformly. -/
   obtain ⟨f_n, hf_n⟩ : ∃ f_n : ℕ → C(X, ℂ), (∀ n, f_n n ∈ S) ∧
     Filter.Tendsto f_n Filter.atTop (nhds f) := by
-    have h_dense : f ∈ S.topologicalClosure := by aesop
+    have h_dense : f ∈ S.topologicalClosure := by rw [hS] ; exact Submodule.mem_top
+
     exact mem_closure_iff_seq_limit.mp h_dense
   exact tendsto_nhds_unique (h_cont.1.continuousAt.tendsto.comp hf_n.2)
-    (h_cont.2.continuousAt.tendsto.comp hf_n.2 |> Filter.Tendsto.congr (by aesop))
+    (h_cont.2.continuousAt.tendsto.comp hf_n.2 |> Filter.Tendsto.congr (by
+      intro x
+      have hx : f_n x ∈ S := hf_n.1 x
+      dsimp [(· ∘ ·)]
+      symm
+      exact h (f_n x) hx))
 
+--#count_heartbeats in
 /-- If two probability measures on the unit circle have the same moments, then they are equal. -/
 lemma measure_eq_of_moments (μ₁ μ₂ : Measure (sphere (0 : ℂ) 1))
     [IsProbabilityMeasure μ₁] [IsProbabilityMeasure μ₂]
