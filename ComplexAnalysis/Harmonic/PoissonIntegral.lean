@@ -81,7 +81,7 @@ private lemma cauchy_integral_formula_unitDisc
   norm_num [circleIntegral, circleMap, mul_assoc, mul_comm, mul_left_comm, div_eq_mul_inv]
   norm_num [← mul_assoc]
 
-#count_heartbeats in
+-- #count_heartbeats in
 /-- Cauchy-Goursat theorem for the unit disc implies the integral of an analytic function
 against the conjugate Cauchy kernel vanishes. -/
 private lemma goursat_vanishing_integral
@@ -229,7 +229,7 @@ private lemma poisson_integral_limit_to_boundary (g : ℂ → ℝ) (hz : z ∈ b
         · rw [abs_of_pos (hr b).1]; linarith [(hr b).2]
       · simp
 
-#count_heartbeats in
+-- #count_heartbeats in
 /-- For an analytic function `f` on the unit disc, `f(rz)` equals the integral
 of `f(re^{it})` against the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
@@ -288,7 +288,7 @@ private lemma poisson_formula_analytic_unitDisc
 
 open InnerProductSpace
 
-#count_heartbeats in
+-- #count_heartbeats in
 /-- For a harmonic function `u` on the unit disc, `u(rz)` equals the integral
 of `u(r e^{it})` times the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
@@ -365,7 +365,7 @@ lemma real_part_herglotz_kernel {x w : ℂ} (hx : ‖x‖ = 1) :
   · nlinarith
   · nlinarith
 
-#count_heartbeats in
+-- #count_heartbeats in
 /-- **Poisson integral formula for harmonic functions on the unit disc**:
 A function `u` harmonic on the unit disc and continuous on the closed unit disc
 satisfies `u(z) = (1/2π) ∫_0^{2π} (1 - |z|²) / |e^{it} - z|² u(e^{it}) dt`
