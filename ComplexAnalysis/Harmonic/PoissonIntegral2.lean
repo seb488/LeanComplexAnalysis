@@ -40,20 +40,18 @@ set_option Elab.async false
 
 public section
 
-open Complex Metric Real Set Filter Topology
-
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-         {z : ℂ} {r : ℝ} {f : ℂ → E} {u : ℂ → ℝ}
+open Complex Metric Real Set
 
 -- #count_heartbeats in
 /-- Cauchy's integral formula for analytic functions on the unit disc,
     evaluated at scaled points `r * z` with `r ∈ (0,1)`. -/
-theorem cauchy_integral_formula_unitDisc [CompleteSpace E]
+theorem cauchy_integral_formula_unitDisc {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℂ E] [CompleteSpace E] {f : ℂ → E} {z : ℂ} {r : ℝ}
     (hf : AnalyticOn ℂ f (ball 0 1)) (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
     f (r * z) = (1 / (2 * π)) • ∫ t in 0..2*π,
                 (exp (t * I) / (exp (t * I) - z)) • (f (r * exp (t * I))) := by
   have (x : ℂ) (hx : ‖x‖ ≤ 1) : ‖r * x‖ < 1 := by
-      simp only [Complex.norm_mul, norm_real, norm_eq_abs, abs_of_pos hr.1]
+      simp only [norm_mul, norm_real, norm_eq_abs, abs_of_pos hr.1]
       have := mul_le_of_le_one_left (LT.lt.le hr.1) hx
       rw [mul_comm] at this
       exact LE.le.trans_lt this hr.2
@@ -106,9 +104,10 @@ theorem cauchy_integral_formula_unitDisc [CompleteSpace E]
 -- #count_heartbeats in
 /-- Cauchy-Goursat theorem for the unit disc implies the integral of an analytic function
 against the conjugate Cauchy kernel vanishes. -/
-lemma goursat_vanishing_integral
+lemma goursat_vanishing_integral {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    {f : ℂ → E} {z : ℂ} {r : ℝ}
     (hf : AnalyticOn ℂ f (ball 0 1)) (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
-    ∫ t in 0..2*Real.pi,  (star z / (star (exp (t * I)) - star z)) • f (r * exp (t * I)) = 0 := by
+    ∫ t in 0..2*π,  (star z / (star (exp (t * I)) - star z)) • f (r * exp (t * I)) = 0 := by
   -- Algebraic identity for the Goursat integrand.
   have goursat_integrand_eq (z : ℂ) (t : ℝ) :
       star z / (star (exp (t * I)) - star z) =  (I * exp (t * I)) *
@@ -118,8 +117,8 @@ lemma goursat_vanishing_integral
       apply congrArg cexp
       simp only [map_mul, conj_ofReal, conj_I, mul_neg]
     simp only [this]
-    rw [mul_comm I,mul_assoc, ← mul_div_assoc, mul_div_mul_left (hc:=I_ne_zero), ← mul_div_assoc,
-        mul_comm (cexp (t * I)), mul_div_assoc,div_eq_mul_inv (star z)]
+    rw [mul_comm I, mul_assoc, ← mul_div_assoc, mul_div_mul_left (hc:=I_ne_zero), ← mul_div_assoc,
+        mul_comm (cexp (t * I)), mul_div_assoc, div_eq_mul_inv (star z)]
     apply congrArg (fun x => (star z) * x)
     rw [inv_eq_one_div]
     nth_rewrite 2 [← inv_inv (cexp (t * I)), inv_eq_one_div]
@@ -151,7 +150,7 @@ lemma goursat_vanishing_integral
   have h_cauchy : (∮ w in C(0, 1), g w) = 0 := by
     apply circleIntegral_eq_zero_of_differentiable_on_off_countable
     · exact zero_le_one
-    · exact Set.countable_empty
+    · exact countable_empty
     · refine ContinuousOn.smul ?_ ?_
       · refine continuousOn_of_forall_continuousAt fun w hw =>
           ContinuousAt.div continuousAt_const ?_ ?_
@@ -171,7 +170,7 @@ lemma goursat_vanishing_integral
           exact DifferentiableAt.mul (differentiableAt_const (star z)) differentiableAt_id
         · exact aux_denom_ne_zero (ball_subset_closedBall hw.1)
       · refine DifferentiableAt.comp w ?_ ?_
-        · refine hf.differentiableOn.differentiableAt (Metric.isOpen_ball.mem_nhds ?_)
+        · refine hf.differentiableOn.differentiableAt (isOpen_ball.mem_nhds ?_)
           rw [mem_ball_zero_iff]
           have hw1 : ‖w‖ < 1 := mem_ball_zero_iff.mp hw.1
           calc ‖↑r * w‖  = ‖(r:ℂ)‖ * ‖w‖ := norm_mul _ _
@@ -180,7 +179,6 @@ lemma goursat_vanishing_integral
             _ = r                        := mul_one r
             _ < 1                        := hr.2
         · exact differentiableAt_id.const_mul _
- -- #count_heartbeats! in simp_all [circleIntegral, mul_assoc, mul_comm, mul_left_comm]
   convert h_cauchy using 3
   rw [circleIntegral_def_Icc]
   rw [intervalIntegral.integral_of_le]
@@ -192,79 +190,13 @@ lemma goursat_vanishing_integral
       rw [smul_smul, h_integrand θ,  ofReal_one, one_mul,smul_smul]
       apply congrArg (fun x => x • f (r * cexp (θ * I)))
       rw [mul_comm I]
-  · exact mul_nonneg zero_le_two Real.pi_pos.le
-
--- #count_heartbeats in
-/-- For a sequence `r_n → 1` with `r_n ∈ (0,1)`,
-the integral of `t ↦ k(e^{it}) f(r_n * e^{it})` on [0 , 2π] converges to
-the integral of `t ↦ k(e^{it}) f(e^{it})` on [0 , 2π],
-when `f` is continuous on the closed unit disc and `k` is continuous on the unit circle. -/
-theorem tendsto_integral_boundary_unitDisc_of_continuousOn
-    (hf : ContinuousOn f (closedBall (0 : ℂ) 1))
-    (k : ℂ → ℂ) (hk : ContinuousOn k (sphere (0 : ℂ) 1))
-    (r : ℕ → ℝ) (hr : ∀ n, r n ∈ Ioo 0 1) (hr_lim : Tendsto r atTop (𝓝 1)) :
-    Tendsto (fun n => ∫ t in 0..2 * π, (k (exp (t * I))) • f (r n * exp (t * I)))
-           atTop (𝓝 (∫ t in 0..2 * π, (k (exp (t * I))) • f (exp (t * I)))) := by
-  -- -- We apply the Lebesgue Dominated Convergence Theorem.
-  have hrn (n : ℕ) (t : ℝ) : (r n) * cexp (t * I) ∈ closedBall 0 1  := by
-      rw [mem_closedBall, dist_zero_right, norm_mul, norm_real,
-            norm_eq_abs, norm_exp_ofReal_mul_I, mul_one, abs_of_pos (hr n).1]
-      exact LT.lt.le (hr n).2
-  apply intervalIntegral.tendsto_integral_filter_of_dominated_convergence
-  rotate_right
-  -- We define the bound to be the supremum of the integrand.
-  · exact fun x => (SupSet.sSup (image (fun ζ => ‖k ζ‖) (sphere 0 1))) *
-                   (SupSet.sSup (image (fun w => ‖f w‖) (closedBall 0 1)))
-  -- We verify the measurability of the integrand.
-  · apply Eventually.of_forall
-    intro n
-    apply Continuous.aestronglyMeasurable
-    refine Continuous.smul ?_ ?_
-    · refine ContinuousOn.comp_continuous (s:= sphere 0 1) hk (by fun_prop) ?_
-      · intro x
-        rw [mem_sphere, dist_zero_right, norm_exp_ofReal_mul_I]
-    · exact ContinuousOn.comp_continuous (s:= closedBall 0 1) hf (by fun_prop) (hrn n)
-  -- We verify that the integrand is eventually bounded by the bound.
-  · refine Filter.Eventually.of_forall fun n => Filter.Eventually.of_forall fun t ht => ?_
-    -- We bound each factor of the integrand separately.
-    have h_bound :
-        ‖f (r n * exp (t * I))‖ ≤ sSup (image (fun w => ‖f w‖) (closedBall (0 : ℂ) 1)) ∧
-        ‖k (exp (t * I))‖ ≤ sSup (image (fun w => ‖k w‖) (sphere 0 1)) := by
-      refine ⟨le_csSup ?_ ?_, le_csSup ?_ ?_⟩
-      · exact IsCompact.bddAbove (isCompact_closedBall (0 : ℂ) 1 |>.image_of_continuousOn hf.norm)
-      · exact ⟨_, hrn n t, rfl⟩
-      · exact IsCompact.bddAbove (IsCompact.image_of_continuousOn (isCompact_sphere 0 1) hk.norm)
-      · use (exp (t * I))
-        constructor
-        · simp [Metric.sphere, dist_eq_norm]
-        · rfl
-    have hmul_bds: ‖(k (exp (t * I)))‖  * ‖f (r n * exp (t * I))‖ ≤
-      (sSup (image (fun ζ => ‖k ζ‖) (sphere 0 1))) *
-      (sSup (image (fun w => ‖f w‖) (closedBall (0 : ℂ) 1))):= by
-         apply mul_le_mul h_bound.2 h_bound.1 (norm_nonneg (f ((r n) * cexp (t * I))))
-         apply sSup_nonneg
-         rintro _ ⟨_,⟨_,hx⟩⟩
-         simp_rw [← hx, norm_nonneg]
-    have hmul_norm : ‖k (cexp (t * I)) • f ((r n) * cexp (t * I))‖ ≤
-      ‖k (cexp (t * I))‖ * ‖f ((r n) * cexp (t * I))‖ := by rw [norm_smul]
-    exact le_trans hmul_norm hmul_bds
-  · simp only [ne_eq, enorm_ne_top, not_false_eq_true, intervalIntegrable_const]
-  -- We verify the pointwise convergence of the integrand.
-  · refine Eventually.of_forall fun x hx => Tendsto.smul tendsto_const_nhds ?_
-    apply Filter.Tendsto.comp (hf.continuousWithinAt _)
-    · rw [tendsto_nhdsWithin_iff]
-      constructor
-      · simpa using Tendsto.mul
-          (Complex.continuous_ofReal.continuousAt.tendsto.comp hr_lim) tendsto_const_nhds
-      · apply Eventually.of_forall
-        exact fun n => hrn n x
-    · rw [mem_closedBall,dist_zero_right,norm_exp_ofReal_mul_I]
+  · exact mul_nonneg zero_le_two pi_pos.le
 
 -- #count_heartbeats in
 /-- The real part of the Herglotz–Riesz kernel is equal to the Poisson kernel. -/
 theorem real_part_herglotz_kernel (x w : ℂ) (hx : ‖x‖ = 1) :
     ((x + w) / (x - w)).re = (1 - ‖w‖^2) / ‖x - w‖^2 := by
-  rw [Complex.div_re, normSq_eq_norm_sq (x - w)]
+  rw [div_re, normSq_eq_norm_sq (x - w)]
   calc (x + w).re * (x - w).re / ‖x - w‖ ^ 2 + (x + w).im * (x - w).im / ‖x - w‖ ^ 2
    _ = ((x.re + w.re) * (x.re - w.re) + (x.im + w.im) * (x.im - w.im)) / ‖x - w‖ ^ 2 := by
         simp only [add_re, sub_re, add_im, sub_im, add_div]
@@ -277,7 +209,8 @@ theorem real_part_herglotz_kernel (x w : ℂ) (hx : ‖x‖ = 1) :
 /-- For an analytic function `f` on the unit disc, `f(rz)` equals the integral
 of `f(re^{it})` against the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
-theorem poisson_formula_analytic_unitDisc [CompleteSpace E]
+theorem poisson_formula_analytic_scaled_radius {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℂ E] [CompleteSpace E] {f : ℂ → E} {z : ℂ} {r : ℝ}
     (hf : AnalyticOn ℂ f (ball 0 1))
     (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
     f (r * z) = (1 / (2 * π)) • ∫ t in 0..2*π,
@@ -333,10 +266,10 @@ open InnerProductSpace
 /-- For a harmonic function `u` on the unit disc, `u(rz)` equals the integral
 of `u(r e^{it})` times the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
-theorem harmonic_representation_scaled_radius
+theorem poisson_formula_harmonic_scaled_radius {u : ℂ → ℝ} {z : ℂ} {r : ℝ}
     (hu : HarmonicOnNhd u (ball 0 1))
     (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
-    u (r * z) = (1 / (2 * Real.pi)) * ∫ t in (0)..(2 * Real.pi),
+    u (r * z) = (1 / (2 * π)) * ∫ t in (0)..(2 * π),
       (((exp (t * I) + z) / (exp (t * I) - z))).re * (u (r * exp (t * I))) := by
   -- We express `u` as the real part of an analytic function `f`. -/
   have hfu : ∃ (f : ℂ → ℂ), AnalyticOn ℂ f (ball 0 1) ∧
@@ -357,26 +290,156 @@ theorem harmonic_representation_scaled_radius
   have hrt_eq : EqOn
     (fun t : ℝ => ((exp (t * I) + z) / (exp (t * I) - z)).re *(f (r * exp (t * I))).re)
     (fun t : ℝ => ((exp (t * I) + z) / (exp (t * I) - z)).re * u (r * exp (t * I)))
-    (uIcc 0 (2 * Real.pi)) := by
+    (uIcc 0 (2 * π)) := by
     intro t _
     simp only [← hf_eq (hrt t)]
   rw [← intervalIntegral.integral_congr hrt_eq]
   dsimp
-  rw [congr_arg Complex.re (poisson_formula_analytic_unitDisc hf hr hz), smul_re, smul_eq_mul]
+  rw [congr_arg re (poisson_formula_analytic_scaled_radius hf hr hz), smul_re, smul_eq_mul]
   apply congrArg (fun x => 1 / (2 * π) * x)
-  simp only [intervalIntegral.integral_of_le Real.two_pi_pos.le]
+  simp only [intervalIntegral.integral_of_le two_pi_pos.le]
   symm
   convert integral_re _ using 1
   any_goals tauto
   · simp only [real_smul, RCLike.mul_re, RCLike.re_to_complex, ofReal_re, RCLike.im_to_complex,
                ofReal_im, zero_mul, sub_zero]
-  · refine ContinuousOn.integrableOn_Icc ?_ |> fun h => h.mono_set <| Set.Ioc_subset_Icc_self
+  · refine ContinuousOn.integrableOn_Icc ?_ |> fun h => h.mono_set <| Ioc_subset_Icc_self
     refine ContinuousOn.smul ?_ ?_
     · refine Continuous.continuousOn ?_
-      refine Complex.continuous_re.comp ?_
+      refine continuous_re.comp ?_
       refine Continuous.div (by fun_prop) (by fun_prop) ?_
       intro t hexpz
       rw [sub_eq_zero] at hexpz
       rw [← hexpz,mem_ball,dist_zero_right, norm_exp_ofReal_mul_I] at hz
       exact (lt_self_iff_false 1).mp hz
     · exact hf.continuousOn.comp (Continuous.continuousOn (by fun_prop)) (fun t _ => hrt t)
+
+open Filter Topology
+
+-- #count_heartbeats in
+/-- For a sequence `r_n → 1` with `r_n ∈ (0,1)`,
+the integral of `t ↦ k(e^{it}) f(r_n * e^{it})` on [0 , 2π] converges to
+the integral of `t ↦ k(e^{it}) f(e^{it})` on [0 , 2π],
+when `f` is continuous on the closed unit disc and `k` is continuous on the unit circle. -/
+theorem tendsto_integral_prod_of_continuousOn
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    {f : ℂ → E} {k : ℂ → ℝ} {r : ℕ → ℝ}
+    (hf : ContinuousOn f (closedBall (0 : ℂ) 1)) (hk : ContinuousOn k (sphere 0 1))
+    (hr : ∀ n, r n ∈ Ioo 0 1) (hr_lim : Tendsto r atTop (𝓝 1)) :
+    Tendsto (fun n => ∫ t in 0..2 * π, (k (exp (t * I))) • f (r n * exp (t * I)))
+           atTop (𝓝 (∫ t in 0..2 * π, (k (exp (t * I))) • f (exp (t * I)))) := by
+  -- -- We apply the Lebesgue Dominated Convergence Theorem.
+  have hrn (n : ℕ) (t : ℝ) : (r n) * cexp (t * I) ∈ closedBall 0 1  := by
+      rw [mem_closedBall, dist_zero_right, norm_mul, norm_real,
+            norm_eq_abs, norm_exp_ofReal_mul_I, mul_one, abs_of_pos (hr n).1]
+      exact LT.lt.le (hr n).2
+  apply intervalIntegral.tendsto_integral_filter_of_dominated_convergence
+  rotate_right
+  -- We define the bound to be the supremum of the integrand.
+  · exact fun x => (SupSet.sSup (image (fun ζ => ‖k ζ‖) (sphere 0 1))) *
+                   (SupSet.sSup (image (fun w => ‖f w‖) (closedBall 0 1)))
+  -- We verify the measurability of the integrand.
+  · apply Eventually.of_forall
+    intro n
+    apply Continuous.aestronglyMeasurable
+    refine Continuous.smul ?_ ?_
+    · refine ContinuousOn.comp_continuous (s:= sphere 0 1) hk (by fun_prop) ?_
+      · intro x
+        rw [mem_sphere, dist_zero_right, norm_exp_ofReal_mul_I]
+    · exact ContinuousOn.comp_continuous (s:= closedBall 0 1) hf (by fun_prop) (hrn n)
+  -- We verify that the integrand is eventually bounded by the bound.
+  · refine Eventually.of_forall fun n => Eventually.of_forall fun t ht => ?_
+    -- We bound each factor of the integrand separately.
+    have h_bound :
+        ‖f (r n * exp (t * I))‖ ≤ sSup (image (fun w => ‖f w‖) (closedBall (0 : ℂ) 1)) ∧
+        ‖k (exp (t * I))‖ ≤ sSup (image (fun w => ‖k w‖) (sphere 0 1)) := by
+      refine ⟨le_csSup ?_ ?_, le_csSup ?_ ?_⟩
+      · exact IsCompact.bddAbove (isCompact_closedBall (0 : ℂ) 1 |>.image_of_continuousOn hf.norm)
+      · exact ⟨_, hrn n t, rfl⟩
+      · exact IsCompact.bddAbove (IsCompact.image_of_continuousOn (isCompact_sphere 0 1) hk.norm)
+      · use (exp (t * I))
+        constructor
+        · simp [sphere, dist_eq_norm]
+        · rfl
+    have hmul_bds: ‖(k (exp (t * I)))‖  * ‖f (r n * exp (t * I))‖ ≤
+      (sSup (image (fun ζ => ‖k ζ‖) (sphere 0 1))) *
+      (sSup (image (fun w => ‖f w‖) (closedBall (0 : ℂ) 1))):= by
+         apply mul_le_mul h_bound.2 h_bound.1 (norm_nonneg (f ((r n) * cexp (t * I))))
+         apply sSup_nonneg
+         rintro _ ⟨_,⟨_,hx⟩⟩
+         simp_rw [← hx, norm_nonneg]
+    have hmul_norm : ‖k (cexp (t * I)) • f ((r n) * cexp (t * I))‖ ≤
+      ‖k (cexp (t * I))‖ * ‖f ((r n) * cexp (t * I))‖ := by rw [norm_smul]
+    exact le_trans hmul_norm hmul_bds
+  · simp only [ne_eq, enorm_ne_top, not_false_eq_true, intervalIntegrable_const]
+  -- We verify the pointwise convergence of the integrand.
+  · refine Eventually.of_forall fun x hx => Tendsto.smul tendsto_const_nhds ?_
+    apply Tendsto.comp (hf.continuousWithinAt _)
+    · rw [tendsto_nhdsWithin_iff]
+      constructor
+      · simpa using Tendsto.mul
+          (continuous_ofReal.continuousAt.tendsto.comp hr_lim) tendsto_const_nhds
+      · apply Eventually.of_forall
+        exact fun n => hrn n x
+    · rw [mem_closedBall,dist_zero_right,norm_exp_ofReal_mul_I]
+
+-- #count_heartbeats in
+/- The Poisson kernel is continuous on the unit circle. -/
+theorem poisson_kernel_continousOn_circle {z : ℂ} (hz : z ∈ ball 0 1) :
+    ContinuousOn (fun ζ => ((ζ + z) / (ζ - z)).re) (sphere 0  1) := by
+  refine continuous_re.comp_continuousOn ?_
+  refine continuousOn_of_forall_continuousAt ?_
+  intro ζ hζ
+  refine ContinuousAt.div (continuousAt_id.add continuousAt_const)
+                          (continuousAt_id.sub continuousAt_const) ?_
+  intro h
+  rw [sub_eq_zero] at h
+  rw [mem_sphere, dist_zero_right] at hζ
+  rw [← h,mem_ball,dist_zero_right, hζ] at hz
+  exact (lt_self_iff_false 1).mp hz
+
+-- #count_heartbeats in
+/-- **Poisson integral formula for harmonic functions on the unit disc**:
+A function `u` harmonic on the unit disc and continuous on the closed unit disc
+satisfies `u(z) = (1/2π) ∫_0^{2π} (1 - |z|²) / |e^{it} - z|² u(e^{it}) dt`
+for `z` in the unit disc. -/
+theorem poisson_integral_formula {u : ℂ → ℝ} {z : ℂ}
+    (hu : HarmonicOnNhd u (ball 0 1)) (hc : ContinuousOn u (closedBall 0 1))
+    (hz : z ∈ ball 0 1) :
+    u z = (1 / (2 * π)) * ∫ t in 0..(2 * π),
+      (1 - ‖z‖^2) / ‖(exp (t * I)) - z‖^2 * (u (exp (t * I))) := by
+  -- We approximate `1` by a sequence `r_n` in `(0,1)`.
+  let r : ℕ → ℝ := fun n => 1 - 1 / (n + 2)
+  have hr (n : ℕ): r n ∈ Ioo 0 1 := by
+    simp only [one_div, mem_Ioo, sub_pos, sub_lt_self_iff, inv_pos, r]
+    have : (1 : ℝ) < (↑n+2 : ℝ) := by linarith
+    exact ⟨inv_lt_one_of_one_lt₀ this, by linarith⟩
+  have hr_lim : Tendsto r atTop (𝓝 1) :=
+    le_trans (tendsto_const_nhds.sub <| tendsto_const_nhds.div_atTop
+              <| tendsto_atTop_add_const_right _ _ tendsto_natCast_atTop_atTop)
+             (by rw [sub_zero])
+  -- We express `u(r_n z)` as the Poisson integral and then take the limit.
+  have hu_lim := tendsto_integral_prod_of_continuousOn hc
+                   (poisson_kernel_continousOn_circle hz) hr hr_lim
+  have h_poisson (n : ℕ) := poisson_formula_harmonic_scaled_radius hu (hr n) hz
+  have hu_lim : Tendsto (fun n => (u (r n * z))) atTop (𝓝 ((1 / (2 * π)) * ∫ t in 0..2 * π,
+      (((exp (t * I) + z) / (exp (t * I) - z)).re * u (exp (t * I))))) := by
+    simp only [h_poisson]
+    dsimp only [smul_eq_mul] at hu_lim
+    exact (Tendsto.const_mul (1 / (2 * π)) hu_lim)
+  -- We show that `u (r_n z)` tends to `u z` as `n → ∞`.
+  have hu_lim' : Tendsto (fun n => u (r n * z)) atTop (𝓝 (u z)) := by
+    have h_seq : Tendsto (fun n => r n  * z) atTop (𝓝 z) := by
+      simpa using Tendsto.mul (continuous_ofReal.continuousAt.tendsto.comp hr_lim)
+                                     (tendsto_const_nhds (x := z))
+    specialize hc z (ball_subset_closedBall hz)
+    have hc : ContinuousAt u z := ContinuousWithinAt.continuousAt hc (closedBall_mem_nhds_of_mem hz)
+    exact (ContinuousAt.tendsto hc).comp h_seq
+  -- We conclude by uniqueness of limits and by revealing the Poisson kernel.
+  rw [← tendsto_nhds_unique hu_lim hu_lim']
+  apply congrArg (fun x => (1 / (2 * π)) * x)
+  apply intervalIntegral.integral_congr_ae
+  apply MeasureTheory.ae_of_all
+  intro t _
+  rw [real_part_herglotz_kernel]
+  exact norm_exp_ofReal_mul_I t
