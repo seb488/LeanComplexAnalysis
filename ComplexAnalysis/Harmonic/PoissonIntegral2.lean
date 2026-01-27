@@ -42,7 +42,7 @@ public section
 
 open Complex Metric Real Set
 
--- #count_heartbeats in
+--#count_heartbeats in --12000
 /-- Cauchy's integral formula for analytic functions on the unit disc,
     evaluated at scaled points `r * z` with `r ∈ (0,1)`. -/
 theorem cauchy_integral_formula_unitDisc {E : Type*} [NormedAddCommGroup E]
@@ -56,17 +56,17 @@ theorem cauchy_integral_formula_unitDisc {E : Type*} [NormedAddCommGroup E]
       rw [mul_comm] at this
       exact LE.le.trans_lt this hr.2
   have hfr_diff (x : ℂ) (hx : ‖x‖ ≤ 1) : DifferentiableAt ℂ (fun ζ => f (r * ζ)) x :=
-     DifferentiableAt.comp x (hf.differentiableOn.differentiableAt (isOpen_ball.mem_nhds
-                         (by simp only [mem_ball, Complex.dist_eq, sub_zero, this x hx])))
-                             (differentiableAt_id.const_mul _)
+      DifferentiableAt.comp x (hf.differentiableOn.differentiableAt (isOpen_ball.mem_nhds
+        (by simp only [mem_ball, Complex.dist_eq, sub_zero, this x hx])))
+          (differentiableAt_id.const_mul _)
   have hfr_cont : ContinuousOn (fun ζ => f (r* ζ)) (closedBall 0 1) := by
       intro x hx
       rw [mem_closedBall, dist_zero_right] at hx
       exact (DifferentiableAt.continuousAt (hfr_diff x hx)).continuousWithinAt
   have h_cauchy : -- We apply the Cauchy Integral Formula to the function `z ↦ f(rz)`.
-    f (r * z) = (1 / (2 * π * I)) • ∮ (ζ : ℂ) in C(0, 1), (1 / (ζ - z)) • f (r * ζ)  := by
+      f (r * z) = (1 / (2 * π * I)) • ∮ (ζ : ℂ) in C(0, 1), (1 / (ζ - z)) • f (r * ζ)  := by
     have := @circleIntegral_sub_inv_smul_of_differentiable_on_off_countable
-               _ _ _ _ 1 0 z (fun ζ => f (r * ζ)) ∅ countable_empty hz hfr_cont
+      _ _ _ _ 1 0 z (fun ζ => f (r * ζ)) ∅ countable_empty hz hfr_cont
     simp only [div_eq_inv_mul, mul_one]
     rw [this]
     · simp only [smul_smul,inv_mul_cancel₀ two_pi_I_ne_zero]
@@ -75,16 +75,16 @@ theorem cauchy_integral_formula_unitDisc {E : Type*} [NormedAddCommGroup E]
       simp only [diff_empty,mem_ball,Complex.dist_eq, sub_zero] at hx
       exact hfr_diff x (LT.lt.le hx)
   have h_cauchy :
-    f (r * z) =  ∮ (ζ : ℂ) in C(0, 1), (1 / (2 * π * I)) • (1 / (ζ - z)) • f (r * ζ)  := by
+      f (r * z) =  ∮ (ζ : ℂ) in C(0, 1), (1 / (2 * π * I)) • (1 / (ζ - z)) • f (r * ζ)  := by
     rw [h_cauchy]
     exact Eq.symm (circleIntegral.integral_smul
-              (1 / (2 * π * I)) (fun ζ ↦ (1 / (ζ - z)) • f (r * ζ)) 0 1)
+      (1 / (2 * π * I)) (fun ζ ↦ (1 / (ζ - z)) • f (r * ζ)) 0 1)
   have : (1 / (2 * π)) • ∫ (t : ℝ) in 0..2 * π,
          (cexp (t * I) / (cexp (t * I) - z)) • f (r * cexp (t * I)) =
          ∫ (t : ℝ) in 0..2 * π, (1 / (2 * π)) •
          (cexp (t * I) / (cexp (t * I) - z)) • f (r * cexp (t * I)) :=
     Eq.symm (intervalIntegral.integral_smul (1 / (2 * π)) fun t ↦
-            (cexp (t * I) / (cexp (t * I) - z)) • f (r * cexp (t * I)))
+        (cexp (t * I) / (cexp (t * I) - z)) • f (r * cexp (t * I)))
   rw [this,h_cauchy]
   simp only [circleIntegral]
   congr 1
@@ -101,7 +101,7 @@ theorem cauchy_integral_formula_unitDisc {E : Type*} [NormedAddCommGroup E]
     ring_nf
   rw [this]
 
--- #count_heartbeats in
+--#count_heartbeats in -- 15000
 /-- Cauchy-Goursat theorem for the unit disc implies the integral of an analytic function
 against the conjugate Cauchy kernel vanishes. -/
 lemma goursat_vanishing_integral {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
@@ -111,7 +111,7 @@ lemma goursat_vanishing_integral {E : Type*} [NormedAddCommGroup E] [NormedSpace
   -- Algebraic identity for the Goursat integrand.
   have goursat_integrand_eq (z : ℂ) (t : ℝ) :
       star z / (star (exp (t * I)) - star z) =  (I * exp (t * I)) *
-     (star z / (I * (1 - star z * exp (t * I)))) := by
+      (star z / (I * (1 - star z * exp (t * I)))) := by
     have : star (exp (t * I)) = (exp (t * I))⁻¹ := by
       rw [star_def, ← exp_conj, ← exp_neg (t * I)]
       apply congrArg cexp
@@ -192,7 +192,7 @@ lemma goursat_vanishing_integral {E : Type*} [NormedAddCommGroup E] [NormedSpace
       rw [mul_comm I]
   · exact mul_nonneg zero_le_two pi_pos.le
 
--- #count_heartbeats in
+--#count_heartbeats in --2000
 /-- The real part of the Herglotz–Riesz kernel is equal to the Poisson kernel. -/
 theorem real_part_herglotz_kernel (x w : ℂ) (hx : ‖x‖ = 1) :
     ((x + w) / (x - w)).re = (1 - ‖w‖^2) / ‖x - w‖^2 := by
@@ -205,7 +205,7 @@ theorem real_part_herglotz_kernel (x w : ℂ) (hx : ‖x‖ = 1) :
    _ = (‖x‖ ^ 2 - ‖w‖ ^ 2) / ‖x - w‖ ^ 2 := by simp only [normSq_eq_norm_sq]
    _ = (1 - ‖w‖ ^ 2) / ‖x - w‖ ^ 2 := by rw [hx, one_pow 2]
 
--- #count_heartbeats in
+--#count_heartbeats in --13000
 /-- For an analytic function `f` on the unit disc, `f(rz)` equals the integral
 of `f(re^{it})` against the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
@@ -214,15 +214,15 @@ theorem poisson_formula_analytic_scaled_radius {E : Type*} [NormedAddCommGroup E
     (hf : AnalyticOn ℂ f (ball 0 1))
     (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
     f (r * z) = (1 / (2 * π)) • ∫ t in 0..2*π,
-       (((exp (t * I) + z) / (exp (t * I) - z)).re) • f (r * exp (t * I)) := by
+      (((exp (t * I) + z) / (exp (t * I) - z)).re) • f (r * exp (t * I)) := by
   have h_exp_z (t : ℝ) : cexp (t * I) - z ≠ 0 := by
     intro h
     rw [sub_eq_zero] at h
     rw [← h,mem_ball,dist_zero_right, norm_exp_ofReal_mul_I] at hz
     exact (lt_self_iff_false 1).mp hz
   have h_add : f (r * z) = (1 / (2 * π)) • ∫ t in 0..2*π,
-               (exp (t * I) / (exp (t * I) - z)) • f (r * exp (t * I))  +
-               (star z / (star (exp (t * I)) - star z)) • f (r * exp (t * I)) := by
+                (exp (t * I) / (exp (t * I) - z)) • f (r * exp (t * I))  +
+                (star z / (star (exp (t * I)) - star z)) • f (r * exp (t * I)) := by
     have hr_exp (t : ℝ) : r * cexp (t * I) ∈ ball 0 1 := by
       simp only [mem_ball,Complex.dist_eq,sub_zero, norm_mul,norm_real,norm_eq_abs, abs_of_pos hr.1]
       simpa [mul_comm,norm_exp_ofReal_mul_I] using hr.2
@@ -256,13 +256,13 @@ theorem poisson_formula_analytic_scaled_radius {E : Type*} [NormedAddCommGroup E
     rw [star_def, ← exp_conj, ← exp_neg (t * I)]
     apply congrArg cexp
     simp only [map_mul, conj_ofReal, conj_I, mul_neg]
-  simp only [← star_def, this,mul_sub,sub_mul]
+  simp only [← star_def, this, mul_sub,sub_mul]
   simp only [ne_eq, Complex.exp_ne_zero, not_false_eq_true, mul_inv_cancel₀, star_def,
              mul_conj, normSq_eq_norm_sq z, ofReal_pow, sub_add_sub_cancel]
 
 open InnerProductSpace
 
--- #count_heartbeats in
+--#count_heartbeats in --10000
 /-- For a harmonic function `u` on the unit disc, `u(rz)` equals the integral
 of `u(r e^{it})` times the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
@@ -316,7 +316,7 @@ theorem poisson_formula_harmonic_scaled_radius {u : ℂ → ℝ} {z : ℂ} {r : 
 
 open Filter Topology
 
--- #count_heartbeats in
+--#count_heartbeats in --10000
 /-- For a sequence `r_n → 1` with `r_n ∈ (0,1)`,
 the integral of `t ↦ k(e^{it}) f(r_n * e^{it})` on [0 , 2π] converges to
 the integral of `t ↦ k(e^{it}) f(e^{it})` on [0 , 2π],
@@ -327,12 +327,12 @@ theorem tendsto_integral_prod_of_continuousOn
     (hf : ContinuousOn f (closedBall (0 : ℂ) 1)) (hk : ContinuousOn k (sphere 0 1))
     (hr : ∀ n, r n ∈ Ioo 0 1) (hr_lim : Tendsto r atTop (𝓝 1)) :
     Tendsto (fun n => ∫ t in 0..2 * π, (k (exp (t * I))) • f (r n * exp (t * I)))
-           atTop (𝓝 (∫ t in 0..2 * π, (k (exp (t * I))) • f (exp (t * I)))) := by
+      atTop (𝓝 (∫ t in 0..2 * π, (k (exp (t * I))) • f (exp (t * I)))) := by
   -- -- We apply the Lebesgue Dominated Convergence Theorem.
   have hrn (n : ℕ) (t : ℝ) : (r n) * cexp (t * I) ∈ closedBall 0 1  := by
-      rw [mem_closedBall, dist_zero_right, norm_mul, norm_real,
-            norm_eq_abs, norm_exp_ofReal_mul_I, mul_one, abs_of_pos (hr n).1]
-      exact LT.lt.le (hr n).2
+    rw [mem_closedBall, dist_zero_right, norm_mul, norm_real,
+        norm_eq_abs, norm_exp_ofReal_mul_I, mul_one, abs_of_pos (hr n).1]
+    exact LT.lt.le (hr n).2
   apply intervalIntegral.tendsto_integral_filter_of_dominated_convergence
   rotate_right
   -- We define the bound to be the supremum of the integrand.
@@ -383,8 +383,8 @@ theorem tendsto_integral_prod_of_continuousOn
         exact fun n => hrn n x
     · rw [mem_closedBall,dist_zero_right,norm_exp_ofReal_mul_I]
 
--- #count_heartbeats in
-/- The Poisson kernel is continuous on the unit circle. -/
+--#count_heartbeats in -- 1000
+/-- The Poisson kernel is continuous on the unit circle. -/
 theorem poisson_kernel_continousOn_circle {z : ℂ} (hz : z ∈ ball 0 1) :
     ContinuousOn (fun ζ => ((ζ + z) / (ζ - z)).re) (sphere 0  1) := by
   refine continuous_re.comp_continuousOn ?_
@@ -398,7 +398,7 @@ theorem poisson_kernel_continousOn_circle {z : ℂ} (hz : z ∈ ball 0 1) :
   rw [← h,mem_ball,dist_zero_right, hζ] at hz
   exact (lt_self_iff_false 1).mp hz
 
--- #count_heartbeats in
+--#count_heartbeats in -- 6000
 /-- **Poisson integral formula for harmonic functions on the unit disc**:
 A function `u` harmonic on the unit disc and continuous on the closed unit disc
 satisfies `u(z) = (1/2π) ∫_0^{2π} (1 - |z|²) / |e^{it} - z|² u(e^{it}) dt`
@@ -416,11 +416,11 @@ theorem poisson_integral_formula {u : ℂ → ℝ} {z : ℂ}
     exact ⟨inv_lt_one_of_one_lt₀ this, by linarith⟩
   have hr_lim : Tendsto r atTop (𝓝 1) :=
     le_trans (tendsto_const_nhds.sub <| tendsto_const_nhds.div_atTop
-              <| tendsto_atTop_add_const_right _ _ tendsto_natCast_atTop_atTop)
-             (by rw [sub_zero])
+      <| tendsto_atTop_add_const_right _ _ tendsto_natCast_atTop_atTop)
+        (by rw [sub_zero])
   -- We express `u(r_n z)` as the Poisson integral and then take the limit.
   have hu_lim := tendsto_integral_prod_of_continuousOn hc
-                   (poisson_kernel_continousOn_circle hz) hr hr_lim
+      (poisson_kernel_continousOn_circle hz) hr hr_lim
   have h_poisson (n : ℕ) := poisson_formula_harmonic_scaled_radius hu (hr n) hz
   have hu_lim : Tendsto (fun n => (u (r n * z))) atTop (𝓝 ((1 / (2 * π)) * ∫ t in 0..2 * π,
       (((exp (t * I) + z) / (exp (t * I) - z)).re * u (exp (t * I))))) := by
@@ -431,7 +431,7 @@ theorem poisson_integral_formula {u : ℂ → ℝ} {z : ℂ}
   have hu_lim' : Tendsto (fun n => u (r n * z)) atTop (𝓝 (u z)) := by
     have h_seq : Tendsto (fun n => r n  * z) atTop (𝓝 z) := by
       simpa using Tendsto.mul (continuous_ofReal.continuousAt.tendsto.comp hr_lim)
-                                     (tendsto_const_nhds (x := z))
+        (tendsto_const_nhds (x := z))
     specialize hc z (ball_subset_closedBall hz)
     have hc : ContinuousAt u z := ContinuousWithinAt.continuousAt hc (closedBall_mem_nhds_of_mem hz)
     exact (ContinuousAt.tendsto hc).comp h_seq

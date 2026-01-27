@@ -34,13 +34,13 @@ private lemma harnack_ineq_cont_normalized
     (hc : ContinuousOn u (closedBall 0 1))
     (z : ℂ) (hz : z ∈ ball 0 1) :
     (1 - ‖z‖) / (1 + ‖z‖) ≤ u z ∧ u z ≤ (1 + ‖z‖) / (1 - ‖z‖) := by
-  have h_boundary : ∀ t : ℝ, 0 ≤ t → t ≤ 2 * Real.pi → u (exp (I * t)) ≥ 0 := by
+  have h_boundary : ∀ t : ℝ, 0 ≤ t → t ≤ 2 * Real.pi → u (exp (t * I)) ≥ 0 := by
     intros t ht_nonneg ht_le_two_pi
-    have h_boundary : Filter.Tendsto (fun r : ℝ => u (r * exp (I * t)))
-      (nhdsWithin 1 (Set.Iio 1)) (nhds (u (exp (I * t)))) := by
-      have h_boundary : Filter.Tendsto (fun r : ℝ => u (r * exp (I * t)))
-        (nhdsWithin 1 (Set.Iio 1)) (nhds (u (exp (I * t)))) := by
-        have h_cont : ContinuousOn (fun r : ℝ => u (r * exp (I * t))) (Set.Icc 0 1) := by
+    have h_boundary : Filter.Tendsto (fun r : ℝ => u (r * exp (t * I)))
+      (nhdsWithin 1 (Set.Iio 1)) (nhds (u (exp (t * I)))) := by
+      have h_boundary : Filter.Tendsto (fun r : ℝ => u (r * exp (t * I)))
+        (nhdsWithin 1 (Set.Iio 1)) (nhds (u (exp (t * I)))) := by
+        have h_cont : ContinuousOn (fun r : ℝ => u (r * exp (t * I))) (Set.Icc 0 1) := by
           refine hc.comp ?_ ?_
           · fun_prop
           · norm_num [Set.MapsTo, norm_exp]
@@ -48,41 +48,41 @@ private lemma harnack_ineq_cont_normalized
         have := h_cont 1 (by norm_num)
         simpa using this.tendsto.mono_left <| nhdsWithin_mono _ <| Set.Ioo_subset_Icc_self;
       convert h_boundary using 1;
-    have h_boundary : ∀ᶠ r : ℝ in nhdsWithin 1 (Set.Iio 1), 0 < u (r * exp (I * t)) := by
+    have h_boundary : ∀ᶠ r : ℝ in nhdsWithin 1 (Set.Iio 1), 0 < u (r * exp (t * I)) := by
       filter_upwards [Ioo_mem_nhdsLT zero_lt_one] with r hr using h_pos _ <| by
         simpa [abs_of_nonneg hr.1.le, norm_exp] using hr.2
     exact le_of_tendsto_of_tendsto tendsto_const_nhds ‹_› (
       Filter.eventually_of_mem h_boundary fun x hx => le_of_lt hx)
-  have h_cont_exp : Continuous fun t : ℝ => cexp (I * t) := by
+  have h_cont_exp : Continuous fun t : ℝ => cexp (t * I) := by
     continuity
   -- Apply the Poisson integral formula to u.
   have h_poisson : u z = (1 / (2 * Real.pi)) * ∫ t in (0 : ℝ)..2 * Real.pi,
-    (1 - ‖z‖^2) / ‖(exp (I * t)) - z‖^2 * u (exp (I * t)) := by
-    exact poisson_integral_formula h_harmonic hc z hz
+    (1 - ‖z‖^2) / ‖(exp (t * I)) - z‖^2 * u (exp (t * I)) := by
+    exact poisson_integral_formula h_harmonic hc hz
   -- Using the Poisson integral formula, we can bound u(z) from below and above.
   have h_integral_bounds : (1 / (2 * Real.pi)) * ∫ t in (0 : ℝ)..2 * Real.pi,
-    (1 - ‖z‖^2) / (1 + ‖z‖)^2 * u (exp (I * t)) ≤ u z ∧
+    (1 - ‖z‖^2) / (1 + ‖z‖)^2 * u (exp (t * I)) ≤ u z ∧
       u z ≤ (1 / (2 * Real.pi)) * ∫ t in (0 : ℝ)..2 * Real.pi,
-        (1 - ‖z‖^2) / (1 - ‖z‖)^2 * u (exp (I * t)) := by
+        (1 - ‖z‖^2) / (1 - ‖z‖)^2 * u (exp (t * I)) := by
     -- Using the bounds on the Poisson kernel, we can bound the integral.
     have h_bound_integral : ∀ t : ℝ, 0 ≤ t → t ≤ 2 * Real.pi →
-        (1 - ‖z‖^2) / (1 + ‖z‖)^2 * u (exp (I * t)) ≤
-      (1 - ‖z‖^2) / ‖(exp (I * t)) - z‖^2 * u (exp (I * t)) ∧
-      (1 - ‖z‖^2) / ‖(exp (I * t)) - z‖^2 * u (exp (I * t)) ≤
-      (1 - ‖z‖^2) / (1 - ‖z‖)^2 * u (exp (I * t)) := by
+        (1 - ‖z‖^2) / (1 + ‖z‖)^2 * u (exp (t * I)) ≤
+      (1 - ‖z‖^2) / ‖(exp (t * I)) - z‖^2 * u (exp (t * I)) ∧
+      (1 - ‖z‖^2) / ‖(exp (t * I)) - z‖^2 * u (exp (t * I)) ≤
+      (1 - ‖z‖^2) / (1 - ‖z‖)^2 * u (exp (t * I)) := by
       intros t ht_nonneg ht_le_two_pi
-      have h_norm_bound : ‖(exp (I * t)) - z‖^2 ≥ (1 - ‖z‖)^2 ∧
-        ‖(exp (I * t)) - z‖^2 ≤ (1 + ‖z‖)^2 := by
-        have h_norm_bound : ‖(exp (I * t)) - z‖ ≥ 1 - ‖z‖ ∧ ‖(exp (I * t)) - z‖ ≤ 1 + ‖z‖ := by
-          exact ⟨by have := norm_sub_norm_le (exp (I * t)) z; norm_num [norm_exp] at *; linarith,
-           by have := norm_sub_le (exp (I * t)) z; norm_num [norm_exp] at *; linarith⟩
+      have h_norm_bound : ‖(exp (t * I)) - z‖^2 ≥ (1 - ‖z‖)^2 ∧
+        ‖(exp (t * I)) - z‖^2 ≤ (1 + ‖z‖)^2 := by
+        have h_norm_bound : ‖(exp (t * I)) - z‖ ≥ 1 - ‖z‖ ∧ ‖(exp (t * I)) - z‖ ≤ 1 + ‖z‖ := by
+          exact ⟨by have := norm_sub_norm_le (exp (t * I)) z; norm_num [norm_exp] at *; linarith,
+           by have := norm_sub_le (exp (t * I)) z; norm_num [norm_exp] at *; linarith⟩
         exact ⟨pow_le_pow_left₀ (sub_nonneg.2 <| le_of_lt <| by simpa using hz) h_norm_bound.1 2,
           pow_le_pow_left₀ (norm_nonneg _) h_norm_bound.2 2⟩
       constructor <;> gcongr
       any_goals nlinarith [norm_nonneg z, show ‖z‖ < 1 from by simpa using hz]
       · exact h_boundary t ht_nonneg ht_le_two_pi
       · exact h_boundary t ht_nonneg ht_le_two_pi
-      · nlinarith [norm_nonneg (exp (I * t) - z)]
+      · nlinarith [norm_nonneg (exp (t * I) - z)]
     rw [h_poisson]
     constructor <;> apply_rules [mul_le_mul_of_nonneg_left,
       intervalIntegral.integral_mono_on] <;> norm_num
@@ -109,7 +109,7 @@ private lemma harnack_ineq_cont_normalized
       refine ContinuousOn.mul continuousOn_const ?_
       exact hc.comp (Continuous.continuousOn <| by continuity) fun x hx => by simp [norm_exp]
   -- Using the fact that u(0) = 1, we can simplify the integrals.
-  have h_integral_simplified : ∫ t in (0 : ℝ)..2 * Real.pi, u (exp (I * t)) = 2 * Real.pi := by
+  have h_integral_simplified : ∫ t in (0 : ℝ)..2 * Real.pi, u (exp (t * I)) = 2 * Real.pi := by
     -- Apply the Poisson integral formula at the center of the disc (= mean value property).
     have := poisson_integral_formula  h_harmonic hc (z:=0)
     norm_num at this ⊢

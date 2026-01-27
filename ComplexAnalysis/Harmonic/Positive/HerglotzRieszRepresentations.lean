@@ -508,12 +508,8 @@ lemma u_approx_eq_Lambda (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ)
   have : HarmonicOnNhd (u p) (ball (0 : ℂ) 1) := by
     refine harmonic_of_analytic_real (u p) p hp_analytic ?_
     simp [u]
-  convert harmonic_representation_scaled_radius this hr hz using 1
+  convert poisson_formula_harmonic_scaled_radius this hr hz using 1
   unfold poisson_kernel_func Λ_n_val; norm_num [circleMap]
-  simp [add_comm, u_n]
-  congr 1
-  ext t
-  rw [mul_comm (↑t : ℂ) I]
 
 lemma K_eq_polar : K_weak = WeakDual.polar ℝ (ball (0 : C_unit_circle) 1) := by
   ext Λ
@@ -928,6 +924,7 @@ lemma analytic_unique_of_real_part
     exact h_ftc
   exact fun z hz => sub_eq_zero.mp (h_const z hz |> Eq.trans <| h_zero)
 
+--#count_heartbeats in --78000 --> 60000 --> 51000
 /-- Every analytic function `p` on the unit disc with `p(0) = 1` and
 mapping the unit disc to the right half-plane admits a Herglotz–Riesz representation. -/
 theorem HerglotzRiesz_representation_existence (p : ℂ → ℂ)
@@ -951,8 +948,8 @@ theorem HerglotzRiesz_representation_existence (p : ℂ → ℂ)
     (∫ w : sphere (0 : ℂ) 1, ((w : ℂ) + z) / ((w : ℂ) - z) ∂μ).re := by
     apply_rules [u_eq_limit_Lambda]
     · exact le_trans (tendsto_const_nhds.sub
-      <| tendsto_const_nhds.div_atTop
-      <| Filter.tendsto_atTop_add_const_right _ _ tendsto_natCast_atTop_atTop) <| by norm_num
+        <| tendsto_const_nhds.div_atTop
+          <| Filter.tendsto_atTop_add_const_right _ _ tendsto_natCast_atTop_atTop) <| by norm_num
     · intro f
       /- Since `f` is a continuous function on the unit circle,
       we can write it as the difference of two non-negative continuous functions. -/
@@ -960,14 +957,21 @@ theorem HerglotzRiesz_representation_existence (p : ℂ → ℂ)
         0 ≤ f_pos ∧ 0 ≤ f_neg ∧ f = f_pos - f_neg := by
         use ContinuousMap.mk (fun x => max (f x) 0), ContinuousMap.mk (fun x => max (-f x) 0)
         exact ⟨fun x => le_max_right _ _, fun x =>
-          le_max_right _ _, by ext x; simp [max_def] ; split_ifs <;> linarith⟩
-      convert Filter.Tendsto.sub (
-        hΛ_tendsto f_pos hf_pos) (hΛ_tendsto f_neg hf_neg) using 2 ; focus aesop
-      rw [← integral_sub] ; focus aesop
-      · exact Continuous.integrable_of_hasCompactSupport (by continuity) (
-          by exact HasCompactSupport.of_compactSpace f_pos)
-      · exact Continuous.integrable_of_hasCompactSupport (by continuity) (
-          by exact HasCompactSupport.of_compactSpace f_neg)
+          le_max_right _ _, by
+             ext x
+             rw [ContinuousMap.sub_apply]
+             by_cases h : 0 ≤ f x
+             · simp [max_eq_left h, max_eq_right (by linarith : -f x ≤ 0)]
+             · push_neg at h
+               simp [max_eq_right (le_of_lt h), max_eq_left (by linarith : 0 ≤ -f x)]⟩
+      convert Filter.Tendsto.sub (hΛ_tendsto f_pos hf_pos) (hΛ_tendsto f_neg hf_neg) using 1
+      · ext n ; rw [hf] ; exact (Λ_seq p r hp_analytic hr (phi n)).map_sub f_pos f_neg
+      rw [← integral_sub]
+      · congr 1 ; rw [hf] ; rfl
+      · exact (map_continuous f_pos).integrable_of_hasCompactSupport
+         (HasCompactSupport.of_compactSpace f_pos)
+      · exact (map_continuous f_neg).integrable_of_hasCompactSupport
+         (HasCompactSupport.of_compactSpace f_neg)
   -- By `analytic_unique_of_real_part`, `p(z) = q(z)` for all `z` in the unit disc.
   have h_p_eq_q : ∀ z ∈ ball (0 : ℂ) 1,
     p z = ∫ w : sphere (0 : ℂ) 1, ((w : ℂ) + z) / ((w : ℂ) - z) ∂μ := by
@@ -1002,7 +1006,7 @@ theorem HerglotzRiesz_representation_analytic
             = p z := (hμ_rep z hz).symm
         _ = ∫ x : sphere (0 : ℂ) 1, (x + z) / (x - z) ∂ν := hν z hz
 
---#count_heartbeats in --36000
+--#count_heartbeats in --36000 --> 28000 --> 23000
 /- Every harmonic function `u` on the unit disc with `u(0) = 1` and
 `u(z) > 0` for all `z` admits a unique Herglotz–Riesz integral representation. -/
 theorem HerglotzRiesz_representation_harmonic
@@ -1011,7 +1015,6 @@ theorem HerglotzRiesz_representation_harmonic
     (h_u_zero : u 0 = 1) (h_harmonic : HarmonicOnNhd u (ball (0 : ℂ) 1)) :
     ∃! μ : ProbabilityMeasure (sphere (0 : ℂ) 1),
     ∀ z ∈ ball (0 : ℂ) 1, u z = ∫ x : sphere (0 : ℂ) 1,  (1 - ‖z‖^2) / ‖x - z‖^2 ∂μ := by
-
   let unitDisc := ball (0 : ℂ) 1
   let unitCircle := sphere (0 : ℂ) 1
   have exists_analytic_of_harmonic_unitDisc (g : ℂ → ℝ) (hg : HarmonicOnNhd g unitDisc) :
@@ -1055,12 +1058,12 @@ theorem HerglotzRiesz_representation_harmonic
   have h_real_part : ∀ z ∈ unitDisc, u z = ∫ x : unitCircle, (1 - ‖z‖^2) / ‖(x : ℂ) - z‖^2 ∂μ := by
     have h_real_part' : ∀ z ∈ unitDisc, (F z).re = ∫ x : unitCircle, ((x + z) / (x - z)).re ∂μ := by
       intro z hz; rw [h_rep z hz] ; rw [← integral_re_add_im]
-      · #count_heartbeats! in aesop  --todo
+      · simp [unitCircle, Complex.add_re]
       refine Integrable.mono' (g := fun x => 2 / (1 - ‖z‖)) ?_ ?_ ?_
-      · norm_num [integrable_const_iff]
+      · simp
       · refine Measurable.aestronglyMeasurable ?_; fun_prop
       · have hz' : ‖z‖ < 1 := by rw [mem_ball_zero_iff] at hz ; exact hz
-        simp_all
+        simp only [norm_div]
         refine Filter.Eventually.of_forall fun x => ?_
         have hx : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
         gcongr <;> norm_num [hx]
@@ -1071,7 +1074,7 @@ theorem HerglotzRiesz_representation_harmonic
       ((x + z) / (x - z)).re = (1 - ‖z‖^2) / ‖(x : ℂ) - z‖^2 := by
       intros z hz x;
       have hx : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
-      exact real_part_herglotz_kernel hx
+      exact real_part_herglotz_kernel x z hx
     exact fun z hz => by rw [← hF_re.1 z hz, h_real_part' z hz, integral_congr_ae (
       Filter.Eventually.of_forall fun x => h_real_part_eq z hz x)]
   refine ExistsUnique.intro ?μ ?hμ ?uniq
@@ -1095,7 +1098,7 @@ theorem HerglotzRiesz_representation_harmonic
           have hg_real_part' : (g z).re = ∫ x : unitCircle, ((x + z) / (x - z)).re ∂ν := by
             have h_integrable : Integrable (fun x : unitCircle => ((x + z) / (x - z))) ν := by
               refine Integrable.mono' (g := fun x => 2 / (1 - ‖z‖)) ?_ ?_ ?_
-              · norm_num [integrable_const_iff]
+              · simp
               · refine Measurable.aestronglyMeasurable ?_
                 fun_prop
               · filter_upwards with x
@@ -1111,7 +1114,7 @@ theorem HerglotzRiesz_representation_harmonic
           refine integral_congr_ae ?_
           filter_upwards with x
           have hx : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
-          exact real_part_herglotz_kernel hx
+          exact real_part_herglotz_kernel x z hx
         rw [hF_re.1 z hz, hg_real_part, hν z hz]
       · rw [hF_re.2, h_u_zero] ; exact hg0.symm
     apply HerglotzRiesz_representation_uniqueness μ ν
