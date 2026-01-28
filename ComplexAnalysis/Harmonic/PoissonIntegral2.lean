@@ -42,29 +42,40 @@ public section
 
 open Complex Metric Real Set
 
---#count_heartbeats in --12000
-/-- Cauchy's integral formula for analytic functions on the unit disc,
-    evaluated at scaled points `r * z` with `r ∈ (0,1)`. -/
-theorem cauchy_integral_formula_unitDisc {E : Type*} [NormedAddCommGroup E]
+/- Scaling a point in the closed unit ball by r in (0,1) remains in the unit ball. -/
+lemma norm_le_one_scaled_mem_ball {z : ℂ} {r : ℝ} (hz : ‖z‖ ≤ 1) (hr : r ∈ Ioo 0 1) :
+    r * z ∈ ball 0 1 := by
+  rw [mem_ball, dist_zero_right,norm_mul, norm_real, norm_eq_abs, abs_of_pos hr.1]
+  have := mul_le_of_le_one_left (LT.lt.le hr.1) hz
+  rw [mul_comm] at this
+  exact LE.le.trans_lt this hr.2
+
+/- r* exp (t * I) is in the unit disc for r ∈ (0,1). -/
+lemma exp_mul_in_unitDisc {r : ℝ} (hr : r ∈ Ioo 0 1) (t : ℝ) : r * exp (t * I) ∈ ball 0 1 := by
+  refine norm_le_one_scaled_mem_ball ?_ hr
+  rw [norm_exp_ofReal_mul_I]
+
+
+/- If f is analytic on the unit disc, then ζ ↦ f (r * ζ) is differentiable at z
+  for r in (0,1) and z in the closed unit ball. -/
+lemma analyticOn_unitDisc_differentiableAt_mul {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℂ E] {f : ℂ → E} {z : ℂ} {r : ℝ}
+    (hf : AnalyticOn ℂ f (ball 0 1)) (hz : z ∈ closedBall 0 1) (hr : r ∈ Ioo 0 1) :
+    DifferentiableAt ℂ (fun ζ => f (r * ζ)) z := by
+  rw [mem_closedBall, dist_zero_right] at hz
+  exact DifferentiableAt.comp z (hf.differentiableOn.differentiableAt
+        (isOpen_ball.mem_nhds (norm_le_one_scaled_mem_ball hz hr)))
+        (differentiableAt_id.const_mul _)
+
+/- Cauchy integral formula applied to f analytic on the unit disc at the point r*z,
+for r in (0,1) and z in the ball 0 1. -/
+lemma cauchy_circleIntegral_formula_unitDisc_mul {E : Type*} [NormedAddCommGroup E]
     [NormedSpace ℂ E] [CompleteSpace E] {f : ℂ → E} {z : ℂ} {r : ℝ}
     (hf : AnalyticOn ℂ f (ball 0 1)) (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
-    f (r * z) = (1 / (2 * π)) • ∫ t in 0..2*π,
-                (exp (t * I) / (exp (t * I) - z)) • (f (r * exp (t * I))) := by
-  have (x : ℂ) (hx : ‖x‖ ≤ 1) : ‖r * x‖ < 1 := by
-      simp only [norm_mul, norm_real, norm_eq_abs, abs_of_pos hr.1]
-      have := mul_le_of_le_one_left (LT.lt.le hr.1) hx
-      rw [mul_comm] at this
-      exact LE.le.trans_lt this hr.2
-  have hfr_diff (x : ℂ) (hx : ‖x‖ ≤ 1) : DifferentiableAt ℂ (fun ζ => f (r * ζ)) x :=
-      DifferentiableAt.comp x (hf.differentiableOn.differentiableAt (isOpen_ball.mem_nhds
-        (by simp only [mem_ball, Complex.dist_eq, sub_zero, this x hx])))
-          (differentiableAt_id.const_mul _)
-  have hfr_cont : ContinuousOn (fun ζ => f (r* ζ)) (closedBall 0 1) := by
-      intro x hx
-      rw [mem_closedBall, dist_zero_right] at hx
-      exact (DifferentiableAt.continuousAt (hfr_diff x hx)).continuousWithinAt
-  have h_cauchy : -- We apply the Cauchy Integral Formula to the function `z ↦ f(rz)`.
-      f (r * z) = (1 / (2 * π * I)) • ∮ (ζ : ℂ) in C(0, 1), (1 / (ζ - z)) • f (r * ζ)  := by
+    f (r * z) = (1 / (2 * π * I)) • ∮ (ζ : ℂ) in C(0, 1), (1 / (ζ - z)) • f (r * ζ) := by
+    have hfr_cont : ContinuousOn (fun ζ => f (r* ζ)) (closedBall 0 1) :=
+      fun x hx => (DifferentiableAt.continuousAt
+                   (analyticOn_unitDisc_differentiableAt_mul hf hx hr)).continuousWithinAt
     have := @circleIntegral_sub_inv_smul_of_differentiable_on_off_countable
       _ _ _ _ 1 0 z (fun ζ => f (r * ζ)) ∅ countable_empty hz hfr_cont
     simp only [div_eq_inv_mul, mul_one]
@@ -72,20 +83,19 @@ theorem cauchy_integral_formula_unitDisc {E : Type*} [NormedAddCommGroup E]
     · simp only [smul_smul,inv_mul_cancel₀ two_pi_I_ne_zero]
       exact Eq.symm (MulAction.one_smul (f (r * z)))
     · intro x hx
-      simp only [diff_empty,mem_ball,Complex.dist_eq, sub_zero] at hx
-      exact hfr_diff x (LT.lt.le hx)
-  have h_cauchy :
-      f (r * z) =  ∮ (ζ : ℂ) in C(0, 1), (1 / (2 * π * I)) • (1 / (ζ - z)) • f (r * ζ)  := by
-    rw [h_cauchy]
-    exact Eq.symm (circleIntegral.integral_smul
-      (1 / (2 * π * I)) (fun ζ ↦ (1 / (ζ - z)) • f (r * ζ)) 0 1)
-  have : (1 / (2 * π)) • ∫ (t : ℝ) in 0..2 * π,
-         (cexp (t * I) / (cexp (t * I) - z)) • f (r * cexp (t * I)) =
-         ∫ (t : ℝ) in 0..2 * π, (1 / (2 * π)) •
-         (cexp (t * I) / (cexp (t * I) - z)) • f (r * cexp (t * I)) :=
-    Eq.symm (intervalIntegral.integral_smul (1 / (2 * π)) fun t ↦
-        (cexp (t * I) / (cexp (t * I) - z)) • f (r * cexp (t * I)))
-  rw [this,h_cauchy]
+      simp only [diff_empty] at hx
+      exact analyticOn_unitDisc_differentiableAt_mul hf (ball_subset_closedBall hx) hr
+
+/-- Cauchy's integral formula for analytic functions on the unit disc,
+    evaluated at scaled points `r * z` with `r ∈ (0,1)`. -/
+theorem cauchy_integral_formula_unitDisc_mul {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℂ E] [CompleteSpace E] {f : ℂ → E} {z : ℂ} {r : ℝ}
+    (hf : AnalyticOn ℂ f (ball 0 1)) (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
+    f (r * z) = (1 / (2 * π)) • ∫ t in 0..2*π,
+                (exp (t * I) / (exp (t * I) - z)) • (f (r * exp (t * I))) := by
+  have h_cauchy := cauchy_circleIntegral_formula_unitDisc_mul hf hr hz
+  rw [← circleIntegral.integral_smul] at h_cauchy
+  rw [← intervalIntegral.integral_smul, h_cauchy]
   simp only [circleIntegral]
   congr 1
   ext t
@@ -101,98 +111,113 @@ theorem cauchy_integral_formula_unitDisc {E : Type*} [NormedAddCommGroup E]
     ring_nf
   rw [this]
 
---#count_heartbeats in -- 15000
+/- 1 - star z * w ≠ 0, for z in unit disc and w in closed unit disc -/
+lemma one_sub_star_neq_zero {z : ℂ} {w : ℂ} (hz : z ∈ ball 0 1) (hw : w ∈ closedBall 0 1) :
+    1 - star z * w ≠ 0 := by
+  intro h
+  have hz_norm : ‖z‖ < 1 := by rw [mem_ball_zero_iff] at hz ; exact hz
+  have hw_norm : ‖w‖ ≤ 1 := mem_closedBall_zero_iff.mp hw
+  have : ‖star z * w‖ < 1 := by
+    calc ‖star z * w‖ ≤ ‖star z‖ * ‖w‖ := norm_mul_le _ _
+      _ = ‖z‖ * ‖w‖ := by rw [norm_star]
+      _ < 1 := by nlinarith [norm_nonneg z, norm_nonneg w]
+  rw [sub_eq_zero] at h
+  rw [←h] at this
+  rw [norm_one] at this
+  exact absurd this (lt_irrefl 1)
+
+/- If f is analytic on the unit disc, then ζ ↦ (star z / (I * (1 - star z * ζ))) • (f (r * ζ)))
+ is differentiable at w in the closed unit disc, for r in (0,1). -/
+lemma goursat_integrand_diffferentiableAt {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    {f : ℂ → E} {z w : ℂ} {r : ℝ} (hf : AnalyticOn ℂ f (ball 0 1))
+    (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) (hw : w ∈ closedBall 0 1) :
+    DifferentiableAt ℂ (fun ζ => (star z / (I * (1 - star z * ζ))) • (f (r * ζ))) w := by
+    refine DifferentiableAt.smul ?_ ?_
+    · refine DifferentiableAt.div (differentiableAt_const _) ?_ ?_
+      · apply DifferentiableAt.const_mul
+        refine DifferentiableAt.sub (differentiableAt_const (1 : ℂ)) ?_
+        exact DifferentiableAt.mul (differentiableAt_const (star z)) differentiableAt_id
+      · exact mul_ne_zero I_ne_zero (one_sub_star_neq_zero hz hw)
+    · exact analyticOn_unitDisc_differentiableAt_mul hf hw hr
+
+/- We apply the Cauchy-Goursat theorem to the function
+(fun ζ => (star z / (I * (1 - star z * ζ))) • (f (r * ζ))) on the unit circle. -/
+lemma goursat_vanishing_integral_aux {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    {f : ℂ → E} {z : ℂ} {r : ℝ}
+    (hf : AnalyticOn ℂ f (ball 0 1)) (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
+    (∮ w in C(0, 1), (star z / (I * (1 - star z * w))) • (f (r * w))) = 0 := by
+  apply circleIntegral_eq_zero_of_differentiable_on_off_countable (zero_le_one) countable_empty
+  · exact fun ζ hζ => (DifferentiableAt.continuousAt
+                      (goursat_integrand_diffferentiableAt hf hr hz hζ)).continuousWithinAt
+  · rw [diff_empty]
+    exact fun ζ hζ => goursat_integrand_diffferentiableAt hf hr hz (ball_subset_closedBall hζ)
+
+/- Algebraic identity that will be used in integrand of the Cauchy-Goursat theorem. -/
+lemma goursat_integrand_eq (z : ℂ) (t : ℝ) :  star z / (star (exp (t * I)) - star z) =
+                        (I * exp (t * I)) * (star z / (I * (1 - star z * exp (t * I)))) := by
+  have : star (exp (t * I)) = (exp (t * I))⁻¹ := by
+    rw [star_def, ← exp_conj, ← exp_neg (t * I)]
+    apply congrArg cexp
+    simp only [map_mul, conj_ofReal, conj_I, mul_neg]
+  simp only [this]
+  rw [mul_comm I, mul_assoc, ← mul_div_assoc, mul_div_mul_left (hc:=I_ne_zero), ← mul_div_assoc,
+      mul_comm (cexp (t * I)), mul_div_assoc, div_eq_mul_inv (star z)]
+  apply congrArg (fun x => (star z) * x)
+  rw [inv_eq_one_div]
+  nth_rewrite 2 [← inv_inv (cexp (t * I)), inv_eq_one_div]
+  rw [div_div,mul_sub,mul_one,mul_comm (star z),← mul_assoc,
+      inv_mul_cancel₀ (Complex.exp_ne_zero (t * I)),one_mul]
+
 /-- Cauchy-Goursat theorem for the unit disc implies the integral of an analytic function
 against the conjugate Cauchy kernel vanishes. -/
-lemma goursat_vanishing_integral {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+lemma goursat_vanishing_integral_unitDisc_mul {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
     {f : ℂ → E} {z : ℂ} {r : ℝ}
     (hf : AnalyticOn ℂ f (ball 0 1)) (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
     ∫ t in 0..2*π,  (star z / (star (exp (t * I)) - star z)) • f (r * exp (t * I)) = 0 := by
-  -- Algebraic identity for the Goursat integrand.
-  have goursat_integrand_eq (z : ℂ) (t : ℝ) :
-      star z / (star (exp (t * I)) - star z) =  (I * exp (t * I)) *
-      (star z / (I * (1 - star z * exp (t * I)))) := by
-    have : star (exp (t * I)) = (exp (t * I))⁻¹ := by
-      rw [star_def, ← exp_conj, ← exp_neg (t * I)]
-      apply congrArg cexp
-      simp only [map_mul, conj_ofReal, conj_I, mul_neg]
-    simp only [this]
-    rw [mul_comm I, mul_assoc, ← mul_div_assoc, mul_div_mul_left (hc:=I_ne_zero), ← mul_div_assoc,
-        mul_comm (cexp (t * I)), mul_div_assoc, div_eq_mul_inv (star z)]
-    apply congrArg (fun x => (star z) * x)
-    rw [inv_eq_one_div]
-    nth_rewrite 2 [← inv_inv (cexp (t * I)), inv_eq_one_div]
-    rw [div_div,mul_sub,mul_one,mul_comm (star z),← mul_assoc,
-        inv_mul_cancel₀ (Complex.exp_ne_zero (t * I)),one_mul]
-  -- Use `goursat_integrand_eq` to rewrite the integrand.
-  have h_integrand : ∀ t : ℝ, (star z / (star (exp (t * I)) - star z)) • (f (r * exp (t * I))) =
-    (I * exp (t * I)) • ((star z / (I * (1 - star z * exp (t * I)))) • (f (r * exp (t * I)))) := by
-    intro t
-    rw [goursat_integrand_eq]
-    simp only [mul_assoc, mul_smul]
-  -- Let $g(w) = (star z / (I * (1 - star z * w))) • f (r * w)$.
-  set g : ℂ → E := fun w => (star z / (I * (1 - star z * w))) • (f (r * w))
-  have aux_denom_ne_zero {w : ℂ} (hw : w ∈ closedBall 0 1) : I * (1 - star z * w) ≠ 0 := by
-    apply mul_ne_zero I_ne_zero
-    intro h
-    have hz_norm : ‖z‖ < 1 := by rw [mem_ball_zero_iff] at hz ; exact hz
-    have hw_norm : ‖w‖ ≤ 1 := mem_closedBall_zero_iff.mp hw
-    have : ‖star z * w‖ < 1 := by
-      calc ‖star z * w‖ ≤ ‖star z‖ * ‖w‖ := norm_mul_le _ _
-        _ = ‖z‖ * ‖w‖ := by rw [norm_star]
-        _ < 1 := by nlinarith [norm_nonneg z, norm_nonneg w]
-    rw [sub_eq_zero] at h
-    rw [<-h] at this
-    rw [norm_one] at this
-    exact absurd this (lt_irrefl 1)
-  /- By Cauchy's integral theorem, the integral of an
-   analytic function over a closed contour is zero. -/
-  have h_cauchy : (∮ w in C(0, 1), g w) = 0 := by
-    apply circleIntegral_eq_zero_of_differentiable_on_off_countable
-    · exact zero_le_one
-    · exact countable_empty
-    · refine ContinuousOn.smul ?_ ?_
-      · refine continuousOn_of_forall_continuousAt fun w hw =>
-          ContinuousAt.div continuousAt_const ?_ ?_
-        · exact ContinuousAt.mul continuousAt_const (ContinuousAt.sub continuousAt_const (
-            ContinuousAt.mul continuousAt_const continuousAt_id))
-        · exact aux_denom_ne_zero hw
-      · refine ContinuousOn.comp hf.continuousOn ?_ ?_;
-        · exact continuousOn_const.mul continuousOn_id;
-        · exact fun x hx => by simpa [abs_of_nonneg hr.1.le] using lt_of_le_of_lt (
-          mul_le_of_le_one_right hr.1.le (mem_closedBall_zero_iff.mp hx)) hr.2;
-    · intro w hw
-      refine DifferentiableAt.smul ?_ ?_
-      · refine DifferentiableAt.div ?_ ?_ ?_
-        · exact differentiableAt_const _
-        · apply DifferentiableAt.const_mul
-          refine DifferentiableAt.sub (differentiableAt_const (1 : ℂ)) ?_
-          exact DifferentiableAt.mul (differentiableAt_const (star z)) differentiableAt_id
-        · exact aux_denom_ne_zero (ball_subset_closedBall hw.1)
-      · refine DifferentiableAt.comp w ?_ ?_
-        · refine hf.differentiableOn.differentiableAt (isOpen_ball.mem_nhds ?_)
-          rw [mem_ball_zero_iff]
-          have hw1 : ‖w‖ < 1 := mem_ball_zero_iff.mp hw.1
-          calc ‖↑r * w‖  = ‖(r:ℂ)‖ * ‖w‖ := norm_mul _ _
-            _ = r * ‖w‖                := by rw [norm_real, norm_eq_abs, abs_of_pos hr.1]
-            _ < r * 1                    := mul_lt_mul_of_pos_left hw1 hr.1
-            _ = r                        := mul_one r
-            _ < 1                        := hr.2
-        · exact differentiableAt_id.const_mul _
-  convert h_cauchy using 3
+  convert (goursat_vanishing_integral_aux hf hr hz) using 3
   rw [circleIntegral_def_Icc]
-  rw [intervalIntegral.integral_of_le]
-  · congr 1
-    · apply MeasureTheory.Measure.restrict_congr_set
-      exact MeasureTheory.Ioc_ae_eq_Icc
-    · funext θ
-      simp only [circleMap_zero, deriv_circleMap]
-      rw [smul_smul, h_integrand θ,  ofReal_one, one_mul,smul_smul]
-      apply congrArg (fun x => x • f (r * cexp (θ * I)))
-      rw [mul_comm I]
-  · exact mul_nonneg zero_le_two pi_pos.le
+  rw [intervalIntegral.integral_of_le (mul_nonneg zero_le_two pi_pos.le)]
+  congr 1
+  · exact MeasureTheory.Measure.restrict_congr_set MeasureTheory.Ioc_ae_eq_Icc
+  · funext θ
+    simp only [circleMap_zero, deriv_circleMap]
+    rw [goursat_integrand_eq z θ, smul_smul, ofReal_one, one_mul]
+    apply congrArg (fun x => x • f (r * cexp (θ * I)))
+    rw [mul_comm I]
 
---#count_heartbeats in --2000
+/- exp (t * I) is not equal to z in the unit disc. -/
+lemma exp_not_in_ball {z : ℂ} (hz : z ∈ ball 0 1) (t : ℝ) : exp (t * I) - z ≠ 0 := by
+  intro h
+  rw [sub_eq_zero] at h
+  rw [← h,mem_ball,dist_zero_right, norm_exp_ofReal_mul_I] at hz
+  exact (lt_self_iff_false 1).mp hz
+
+/- We put together `goursat_vanishing_integral_unitDisc_mul` and
+  `cauchy_integral_formula_unitDisc_mul` -/
+lemma cauch_goursat_integral_aux {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℂ E] [CompleteSpace E] {f : ℂ → E} {z : ℂ} {r : ℝ}
+    (hf : AnalyticOn ℂ f (ball 0 1)) (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
+    f (r * z) = (1 / (2 * π)) • ∫ t in 0..2*π,
+                (exp (t * I) / (exp (t * I) - z)) • f (r * exp (t * I))  +
+                (star z / (star (exp (t * I)) - star z)) • f (r * exp (t * I)) := by
+  rw [intervalIntegral.integral_add]
+  · rw [cauchy_integral_formula_unitDisc_mul hf hr hz,
+        goursat_vanishing_integral_unitDisc_mul hf hr hz, add_zero]
+  · apply ContinuousOn.intervalIntegrable
+    refine ContinuousOn.smul ?_ ?_
+    · exact ContinuousOn.div (Continuous.continuousOn (by fun_prop))
+                               (Continuous.continuousOn (by fun_prop))
+                               (fun t _ => exp_not_in_ball hz t)
+    · exact hf.continuousOn.comp (Continuous.continuousOn (by fun_prop))
+              (fun t _ => exp_mul_in_unitDisc hr t)
+  · apply ContinuousOn.intervalIntegrable
+    refine ContinuousOn.smul ?_ ?_
+    · exact ContinuousOn.div (Continuous.continuousOn continuous_const)
+              (Continuous.continuousOn (by fun_prop))
+              (fun t _ => by rw [← star_sub]; exact star_ne_zero.mpr (exp_not_in_ball hz t))
+    · exact hf.continuousOn.comp (by fun_prop)
+                (fun t _ => exp_mul_in_unitDisc hr t)
+
 /-- The real part of the Herglotz–Riesz kernel is equal to the Poisson kernel. -/
 theorem real_part_herglotz_kernel (x w : ℂ) (hx : ‖x‖ = 1) :
     ((x + w) / (x - w)).re = (1 - ‖w‖^2) / ‖x - w‖^2 := by
@@ -205,7 +230,6 @@ theorem real_part_herglotz_kernel (x w : ℂ) (hx : ‖x‖ = 1) :
    _ = (‖x‖ ^ 2 - ‖w‖ ^ 2) / ‖x - w‖ ^ 2 := by simp only [normSq_eq_norm_sq]
    _ = (1 - ‖w‖ ^ 2) / ‖x - w‖ ^ 2 := by rw [hx, one_pow 2]
 
---#count_heartbeats in --13000
 /-- For an analytic function `f` on the unit disc, `f(rz)` equals the integral
 of `f(re^{it})` against the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
@@ -215,40 +239,14 @@ theorem poisson_formula_analytic_scaled_radius {E : Type*} [NormedAddCommGroup E
     (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
     f (r * z) = (1 / (2 * π)) • ∫ t in 0..2*π,
       (((exp (t * I) + z) / (exp (t * I) - z)).re) • f (r * exp (t * I)) := by
-  have h_exp_z (t : ℝ) : cexp (t * I) - z ≠ 0 := by
-    intro h
-    rw [sub_eq_zero] at h
-    rw [← h,mem_ball,dist_zero_right, norm_exp_ofReal_mul_I] at hz
-    exact (lt_self_iff_false 1).mp hz
-  have h_add : f (r * z) = (1 / (2 * π)) • ∫ t in 0..2*π,
-                (exp (t * I) / (exp (t * I) - z)) • f (r * exp (t * I))  +
-                (star z / (star (exp (t * I)) - star z)) • f (r * exp (t * I)) := by
-    have hr_exp (t : ℝ) : r * cexp (t * I) ∈ ball 0 1 := by
-      simp only [mem_ball,Complex.dist_eq,sub_zero, norm_mul,norm_real,norm_eq_abs, abs_of_pos hr.1]
-      simpa [mul_comm,norm_exp_ofReal_mul_I] using hr.2
-    /- We add the integrals from `cauchy_integral_formula_unitDisc`
-      and `goursat_vanishing_integral` to obtain the desired formula. -/
-    rw [intervalIntegral.integral_add]
-    · rw [cauchy_integral_formula_unitDisc hf hr hz, goursat_vanishing_integral hf hr hz, add_zero]
-    · apply ContinuousOn.intervalIntegrable
-      refine ContinuousOn.smul ?_ ?_
-      · exact ContinuousOn.div (Continuous.continuousOn (by fun_prop))
-                               (Continuous.continuousOn (by fun_prop)) (fun t _ => h_exp_z t)
-      · exact hf.continuousOn.comp (Continuous.continuousOn (by fun_prop)) (fun t _ => hr_exp t)
-    · apply ContinuousOn.intervalIntegrable
-      refine ContinuousOn.smul ?_ ?_
-      · exact ContinuousOn.div (Continuous.continuousOn continuous_const)
-                               (Continuous.continuousOn (by fun_prop))
-                               (fun t _ => by rw [← star_sub]; exact star_ne_zero.mpr (h_exp_z t))
-      · exact hf.continuousOn.comp (by fun_prop) (fun t _ => hr_exp t)
-  convert h_add using 3
+  convert cauch_goursat_integral_aux hf hr hz using 3
   ext t
   rw [← add_smul]
   apply congrArg (fun (x : ℂ) => x • f (r * cexp (t * I)))
   rw [real_part_herglotz_kernel (exp (t * I)) z (by rw [norm_exp_ofReal_mul_I])]
   dsimp
   simp only [← star_def, ← star_sub]
-  rw [div_add_div _ _ (h_exp_z t) (star_ne_zero.mpr (h_exp_z t))]
+  rw [div_add_div _ _ (exp_not_in_ball hz t) (star_ne_zero.mpr (exp_not_in_ball hz t))]
   simp only [star_def, mul_conj,normSq_eq_norm_sq]
   simp only [ofReal_div, ofReal_sub, ofReal_one, ofReal_pow, map_sub]
   apply congrArg (fun (x : ℂ) => x / ‖(exp (t * I) - z)‖^2)
@@ -278,21 +276,14 @@ theorem poisson_formula_harmonic_scaled_radius {u : ℂ → ℝ} {z : ℂ} {r : 
     use f
     exact ⟨hf.1.analyticOn, hf.2⟩
   obtain ⟨f, hf, hf_eq⟩ := hfu
-  have hrz : r * z ∈ ball 0 1 := by
-    simp only [mem_ball, dist_zero_right, norm_mul, norm_real, norm_eq_abs, abs_of_pos hr.1]
-    rw [mem_ball, dist_zero_right] at hz
-    nlinarith [hr.1, hr.2, hz]
-  rw [← hf_eq hrz]
-  have hrt (t : ℝ) : r * exp (t * I) ∈ ball 0 1 := by
-    simp only [mem_ball, dist_zero_right, norm_mul, norm_real, norm_eq_abs, abs_of_pos hr.1,
-               norm_exp_ofReal_mul_I, mul_one, hr.2]
+  rw [← hf_eq (norm_le_one_scaled_mem_ball (LT.lt.le (mem_ball_zero_iff.mp hz)) hr)]
   -- We replace `u(rz)` by `Re(f(rz))`.
   have hrt_eq : EqOn
     (fun t : ℝ => ((exp (t * I) + z) / (exp (t * I) - z)).re *(f (r * exp (t * I))).re)
     (fun t : ℝ => ((exp (t * I) + z) / (exp (t * I) - z)).re * u (r * exp (t * I)))
     (uIcc 0 (2 * π)) := by
     intro t _
-    simp only [← hf_eq (hrt t)]
+    simp only [← hf_eq (exp_mul_in_unitDisc hr t)]
   rw [← intervalIntegral.integral_congr hrt_eq]
   dsimp
   rw [congr_arg re (poisson_formula_analytic_scaled_radius hf hr hz), smul_re, smul_eq_mul]
@@ -312,9 +303,12 @@ theorem poisson_formula_harmonic_scaled_radius {u : ℂ → ℝ} {z : ℂ} {r : 
       rw [sub_eq_zero] at hexpz
       rw [← hexpz,mem_ball,dist_zero_right, norm_exp_ofReal_mul_I] at hz
       exact (lt_self_iff_false 1).mp hz
-    · exact hf.continuousOn.comp (Continuous.continuousOn (by fun_prop)) (fun t _ => hrt t)
+    · exact hf.continuousOn.comp (Continuous.continuousOn (by fun_prop))
+                                 (fun t _ => exp_mul_in_unitDisc hr t)
 
 open Filter Topology
+
+--TO DO:
 
 --#count_heartbeats in --10000
 /-- For a sequence `r_n → 1` with `r_n ∈ (0,1)`,

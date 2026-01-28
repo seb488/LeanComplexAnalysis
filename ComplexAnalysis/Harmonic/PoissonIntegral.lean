@@ -131,7 +131,7 @@ lemma goursat_vanishing_integral {E : Type*} [NormedAddCommGroup E] [NormedSpace
   have aux_denom_ne_zero {w : ℂ} (hw : w ∈ closedBall 0 1) : I * (1 - star z * w) ≠ 0 := by
     apply mul_ne_zero I_ne_zero
     intro h
-    have hz_norm : ‖z‖ < 1 := by rw [mem_ball_zero_iff] at hz ; exact hz
+    have hz_norm : ‖z‖ < 1 := by rw [mem_ball_zero_iff] at hz; exact hz
     have hw_norm : ‖w‖ ≤ 1 := mem_closedBall_zero_iff.mp hw
     have : ‖star z * w‖ < 1 := by
       calc ‖star z * w‖ ≤ ‖star z‖ * ‖w‖ := norm_mul_le _ _
@@ -153,10 +153,10 @@ lemma goursat_vanishing_integral {E : Type*} [NormedAddCommGroup E] [NormedSpace
         · exact ContinuousAt.mul continuousAt_const (ContinuousAt.sub continuousAt_const (
             ContinuousAt.mul continuousAt_const continuousAt_id))
         · exact aux_denom_ne_zero hw
-      · refine ContinuousOn.comp hf.continuousOn ?_ ?_;
-        · exact continuousOn_const.mul continuousOn_id;
+      · refine ContinuousOn.comp hf.continuousOn ?_ ?_
+        · exact continuousOn_const.mul continuousOn_id
         · exact fun x hx => by simpa [abs_of_nonneg hr.1.le] using lt_of_le_of_lt (
-          mul_le_of_le_one_right hr.1.le (mem_closedBall_zero_iff.mp hx)) hr.2;
+          mul_le_of_le_one_right hr.1.le (mem_closedBall_zero_iff.mp hx)) hr.2
     · intro w hw
       refine DifferentiableAt.smul ?_ ?_
       · refine DifferentiableAt.div ?_ ?_ ?_
