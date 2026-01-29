@@ -50,7 +50,9 @@ harmonic function, Poisson integral, analytic function, unit disc
 
 set_option Elab.async false
 
--- set_option linter.all true
+set_option linter.tacticAnalysis.tryAtEachStepAesop true
+set_option linter.tacticAnalysis.tryAtEachStepGrind true
+set_option linter.tacticAnalysis.tryAtEachStepSimpAll true
 
 public section
 
@@ -81,7 +83,7 @@ lemma exp_ofReal_mul_I_not_in_ball {z : ℂ} (hz : z ∈ ball 0 1) (t : ℝ) : e
   exact (lt_self_iff_false 1).mp hz
 
 /- The conjugate of e^{it} is its inverse. -/
-lemma star_exp_ofReal_mul_I {t : ℝ} : star (exp (t * I)) = (exp (t * I))⁻¹ := by
+lemma star_exp_ofReal_mul_I_eq_inv {t : ℝ} : star (exp (t * I)) = (exp (t * I))⁻¹ := by
   rw [star_def, ← exp_conj, ← exp_neg (t * I)]
   congr 1
   simp only [map_mul, conj_ofReal, conj_I, mul_neg]
@@ -192,7 +194,7 @@ lemma goursat_vanishing_integral_aux {E : Type*} [NormedAddCommGroup E] [NormedS
 /- Algebraic identity that will be used in integrand of the Cauchy-Goursat theorem. -/
 lemma goursat_integrand_eq (z : ℂ) (t : ℝ) : star z / (star (exp (t * I)) - star z) =
                     (I * exp (t * I)) * (star z / (I * (1 - star z * exp (t * I)))) := by
-  rw [star_exp_ofReal_mul_I, mul_comm I, mul_assoc, ← mul_div_assoc,
+  rw [star_exp_ofReal_mul_I_eq_inv, mul_comm I, mul_assoc, ← mul_div_assoc,
       mul_div_mul_left (hc := I_ne_zero), ← mul_div_assoc, mul_comm (exp (t * I)),
       mul_div_assoc, div_eq_mul_inv (star z)]
   congr 1
@@ -251,7 +253,7 @@ lemma cauchy_goursat_integral_aux {E : Type*} [NormedAddCommGroup E]
 /-- For an analytic function `f : ℂ → E` on the unit disc, `f(rz)` equals the integral
 of `f(re^{it})` against the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
-theorem poisson_formula_analytic_scaled_radius {E : Type*} [NormedAddCommGroup E]
+theorem poisson_formula_analytic_scaled {E : Type*} [NormedAddCommGroup E]
     [NormedSpace ℂ E] [CompleteSpace E] {f : ℂ → E} {z : ℂ} {r : ℝ}
     (hf : AnalyticOn ℂ f (ball 0 1))
     (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
@@ -268,7 +270,7 @@ theorem poisson_formula_analytic_scaled_radius {E : Type*} [NormedAddCommGroup E
   simp only [star_def, mul_conj, normSq_eq_norm_sq]
   simp only [ofReal_div, ofReal_sub, ofReal_one, ofReal_pow, map_sub]
   congr 1
-  simp only [← star_def, star_exp_ofReal_mul_I, mul_sub, sub_mul]
+  simp only [← star_def, star_exp_ofReal_mul_I_eq_inv, mul_sub, sub_mul]
   simp only [ne_eq, Complex.exp_ne_zero, not_false_eq_true, mul_inv_cancel₀, star_def,
              mul_conj, normSq_eq_norm_sq z, ofReal_pow, sub_add_sub_cancel]
 
@@ -297,7 +299,7 @@ theorem poisson_formula_harmonic_scaled_radius {u : ℂ → ℝ} {z : ℂ} {r : 
        fun t _ => by simp only [← hf_eq (exp_ofReal_mul_I_in_unitDisc hr t)]
   rw [← intervalIntegral.integral_congr hrt_eq]
   dsimp
-  rw [congr_arg re (poisson_formula_analytic_scaled_radius hf hr hz), smul_re, smul_eq_mul]
+  rw [congr_arg re (poisson_formula_analytic_scaled hf hr hz), smul_re, smul_eq_mul]
   congr 1
   simp only [intervalIntegral.integral_of_le two_pi_pos.le]
   symm
@@ -317,8 +319,8 @@ open Filter Topology
 -- #count_heartbeats in -- 5100 hb
 /- We bound  t ↦ ‖k (exp (t * I)) • f (r * exp (t * I))‖, for
 k continuous on the unit circle and f continuous on the closed unit disc. -/
-lemma bounds_continuousOn_unitDisc_unitCircle {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-    {f : ℂ → E} {k : ℂ → ℝ} {r : ℝ} {t : ℝ} (hr : r ∈ Ioo 0 1)
+lemma bounds_continuousOn_closedUnitDisc_unitCircle {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] {f : ℂ → E} {k : ℂ → ℝ} {r : ℝ} {t : ℝ} (hr : r ∈ Ioo 0 1)
     (hf : ContinuousOn f (closedBall 0 1)) (hk : ContinuousOn k (sphere 0 1)) :
     ‖k (exp (t * I)) • f (r * exp (t * I))‖ ≤
     sSup ((fun ζ ↦ |k ζ|) '' sphere 0 1) * sSup ((fun w ↦ ‖f w‖) '' closedBall 0 1) := by
@@ -371,7 +373,7 @@ lemma tendsto_integral_prod_of_continuousOn
     · exact ContinuousOn.comp_continuous (s:= closedBall 0 1) hf (by fun_prop) (hrn n)
   -- We verify that the integrand is eventually bounded by the bound.
   · exact Eventually.of_forall fun n => Eventually.of_forall fun t ht =>
-             bounds_continuousOn_unitDisc_unitCircle (hr n) hf hk
+             bounds_continuousOn_closedUnitDisc_unitCircle (hr n) hf hk
   · simp only [ne_eq, enorm_ne_top, not_false_eq_true, intervalIntegrable_const]
   -- We verify the pointwise convergence of the integrand.
   · refine Eventually.of_forall fun x hx => Tendsto.smul tendsto_const_nhds ?_
@@ -404,7 +406,7 @@ lemma seq_conv_to_one_in_unit_interval :
   let r : ℕ → ℝ := fun n => 1 - 1 / (n + 2)
   have hr (n : ℕ) : r n ∈ Ioo 0 1 := by
     simp only [one_div, mem_Ioo, sub_pos, sub_lt_self_iff, inv_pos, r]
-    have : (1 : ℝ) < (↑n + 2 : ℝ) := by linarith
+    have : (1 : ℝ) < n + 2 := by linarith
     exact ⟨inv_lt_one_of_one_lt₀ this, by linarith⟩
   have hr_lim : Tendsto r atTop (𝓝 1) :=
     le_trans (tendsto_const_nhds.sub <| tendsto_const_nhds.div_atTop
@@ -414,7 +416,7 @@ lemma seq_conv_to_one_in_unit_interval :
 -- #count_heartbeats in -- 800 hb
 /- If r n tends to 1, then f (r n * z) tends to f z, for z in the unit disc,
 when f is continuous on the closed unit disc. -/
-lemma radii_tendsto_one_continuousOn_closedUnitDisc {E : Type*} [NormedAddCommGroup E]
+lemma radius_tendsto_one_continuousOn_closedUnitDisc {E : Type*} [NormedAddCommGroup E]
     [NormedSpace ℝ E] [CompleteSpace E] {f : ℂ → E} {z : ℂ} {r : ℕ → ℝ}
     (hc : ContinuousOn f (closedBall 0 1)) (hr_lim : Tendsto r atTop (𝓝 1))
     (hz : z ∈ ball 0 1) : Tendsto (fun n => f (r n * z)) atTop (𝓝 (f z)) := by
@@ -447,7 +449,7 @@ theorem poisson_integral_formula_harmonic {u : ℂ → ℝ} {z : ℂ}
     dsimp only [smul_eq_mul] at hu_lim
     exact (Tendsto.const_mul (1 / (2 * π)) hu_lim)
   -- We conclude by uniqueness of limits and by revealing the Poisson kernel.
-  rw [← tendsto_nhds_unique hu_lim (radii_tendsto_one_continuousOn_closedUnitDisc hc hr_lim hz)]
+  rw [← tendsto_nhds_unique hu_lim (radius_tendsto_one_continuousOn_closedUnitDisc hc hr_lim hz)]
 
 -- #count_heartbeats in -- 4200 hb
 /-- **Poisson integral formula for analytic functions on the unit disc**:
@@ -463,14 +465,14 @@ theorem poisson_integral_formula_analytic {E : Type*} [NormedAddCommGroup E]
   let r : ℕ → ℝ := fun n => 1 - 1 / (n + 2)
   obtain ⟨hr, hr_lim⟩ := seq_conv_to_one_in_unit_interval
   -- We express `f(r_n z)` as the Poisson integral and then take the limit.
-  have h_poisson (n : ℕ) := poisson_formula_analytic_scaled_radius hf (hr n) hz
+  have h_poisson (n : ℕ) := poisson_formula_analytic_scaled hf (hr n) hz
   have hu_lim : Tendsto (fun n => (f (r n * z))) atTop (𝓝 ((1 / (2 * π)) • ∫ t in 0..2 * π,
       ((1 - ‖z‖ ^ 2) / ‖(exp (t * I)) - z‖ ^ 2) • f (exp (t * I)))) := by
     simp only [r,h_poisson]
     exact (Tendsto.const_smul (tendsto_integral_prod_of_continuousOn hc
             (poisson_kernel_continousOn_circle hz) hr hr_lim) (1 / (2 * π)))
   -- We conclude by uniqueness of limits and by revealing the Poisson kernel.
-  rw [← tendsto_nhds_unique (hu_lim) (radii_tendsto_one_continuousOn_closedUnitDisc hc hr_lim hz)]
+  rw [← tendsto_nhds_unique (hu_lim) (radius_tendsto_one_continuousOn_closedUnitDisc hc hr_lim hz)]
 
 -- #count_heartbeats in -- 2300 hb
 /-- The real part of the Herglotz–Riesz kernel is equal to the Poisson kernel. -/
