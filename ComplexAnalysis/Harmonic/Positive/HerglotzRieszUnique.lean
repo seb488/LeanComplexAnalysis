@@ -54,7 +54,7 @@ lemma moments_eq_integers (μ₁ μ₂ : ProbabilityMeasure (sphere (0 : ℂ) 1)
     simp only [zpow_natCast]
     exact h n
 
---#count_heartbeats in
+--#count_heartbeats in --1000
 lemma continuous_zpow_on_unit_circle (n : ℤ) :
     Continuous (fun x : sphere (0 : ℂ) 1 => x.val ^ n) := by
   cases n with
@@ -72,7 +72,7 @@ lemma continuous_zpow_on_unit_circle (n : ℤ) :
          rw [← norm_ne_zero_iff, this]
          exact one_ne_zero
 
---#count_heartbeats in --109296  TODO
+--#count_heartbeats in --109296  --> 38000
 /-- The span of moments is dense in the space of continuous functions on the unit circle. -/
 lemma span_moments_dense : (Submodule.span ℂ (Set.range (fun n : ℤ => ContinuousMap.mk (
     fun x : sphere (0 : ℂ) 1 => x.val ^ n)
@@ -103,9 +103,15 @@ lemma span_moments_dense : (Submodule.span ℂ (Set.range (fun n : ℤ => Contin
         exact ⟨f, ⟨f, hf_mem, rfl⟩, hf_ne⟩
     apply h_stone_weierstrass A
     · rintro ⟨a, ha⟩ ⟨b, hb⟩ hab
-      use ContinuousMap.mk (fun x : sphere (0 : ℂ) 1 => x.val)
-      refine ⟨?_, fun h => hab (Subtype.ext h)⟩
-      exact Algebra.subset_adjoin (Set.mem_insert _ _)
+      show ∃ f : C(sphere (0:ℂ) 1, ℂ), f ∈ A ∧ f ⟨a, ha⟩ ≠ f ⟨b, hb⟩
+      refine ⟨⟨fun x => x.val, continuous_subtype_val⟩, ?_, ?_⟩
+      · -- Membership
+        apply StarAlgebra.subset_adjoin
+        simp only [Set.mem_singleton_iff]
+      · -- Inequality
+        simp
+        intro h
+        exact hab (Subtype.ext h)
     · intro c
       convert Subalgebra.algebraMap_mem _ c
   intro x hx
@@ -138,20 +144,6 @@ lemma span_moments_dense : (Submodule.span ℂ (Set.range (fun n : ℤ => Contin
     simp only [Finset.mul_sum _ _ _]
     refine Submodule.sum_mem _ fun i hi =>
       Submodule.smul_mem _ _ (Submodule.sum_mem _ fun j hj => ?_)
-    -- We use that the product of two Laurent polynomials is also a Laurent polynomial.
-    -- have h_prod : (c₁ i • ContinuousMap.mk (fun x : sphere (0 : ℂ) 1 => x.val ^ i)
-    --   (continuous_zpow_on_unit_circle i)) *
-    --     (c₂ j • ContinuousMap.mk (fun x : sphere (0 : ℂ) 1 => x.val ^ j)
-    --       (continuous_zpow_on_unit_circle j)) = (c₁ i * c₂ j) • ContinuousMap.mk
-    --         (fun x : sphere (0 : ℂ) 1 => x.val ^ (i + j)) (
-    --           continuous_zpow_on_unit_circle (i + j)) := by
-    --  -- By the properties of exponents, we can combine the terms on the left-hand side.
-    --   have h_exp : ∀ x : sphere (0 : ℂ) 1, (x.val ^ i) * (x.val ^ j) = x.val ^ (i + j) := by
-    --     intros x
-    --     have hx : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
-    --     rw [zpow_add₀]
-    --     exact norm_ne_zero_iff.mp (by simp [hx])
-    --   ext x; simp [h_exp, mul_assoc, mul_left_comm, smul_smul]
     rw [mul_smul_comm]
     refine Submodule.smul_mem _ _ (Submodule.subset_span ⟨i + j, ?_⟩)
     ext x
@@ -182,7 +174,7 @@ lemma span_moments_dense : (Submodule.span ℂ (Set.range (fun n : ℤ => Contin
       rw [star_smul]
       exact Submodule.smul_mem _ _ hsx
 
---#count_heartbeats in
+--#count_heartbeats in --28000
 /-- If two finite measures agree on a dense subspace of continuous functions,
 then they agree on all continuous functions. -/
 lemma integral_eq_on_dense_set {X : Type*} [TopologicalSpace X] [CompactSpace X]
@@ -221,7 +213,7 @@ lemma integral_eq_on_dense_set {X : Type*} [TopologicalSpace X] [CompactSpace X]
       symm
       exact h (f_n x) hx))
 
---#count_heartbeats in
+--#count_heartbeats in --14000
 /-- If two probability measures on the unit circle have the same moments, then they are equal. -/
 lemma measure_eq_of_moments (μ₁ μ₂ : Measure (sphere (0 : ℂ) 1))
     [IsProbabilityMeasure μ₁] [IsProbabilityMeasure μ₂]
@@ -261,7 +253,7 @@ lemma measure_eq_of_moments (μ₁ μ₂ : Measure (sphere (0 : ℂ) 1))
     · exact Eq.symm (by erw [integral_ofReal] ; norm_cast)
   exact ext_of_forall_integral_eq_of_IsFiniteMeasure fun f ↦ h_eq f.toContinuousMap
 
---#count_heartbeats in -- TODO 45000
+--#count_heartbeats in -- 45000
 /-- If two power series are equal on the unit disc, then their coefficients are equal. -/
 lemma coeffs_eq_of_series_eq (c1 c2 : ℕ → ℂ)
     (hc1 : ∃ M, ∀ n, ‖c1 n‖ ≤ M) (hc2 : ∃ M, ∀ n, ‖c2 n‖ ≤ M)
@@ -371,10 +363,11 @@ lemma coeffs_eq_of_series_eq (c1 c2 : ℕ → ℂ)
     tendsto_const_nhds.congr'
       (by filter_upwards [self_mem_nhdsWithin,
                           mem_nhdsWithin_of_mem_nhds (Metric.ball_mem_nhds _ zero_lt_one)]
-                         with z hz hz'; aesop) -- here we use h_eq
+                          with z hz hz'; simp_all only [Set.mem_compl_iff, Set.mem_singleton_iff,
+                            mem_ball, dist_zero_right, zero_div]) -- here we use h_eq
   exact eq_of_sub_eq_zero (tendsto_nhds_unique h_limit h_zero_limit)
 
---#count_heartbeats in
+--#count_heartbeats in --6000
 /-- We expand the Herglotz–Riesz kernel into a power series at 0 by using that
  1/(1 - z/w) = Σ_{n=0}^∞ (z/w)^n. -/
 lemma kernel_expansion (z : ℂ) (hz : ‖z‖ < 1) (w : ℂ) (hw : ‖w‖ = 1) :
@@ -404,7 +397,7 @@ lemma kernel_expansion (z : ℂ) (hz : ‖z‖ < 1) (w : ℂ) (hw : ‖w‖ = 1)
     rw [div_eq_mul_inv, inv_def]
     simp [normSq_eq_norm_sq,hw]
 
---#count_heartbeats in
+#count_heartbeats in --19000
 /-- The kernel_expansion is used to rewrite the integral. -/
 lemma integral_kernel_expansion
     (μ : ProbabilityMeasure (sphere (0 : ℂ) 1)) (z : ℂ) (hz : ‖z‖ < 1) :
@@ -415,7 +408,7 @@ lemma integral_kernel_expansion
      ∫ x : sphere (0 : ℂ) 1, (1 + 2 * ∑' n : ℕ, z ^ (n + 1) * star ((x : ℂ) ^ (n + 1))) ∂μ := by
     apply integral_congr_ae (by filter_upwards with x; apply kernel_expansion z hz; simp)
   rw [h_integral, integral_add, integral_const_mul]
-  all_goals norm_num
+  all_goals simp
   · -- We interchange the integral and the sum.
     rw [integral_tsum]
     · exact tsum_congr fun _ => integral_const_mul _ _
@@ -451,7 +444,7 @@ lemma integral_kernel_expansion
         ext i
         rw [norm_mul, norm_pow, norm_pow]
 
---#count_heartbeats in
+--#count_heartbeats in --10000
 /-- If two probability measures on the unit circle yield the same Herglotz–Riesz functions,
 then they are equal. -/
 theorem HerglotzRiesz_representation_uniqueness

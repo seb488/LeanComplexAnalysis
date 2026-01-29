@@ -22,11 +22,36 @@ for all `z` in the unit disc.
 public section
 
 open  Complex InnerProductSpace Metric Set
+set_option Elab.async false
 
+
+--#count_heartbeats in --5000
+lemma non_neg_boundary
+    (u : ℂ → ℝ) (t : ℝ)
+    (h_pos : ∀ z ∈ ball (0 : ℂ) 1, 0 < u z)
+    (hc : ContinuousOn u (closedBall 0 1)) :
+    0 ≤ u (exp (t * I)) := by
+  have h_boundary : Filter.Tendsto (fun r : ℝ => u (r * exp (t * I)))
+      (nhdsWithin 1 (Set.Iio 1)) (nhds (u (exp (t * I)))) := by
+      have h_cont : ContinuousOn (fun r : ℝ => u (r * exp (t * I))) (Set.Icc 0 1) := by
+        refine hc.comp ?_ ?_
+        · fun_prop
+        · norm_num [Set.MapsTo, norm_exp]
+          exact fun x hx₁ hx₂ => abs_le.mpr ⟨by linarith, by linarith⟩
+      have := h_cont 1 (by norm_num)
+      simpa using this.tendsto.mono_left <| nhdsWithin_mono _ <| Set.Ioo_subset_Icc_self;
+  have h_boundary : ∀ᶠ r : ℝ in nhdsWithin 1 (Set.Iio 1), 0 < u (r * exp (t * I)) := by
+      filter_upwards [Ioo_mem_nhdsLT zero_lt_one] with r hr using h_pos _ <| by
+        simpa [abs_of_nonneg hr.1.le, norm_exp] using hr.2
+  exact le_of_tendsto_of_tendsto tendsto_const_nhds ‹_› (
+      Filter.eventually_of_mem h_boundary fun x hx => le_of_lt hx)
+
+--#time -- 17000ms
+--#count_heartbeats in --184509 --> 135000
 /-- Harnack's inequality for a positive harmonic functions u on the unit disc
 with u(0) = 1 and assuming continuous extension to the closed unit disc.
 -/
-private lemma harnack_ineq_cont_normalized
+lemma harnack_ineq_cont_normalized
     (u : ℂ → ℝ)
     (h_pos : ∀ z ∈ ball (0 : ℂ) 1, 0 < u z)
     (h_f_zero : u 0 = 1)
@@ -34,25 +59,6 @@ private lemma harnack_ineq_cont_normalized
     (hc : ContinuousOn u (closedBall 0 1))
     (z : ℂ) (hz : z ∈ ball 0 1) :
     (1 - ‖z‖) / (1 + ‖z‖) ≤ u z ∧ u z ≤ (1 + ‖z‖) / (1 - ‖z‖) := by
-  have h_boundary : ∀ t : ℝ, 0 ≤ t → t ≤ 2 * Real.pi → u (exp (t * I)) ≥ 0 := by
-    intros t ht_nonneg ht_le_two_pi
-    have h_boundary : Filter.Tendsto (fun r : ℝ => u (r * exp (t * I)))
-      (nhdsWithin 1 (Set.Iio 1)) (nhds (u (exp (t * I)))) := by
-      have h_boundary : Filter.Tendsto (fun r : ℝ => u (r * exp (t * I)))
-        (nhdsWithin 1 (Set.Iio 1)) (nhds (u (exp (t * I)))) := by
-        have h_cont : ContinuousOn (fun r : ℝ => u (r * exp (t * I))) (Set.Icc 0 1) := by
-          refine hc.comp ?_ ?_
-          · fun_prop
-          · norm_num [Set.MapsTo, norm_exp]
-            exact fun x hx₁ hx₂ => abs_le.mpr ⟨by linarith, by linarith⟩
-        have := h_cont 1 (by norm_num)
-        simpa using this.tendsto.mono_left <| nhdsWithin_mono _ <| Set.Ioo_subset_Icc_self;
-      convert h_boundary using 1;
-    have h_boundary : ∀ᶠ r : ℝ in nhdsWithin 1 (Set.Iio 1), 0 < u (r * exp (t * I)) := by
-      filter_upwards [Ioo_mem_nhdsLT zero_lt_one] with r hr using h_pos _ <| by
-        simpa [abs_of_nonneg hr.1.le, norm_exp] using hr.2
-    exact le_of_tendsto_of_tendsto tendsto_const_nhds ‹_› (
-      Filter.eventually_of_mem h_boundary fun x hx => le_of_lt hx)
   have h_cont_exp : Continuous fun t : ℝ => cexp (t * I) := by
     continuity
   -- Apply the Poisson integral formula to u.
@@ -74,51 +80,80 @@ private lemma harnack_ineq_cont_normalized
       have h_norm_bound : ‖(exp (t * I)) - z‖^2 ≥ (1 - ‖z‖)^2 ∧
         ‖(exp (t * I)) - z‖^2 ≤ (1 + ‖z‖)^2 := by
         have h_norm_bound : ‖(exp (t * I)) - z‖ ≥ 1 - ‖z‖ ∧ ‖(exp (t * I)) - z‖ ≤ 1 + ‖z‖ := by
-          exact ⟨by have := norm_sub_norm_le (exp (t * I)) z; norm_num [norm_exp] at *; linarith,
-           by have := norm_sub_le (exp (t * I)) z; norm_num [norm_exp] at *; linarith⟩
+          exact ⟨by
+                have := norm_sub_norm_le (exp (t * I)) z
+                rw [mem_ball_zero_iff] at hz ; simp at h_pos ; simp [norm_exp] at this
+                simp only [one_div, mul_comm] at h_poisson
+                simp
+                linarith,
+                by
+                have := norm_sub_le (exp (t * I)) z
+                rw [mem_ball_zero_iff] at hz ; simp at h_pos ; simp [norm_exp] at this
+                simp only [one_div, mul_comm] at h_poisson
+                simp
+                linarith⟩
         exact ⟨pow_le_pow_left₀ (sub_nonneg.2 <| le_of_lt <| by simpa using hz) h_norm_bound.1 2,
           pow_le_pow_left₀ (norm_nonneg _) h_norm_bound.2 2⟩
       constructor <;> gcongr
       any_goals nlinarith [norm_nonneg z, show ‖z‖ < 1 from by simpa using hz]
-      · exact h_boundary t ht_nonneg ht_le_two_pi
-      · exact h_boundary t ht_nonneg ht_le_two_pi
+      · exact non_neg_boundary u t h_pos hc
+      · exact non_neg_boundary u t h_pos hc
       · nlinarith [norm_nonneg (exp (t * I) - z)]
     rw [h_poisson]
     constructor <;> apply_rules [mul_le_mul_of_nonneg_left,
-      intervalIntegral.integral_mono_on] <;> norm_num
-    any_goals linarith [Real.pi_pos]
+      intervalIntegral.integral_mono_on] <;>
+    all_goals try linarith [Real.pi_pos]
+    all_goals try exact one_div_nonneg.mpr (by nlinarith [Real.pi_pos])
+    all_goals  norm_num
     any_goals intro t ht₁ ht₂; linarith [h_bound_integral t ht₁ ht₂]
     · apply_rules [ContinuousOn.intervalIntegrable]
-      exact ContinuousOn.mul continuousOn_const <| hc.comp (Continuous.continuousOn <| by
-        continuity) fun x hx => by simp [norm_exp]
+      apply ContinuousOn.mul
+      · exact continuousOn_const
+      · apply hc.comp
+        · exact Continuous.continuousOn h_cont_exp
+        · intro t ht ; simp [norm_exp]
     · apply_rules [ContinuousOn.intervalIntegrable]
       refine ContinuousOn.mul ?_ ?_
       · refine ContinuousOn.div continuousOn_const ?_ ?_
         · fun_prop
         · norm_num [exp_ne_zero, sub_eq_zero]
           intro t ht H; rw [← H] at hz; norm_num [norm_exp] at hz
-      · exact hc.comp (Continuous.continuousOn <| by continuity) fun x hx => by simp [norm_exp]
+      · apply hc.comp
+        · exact Continuous.continuousOn h_cont_exp
+        · intro t ht ; simp [norm_exp]
     · apply_rules [ContinuousOn.intervalIntegrable]
       refine ContinuousOn.mul ?_ ?_
       · refine ContinuousOn.div continuousOn_const ?_ ?_
         · fun_prop;
         · norm_num [exp_ne_zero, sub_eq_zero]
           intro t ht H; rw [← H] at hz; norm_num [norm_exp] at hz
-      · exact hc.comp (Continuous.continuousOn <| by continuity) fun x hx => by simp [norm_exp]
+      · apply hc.comp
+        · exact Continuous.continuousOn h_cont_exp
+        · intro t ht ; simp [norm_exp]
     · apply_rules [ContinuousOn.intervalIntegrable]
       refine ContinuousOn.mul continuousOn_const ?_
-      exact hc.comp (Continuous.continuousOn <| by continuity) fun x hx => by simp [norm_exp]
+      apply hc.comp
+      · exact Continuous.continuousOn h_cont_exp
+      · intro t ht ; simp [norm_exp]
   -- Using the fact that u(0) = 1, we can simplify the integrals.
   have h_integral_simplified : ∫ t in (0 : ℝ)..2 * Real.pi, u (exp (t * I)) = 2 * Real.pi := by
     -- Apply the Poisson integral formula at the center of the disc (= mean value property).
     have := poisson_integral_formula  h_harmonic hc (z:=0)
     norm_num at this ⊢
     nlinarith [Real.pi_pos, mul_inv_cancel₀ Real.pi_ne_zero]
-  convert h_integral_bounds using 2 <;> norm_num [h_integral_simplified] <;> ring;
+  convert h_integral_bounds using 2
+  all_goals simp [h_integral_simplified]
+  all_goals ring_nf
   · field_simp
     ring
-  · grind
+  · have hz' : ‖z‖ < 1 := by simpa [Metric.mem_ball, dist_eq_norm] using hz
+    have hz'' : (1 - ‖z‖) ≠ 0 := by nlinarith
+    have hz''' : (1 - ‖z‖ * 2 + ‖z‖ ^ 2) ≠ 0 := by  nlinarith
+    field_simp
+    ring
 
+--#time -- 1000ms
+--#count_heartbeats in -- 11000
 /--
 Removing the normalization at `0` from Lemma `harnack_ineq_normalized_cont`.
 -/
@@ -165,6 +200,8 @@ private lemma harnack_ineq_cont
     _ ≤ ((1 + ‖z‖) / (1 - ‖z‖)) * u 0 := by nlinarith [this.2, h0_ge]
     _ = u 0 * (1 + ‖z‖) / (1 - ‖z‖) := by ring
 
+
+--#count_heartbeats in -- 7000
 /-- The scaled version of a harmonic function. -/
 private lemma harmonic_scaling
     (u : ℂ → ℝ)
@@ -173,7 +210,7 @@ private lemma harmonic_scaling
     let v : ℂ → ℝ := fun w => u (r * w)
     HarmonicOnNhd v (ball (0 : ℂ) 1):= by
       intro v
-      simp_all only [Set.mem_Ioo]
+      simp only [Set.mem_Ioo] at hr
       have hfu : ∃ (f : ℂ → ℂ), AnalyticOn ℂ f (ball 0 1) ∧
         EqOn (fun (z : ℂ) => (f z).re) u (ball 0 1) := by
         obtain ⟨f,hf⟩ := @harmonic_is_realOfHolomorphic u (0 : ℂ) 1 hu
@@ -201,13 +238,13 @@ private lemma harmonic_scaling
                           by simpa [abs_of_pos hr.1]
                           using by nlinarith [norm_nonneg w,
                                               show (‖w‖ : ℝ) < 1 from by simpa using hw])
-        aesop
-      intro w hw;
+        exact hf_eq.symm
+      intro w hw
       have hv_harmonic_at_w : ∀ᶠ w in nhds w, v w = (f (r * w)).re := by
         exact Filter.mem_of_superset (IsOpen.mem_nhds isOpen_ball hw) hv_eq
       exact (harmonicAt_congr_nhds hv_harmonic_at_w).mpr (hv_harmonic w hw)
 
-
+--#count_heartbeats in  --17000
 /-- Scaled version of Harnack's inequality for a smaller radius r < 1. -/
 private lemma harnack_ineq_aux
     (u : ℂ → ℝ)
@@ -238,7 +275,7 @@ private lemma harnack_ineq_aux
           simpa [abs_of_pos hr.1] using
             by nlinarith [hr.1, hr.2, norm_nonneg w, show ‖w‖ < 1 from by simpa using hw])
           hv_harmonic hv_cont (z / r) (by simp_all [div_lt_iff₀, abs_of_pos hr.1])
-      simp at *;
+      simp only [Set.mem_Ioo] at hr
       convert hv_ineq using 2 <;> norm_num [abs_of_pos hr.1, mul_div_cancel₀, hr.1.ne']
       · have hr_pos : 0 < r := hr.1
         field_simp [hr_pos.ne']
@@ -253,6 +290,7 @@ private lemma harnack_ineq_aux
         have hr_pos : 0 < r := hr.1
         field_simp [hr_pos.ne']
 
+--#count_heartbeats in -- 4500
 /-- **Harnack's inequality for positive harmonic functions.**
 A positive harmonic function on the unit disc satisfies
 two-sided estimates in terms of the distance to the boundary.
@@ -287,6 +325,7 @@ theorem harnack_ineq
       nhdsWithin 1 (Set.Iio 1)) (nhds (u 0 * (1 + ‖z‖) / (1 - ‖z‖))) := by
       exact Filter.Tendsto.div (tendsto_const_nhds.mul (
         continuousWithinAt_id.add continuousWithinAt_const)) (
-          continuousWithinAt_id.sub continuousWithinAt_const) (sub_ne_zero_of_ne <| by aesop)
+          continuousWithinAt_id.sub continuousWithinAt_const) (sub_ne_zero_of_ne <|
+            by linarith [mem_ball_zero_iff.mp hz])
     exact le_of_tendsto_of_tendsto tendsto_const_nhds h_lim (
       Filter.eventually_of_mem (Ioo_mem_nhdsLT <| show ‖z‖ < 1 from by simpa using hz) h_aux)

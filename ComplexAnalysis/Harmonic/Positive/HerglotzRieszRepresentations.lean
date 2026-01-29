@@ -153,7 +153,8 @@ lemma herglotz_hasDerivAt (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
         exact ⟨(1 - ‖w₀‖) / 2, half_pos (sub_pos.mpr hw₀), fun n hn hn' =>
           Filter.eventually_of_mem (MeasureTheory.measure_eq_zero_iff_ae_notMem.mp (
             show μ.toMeasure (μ.toMeasure.supportᶜ) = 0 from by simp)) fun x hx =>
-              h_bound x (by aesop) n hn⟩
+              h_bound x (by simp_all [Subtype.forall, mem_sphere_iff_norm, sub_zero,
+                mem_compl_iff, mem_singleton_iff, not_not, setOf_mem_eq]) n hn⟩
       · norm_num
       · have h_tendsto : ∀ x ∈ μ.toMeasure.support,
           Filter.Tendsto (fun n => ((x + n) / (x - n) - (x + w₀) / (x - w₀)) / (n - w₀))
@@ -195,7 +196,7 @@ lemma herglotz_hasDerivAt (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
       h_integrable2 w₀ hw₀⟩
   exact Or.inl <| MeasureTheory.integral_sub h_integrable.1 h_integrable.2
 
-#count_heartbeats in --33000 -> 11000
+--#count_heartbeats in --33000 -> 11000
 /-- Every Herglotz–Riesz representation is analytic, maps 0 to 1 and the unit disc
 into the right half-plane. -/
 theorem HerglotzRiesz_realPos (μ : ProbabilityMeasure (sphere (0 : ℂ) 1)) :
@@ -291,6 +292,7 @@ noncomputable def poisson_kernel_func (z : ℂ) (hz : z ∈ ball 0 1) : C_unit_c
       continuous_subtype_val.add continuous_const) (
         continuous_subtype_val.sub continuous_const) fun w => h_denom_ne_zero w)⟩
 
+--#count_heartbeats in
 /-- `circleMap` takes values on the unit circle. -/
 lemma circleMap_mem_unit_circle (t : ℝ) : circleMap 0 1 t ∈ sphere (0 : ℂ) 1 := by
   apply circleMap_mem_sphere
@@ -360,6 +362,7 @@ def K : Set C_unit_circleDual := {Λ | ∀ f : C_unit_circle, ‖f‖ < 1 → |�
 
 def K_weak : Set (WeakDual ℝ C_unit_circle) := K
 
+--#count_heartbeats in --5000
 /-- The complex Poisson kernel is integrable on the unit circle
 with respect to any finite measure. -/
 lemma complex_kernel_integrable (μ : Measure (sphere (0 : ℂ) 1))
@@ -370,7 +373,7 @@ lemma complex_kernel_integrable (μ : Measure (sphere (0 : ℂ) 1))
     refine Continuous.div ?_ ?_ ?_
     · fun_prop
     · fun_prop
-    · norm_num at *
+    · simp at ⊢ hz
       intro a ha h_eq
       have : a = z := sub_eq_zero.mp h_eq
       rw [this] at ha
@@ -379,6 +382,7 @@ lemma complex_kernel_integrable (μ : Measure (sphere (0 : ℂ) 1))
   rw [hasCompactSupport_iff_eventuallyEq]
   simp [Filter.EventuallyEq]
 
+--#count_heartbeats in
 /-- The integral of the Poisson kernel is the real part of
 the integral of the Herglotz–Riesz kernel. -/
 lemma integral_poisson_eq_re_integral (μ : Measure (sphere (0 : ℂ) 1))
@@ -398,8 +402,12 @@ lemma u_n_pos (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ) (hp : MapsTo p (ball
     simp
     have hz_norm : ‖z‖ = 1 := by exact mem_sphere_zero_iff_norm.mp hz
     rw [abs_of_pos hr.1, hz_norm] ; linarith [hr.2]
-  aesop
+  obtain ⟨left, right⟩ := hr
+  apply hp
+  simp_all only [mem_ball, dist_zero_right, Complex.norm_mul, norm_real,
+    Real.norm_eq_abs]
 
+--#count_heartbeats in --43000 --> 38000
 /-- The mean value property for `u_n p` at 0. -/
 lemma u_n_mean_value (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ)
     (hp_analytic : AnalyticOn ℂ p (ball (0 : ℂ) 1))
@@ -420,10 +428,10 @@ lemma u_n_mean_value (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ)
           mem_closedBall_zero_iff.mp hz) hr.1.le) hr.2
     have := @Complex.circleIntegral_div_sub_of_differentiable_on_off_countable
     specialize @this 1 0 0 {0} ; norm_num at this
-    specialize @this (fun z => p (r n * z)) ?_ ?_ <;> norm_num at *
+    specialize @this (fun z => p (r n * z)) ?_ ?_ <;> simp at hr
     · exact h_analytic.continuousOn
     · intro z hz hz'; exact h_analytic.differentiableOn.differentiableAt (
-        closedBall_mem_nhds_of_mem (by aesop))
+        closedBall_mem_nhds_of_mem (by simp_all only [mem_ball, dist_zero_right]))
     · simp_all [div_eq_mul_inv, mul_assoc, mul_comm, mul_left_comm, circleIntegral]
       simp_all [mul_left_comm (circleMap 0 1 _), mul_comm, ne_of_gt (Real.pi_pos)]
   -- Taking the real part of both sides of the mean value property, we get the desired result.
@@ -445,8 +453,9 @@ lemma u_n_mean_value (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ)
     · continuity
     · norm_num [circleMap, abs_of_pos hr.1]
       linarith [hr.2]
-  aesop
+  simp_all only [mem_Ioo, one_div, mul_inv_rev, one_re]
 
+--#count_heartbeats in --3000
 /-- `u_n p r n` composed with `circleMap` is continuous. -/
 lemma u_n_continuous (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ)
     (hp_analytic : AnalyticOn ℂ p (ball (0 : ℂ) 1))
@@ -540,6 +549,7 @@ lemma embed_continuous : Continuous embed := by
   intro n
   exact (WeakBilin.eval_continuous (topDualPairing ℝ C_unit_circle) (dense_seq n))
 
+--#count_heartbeats in -- 8000 -> 4000
 lemma embed_injective : Function.Injective embed := by
   /- To prove injectivity, assume that two elements `Λ` and `Λ'` in the dual space
   have the same image under the embedding. This means that for every `n`,
@@ -572,7 +582,9 @@ lemma embed_injective : Function.Injective embed := by
       intro n
       obtain ⟨m, hm⟩ : ∃ m, f_n n = dense_seq m := by
         simpa [eq_comm] using hf_n_range n
-      replace h_eq := congr_fun h_eq m; aesop
+      replace h_eq := congr_fun h_eq m
+      simp_all only [mem_range]
+      exact h_eq
     exact tendsto_nhds_unique (h_cont f f_n hf_n_conv |>.1) (
       by simpa only [h_eq_seq] using h_cont f f_n hf_n_conv |>.2)
   /- Since `Λ` and `Λ'` are equal on all elements of `C_unit_circle`,
@@ -595,6 +607,7 @@ lemma K_weak_metrizable : TopologicalSpace.MetrizableSpace (Subtype K_weak) := b
   have h_embedding : IsEmbedding embed_K := h_closed_embedding.isEmbedding
   exact h_embedding.metrizableSpace
 
+--#count_heartbeats in --34000 --> 26000
 /-- `|Λ f| ≤ 1` whenever `‖f‖ < 1`. -/
 lemma norm_lambda_leq_one (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ)
     (hp_analytic : AnalyticOn ℂ p (ball (0 : ℂ) 1))
@@ -633,7 +646,8 @@ lemma norm_lambda_leq_one (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ)
     ∫ t in (0 : ℝ)..2 * Real.pi, u_n p r n (circleMap 0 1 t) := by
     refine intervalIntegral.integral_congr fun t ht => abs_of_nonneg ?_
     apply le_of_lt; exact u_n_pos p r n hp_map hr (circleMap 0 1 t) (circleMap_mem_unit_circle t)
-  have := u_n_mean_value p r n hp_analytic hp0 hr; aesop
+  have := u_n_mean_value p r n hp_analytic hp0 hr
+  simp_all only [one_div, mul_inv_rev, ge_iff_le, Λ]
 
 /-- The space `K_weak` is sequentially compact. -/
 lemma K_weak_seq_compact : SeqCompactSpace (Subtype K_weak) := by
@@ -655,6 +669,7 @@ lemma Λ_seq_mem_K (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ)
     Λ_seq p r hp_analytic hr n ∈ K_weak := by
   exact fun f hf => by simpa using norm_lambda_leq_one p r n hp_analytic hp0 hp_map (hr n) f hf
 
+-- #count_heartbeats in 6000
 /-- There exists a subsequence Λ_{n_k} converging to some Λ in the weak* topology. -/
 lemma Λ_seq_converging_subsequence (p : ℂ → ℂ) (r : ℕ → ℝ)
     (hp_analytic : AnalyticOn ℂ p (ball (0 : ℂ) 1))
@@ -676,7 +691,19 @@ lemma Λ_seq_converging_subsequence (p : ℂ → ℂ) (r : ℕ → ℝ)
         Subtype K_weak) Filter.atTop (nhds Λ) := by
       have := this.1
       have := this (fun n => Set.mem_univ (
-        ⟨Λ_seq p r hp_analytic hr n, h_seq_in_K n⟩ : Subtype K_weak)) ; aesop
+        ⟨Λ_seq p r hp_analytic hr n, h_seq_in_K n⟩ : Subtype K_weak)) ;
+      simp_all only [mem_univ, true_and, Subtype.exists]
+      obtain ⟨w, h⟩ := this
+      obtain ⟨w_1, h⟩ := h
+      obtain ⟨w_2, h⟩ := h
+      obtain ⟨left, right⟩ := h
+      apply Exists.intro
+      · apply Exists.intro
+        · apply Exists.intro
+          · apply And.intro
+            · exact left
+            · exact right
+
     exact ⟨hΛ.choose, hΛ.choose_spec.1, Λ,
       by simpa using tendsto_subtype_rng.mp hΛ.choose_spec.2⟩
   obtain ⟨Λ, hΛ⟩ := hphi.2
@@ -704,6 +731,7 @@ lemma Λ_n_nonneg (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ)
   refine mul_nonneg (by positivity) (
     intervalIntegral.integral_nonneg (by positivity) fun t ht => h_prod_nonneg t ht)
 
+--#count_heartbeats in --58000 --> 51000
 /-- We apply the Riesz–Markov–Kakutani representation theorem for `Λ` to obtain the measure `μ`. -/
 lemma riesz_rep (Λ : WeakDual ℝ C_unit_circle)
     (h_pos : ∀ f : C_unit_circle, 0 ≤ f → 0 ≤ Λ f) :
@@ -732,7 +760,7 @@ lemma riesz_rep (Λ : WeakDual ℝ C_unit_circle)
     · intro f; rfl
   obtain ⟨Λ_c, hΛ_c⟩ := h_ext
   refine ⟨RealRMK.rieszMeasure Λ_c, ?_, ?_⟩
-  · constructor ; norm_num [RealRMK.rieszMeasure]
+  · constructor ; simp [RealRMK.rieszMeasure]
   · intro f
     obtain ⟨f_c, hf_c⟩ : ∃ f_c : CompactlySupportedContinuousMap (sphere (0 : ℂ) 1) ℝ,
       ∀ z : sphere (0 : ℂ) 1, f_c z = f z := by
@@ -741,11 +769,13 @@ lemma riesz_rep (Λ : WeakDual ℝ C_unit_circle)
         simp [Filter.EventuallyEq]
       · exact fun z ↦ rfl
     convert RealRMK.integral_rieszMeasure Λ_c f_c using 1
-    · rw [RealRMK.integral_rieszMeasure] ; aesop
+    · rw [RealRMK.integral_rieszMeasure]
+      simp_all
+      rfl
     convert RealRMK.integral_rieszMeasure Λ_c f_c using 1
     simp only [hf_c]
 
-
+--#count_heartbeats in --10000
 /-- Convergence of the subsequence of linear functionals. -/
 lemma convergence_sub_seq_functionals (p : ℂ → ℂ) (r : ℕ → ℝ)
     (hp_analytic : AnalyticOn ℂ p (ball (0 : ℂ) 1))
@@ -774,12 +804,16 @@ lemma convergence_sub_seq_functionals (p : ℂ → ℂ) (r : ℕ → ℝ)
       unfold Λ_n_val; norm_num; ring_nf
       exact congr_arg₂ _ (congr_arg₂ _ rfl (by norm_num)) rfl
     have h : μ Set.univ = 1 := by
-      rw [← ENNReal.toReal_eq_one_iff] ; aesop
+      rw [← ENNReal.toReal_eq_one_iff]
+      simp_all only [ContinuousMap.one_apply, integral_const, smul_eq_mul, mul_one]
+      obtain ⟨left, right⟩ := hμ
+      exact h_const
     exact ⟨by simpa using h⟩
   use ⟨μ, h_prob⟩
   use phi
   exact ⟨hphi, fun f hf => by simpa only [hμ.2] using hΛ f⟩
 
+--#count_heartbeats in  -- 1000
 /-- The value of `u` at `z` is equal to the real part of the integral
 of the Herglotz–Riesz kernel against the measure `μ`, under hypothesis of
 weak* convergence of `Λ_seq`. -/
@@ -807,6 +841,7 @@ lemma u_eq_limit_Lambda (p : ℂ → ℂ) (r : ℕ → ℝ)
     exact hr_lim
   exact tendsto_nhds_unique h_u_limit h_lambda_limit ▸ integral_poisson_eq_re_integral μ z hz
 
+--#count_heartbeats in -- 52000
 /-- If two analytic functions on the unit disc have the same value at 0
 and equal real parts, then they are equal on the unit disc. -/
 lemma analytic_unique_of_real_part
@@ -826,8 +861,10 @@ lemma analytic_unique_of_real_part
   let unitDisc := {z : ℂ | ‖z‖ < 1}
   have h_analytic : AnalyticOn ℂ h unitDisc := by
     exact hf.sub hg
-  have h_zero : h 0 = 0 := by aesop
-  have h_real_part : ∀ z ∈ unitDisc, (h z).re = 0 := by aesop
+  have h_zero : h 0 = 0 := by simp_all only [mem_setOf_eq, sub_self, h, unitDisc]
+  have h_real_part : ∀ z ∈ unitDisc, (h z).re = 0 := by
+    intro z a
+    simp_all only [mem_setOf_eq, sub_self, sub_re, h, unitDisc]
   /- Since `h` is analytic on the unit disc and its real part is zero,
   by the Cauchy-Riemann equations, `h` must be constant. -/
   have h_const : ∀ z ∈ unitDisc, h z = h 0 := by
@@ -841,11 +878,14 @@ lemma analytic_unique_of_real_part
         deriv h z) 0 ∧ HasDerivAt (
           fun x : ℝ => h (z + Complex.I * x)) (deriv h z * Complex.I) 0 := by
         constructor
-        · rw [hasDerivAt_iff_tendsto_slope_zero] at *
+        · rw [hasDerivAt_iff_tendsto_slope_zero] at h_cauchy_riemann ⊢
           convert h_cauchy_riemann.comp (show Filter.Tendsto (
             fun t : ℝ => ↑t) (𝓝[≠] 0) (𝓝[≠] 0) from Filter.Tendsto.inf (
               Continuous.tendsto' (by continuity) _ _ <|
-                by norm_num) <| by aesop) using 2 ; aesop
+                by norm_num) <| by
+                  simp [Filter.eventually_principal]) using 2;
+                  simp only [zero_add, ofReal_zero, add_zero, real_smul, ofReal_inv, smul_eq_mul,
+                    Function.comp_apply, h]
         · convert HasDerivAt.comp 0 (show HasDerivAt h (deriv h z) (
           z + Complex.I * 0) from by simpa using h_cauchy_riemann) (
             HasDerivAt.const_add z <| HasDerivAt.const_mul Complex.I <|
@@ -919,8 +959,8 @@ lemma analytic_unique_of_real_part
               by simpa [*] using ht)]⟩] ; exact continuousOn_const))
       simp at *
       have := h_ftc 0 1; rw [intervalIntegral.integral_congr fun t ht => h_ftc_step t (
-        by norm_num at ht; linarith) (
-          by norm_num at ht; linarith)] at this; norm_num at *; linear_combination' this.symm
+        by simp at ht; linarith) (
+          by simp at ht; linarith)] at this; simp at this; linear_combination' this.symm
     exact h_ftc
   exact fun z hz => sub_eq_zero.mp (h_const z hz |> Eq.trans <| h_zero)
 
@@ -942,7 +982,7 @@ theorem HerglotzRiesz_representation_existence (p : ℂ → ℂ)
   obtain ⟨μ, phi, hphi_strict_mono,
     hΛ_tendsto⟩ := convergence_sub_seq_functionals p r hp_analytic hp0 hp_map hr
   obtain ⟨hq_analytic,hq0,_⟩ := HerglotzRiesz_realPos μ
-  dsimp at *
+  dsimp at hq0
   /- We apply `u_eq_limit_Lambda`. -/
   have h_u_eq_limit_Lambda : ∀ z ∈ ball (0 : ℂ) 1, u p z =
     (∫ w : sphere (0 : ℂ) 1, ((w : ℂ) + z) / ((w : ℂ) - z) ∂μ).re := by
