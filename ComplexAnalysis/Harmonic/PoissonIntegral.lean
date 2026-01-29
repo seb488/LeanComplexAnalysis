@@ -260,7 +260,7 @@ open InnerProductSpace
 /-- For a harmonic function `u` on the unit disc, `u(rz)` equals the integral
 of `u(r e^{it})` times the real part of the Herglotz kernel, where `r ∈ (0,1)`
 and `z` is in the unit disc. -/
-theorem poisson_formula_harmonic_scaled_radius {u : ℂ → ℝ} {z : ℂ} {r : ℝ}
+theorem poisson_formula_harmonic_scaled {u : ℂ → ℝ} {z : ℂ} {r : ℝ}
     (hu : HarmonicOnNhd u (ball 0 1))
     (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
     u (r * z) = (1 / (2 * π)) * ∫ t in (0)..(2 * π),
@@ -414,7 +414,7 @@ theorem poisson_integral_formula_harmonic {u : ℂ → ℝ} {z : ℂ}
   let r : ℕ → ℝ := fun n => 1 - 1 / (n + 2)
   -- We approximate `1` by a sequence `r_n` in `(0,1)`.
   obtain ⟨hr, hr_lim⟩ := seq_conv_to_one_in_unit_interval
-  have h_poisson (n : ℕ) := poisson_formula_harmonic_scaled_radius hu (hr n) hz
+  have h_poisson (n : ℕ) := poisson_formula_harmonic_scaled hu (hr n) hz
   have hu_lim := tendsto_integral_prod_of_continuousOn hc
                  (poisson_kernel_continousOn_circle hz) hr hr_lim
   have hu_lim : Tendsto (fun n => (u (r n * z))) atTop (𝓝 ((1 / (2 * π)) * ∫ t in 0..2 * π,

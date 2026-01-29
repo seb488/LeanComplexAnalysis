@@ -48,11 +48,8 @@ The proof follows from the
 harmonic function, Poisson integral, analytic function, unit disc
 -/
 
-set_option Elab.async false
-
-set_option linter.tacticAnalysis.tryAtEachStepAesop true
-set_option linter.tacticAnalysis.tryAtEachStepGrind true
-set_option linter.tacticAnalysis.tryAtEachStepSimpAll true
+-- set_option Elab.async false
+-- set_option trace.profiler true
 
 public section
 
