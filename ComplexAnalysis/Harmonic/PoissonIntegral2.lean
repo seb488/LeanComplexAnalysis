@@ -80,6 +80,12 @@ lemma exp_ofReal_mul_I_not_in_ball {z : ℂ} (hz : z ∈ ball 0 1) (t : ℝ) : e
   rw [← h, mem_ball, dist_zero_right, norm_exp_ofReal_mul_I] at hz
   exact (lt_self_iff_false 1).mp hz
 
+/- The conjugate of e^{it} is its inverse. -/
+lemma star_exp_ofReal_mul_I {t : ℝ} : star (exp (t * I)) = (exp (t * I))⁻¹ := by
+  rw [star_def, ← exp_conj, ← exp_neg (t * I)]
+  congr 1
+  simp only [map_mul, conj_ofReal, conj_I, mul_neg]
+
 -- #count_heartbeats in -- 2000 hb
 /- 1 - star z * w ≠ 0, for z in unit disc and w in closed unit disc -/
 lemma one_sub_star_mul_neq_zero {z : ℂ} {w : ℂ} (hz : z ∈ ball 0 1) (hw : w ∈ closedBall 0 1) :
@@ -186,13 +192,9 @@ lemma goursat_vanishing_integral_aux {E : Type*} [NormedAddCommGroup E] [NormedS
 /- Algebraic identity that will be used in integrand of the Cauchy-Goursat theorem. -/
 lemma goursat_integrand_eq (z : ℂ) (t : ℝ) : star z / (star (exp (t * I)) - star z) =
                     (I * exp (t * I)) * (star z / (I * (1 - star z * exp (t * I)))) := by
-  have : star (exp (t * I)) = (exp (t * I))⁻¹ := by
-    rw [star_def, ← exp_conj, ← exp_neg (t * I)]
-    congr 1
-    simp only [map_mul, conj_ofReal, conj_I, mul_neg]
-  simp only [this]
-  rw [mul_comm I, mul_assoc, ← mul_div_assoc, mul_div_mul_left (hc := I_ne_zero), ← mul_div_assoc,
-      mul_comm (exp (t * I)), mul_div_assoc, div_eq_mul_inv (star z)]
+  rw [star_exp_ofReal_mul_I, mul_comm I, mul_assoc, ← mul_div_assoc,
+      mul_div_mul_left (hc := I_ne_zero), ← mul_div_assoc, mul_comm (exp (t * I)),
+      mul_div_assoc, div_eq_mul_inv (star z)]
   congr 1
   rw [inv_eq_one_div]
   nth_rewrite 2 [← inv_inv (exp (t * I)), inv_eq_one_div]
@@ -266,11 +268,7 @@ theorem poisson_formula_analytic_scaled_radius {E : Type*} [NormedAddCommGroup E
   simp only [star_def, mul_conj, normSq_eq_norm_sq]
   simp only [ofReal_div, ofReal_sub, ofReal_one, ofReal_pow, map_sub]
   congr 1
-  have : star (exp (t * I)) = (exp (t * I))⁻¹ := by
-    rw [star_def, ← exp_conj, ← exp_neg (t * I)]
-    congr 1
-    simp only [map_mul, conj_ofReal, conj_I, mul_neg]
-  simp only [← star_def, this, mul_sub, sub_mul]
+  simp only [← star_def, star_exp_ofReal_mul_I, mul_sub, sub_mul]
   simp only [ne_eq, Complex.exp_ne_zero, not_false_eq_true, mul_inv_cancel₀, star_def,
              mul_conj, normSq_eq_norm_sq z, ofReal_pow, sub_add_sub_cancel]
 
