@@ -74,8 +74,7 @@ lemma exp_ofReal_mul_I_not_in_ball {z : ℂ} (hz : z ∈ ball 0 1) (t : ℝ) : e
 /-- The conjugate of `exp (t * I)` is its inverse. -/
 lemma star_exp_ofReal_mul_I_eq_inv {t : ℝ} : star (exp (t * I)) = (exp (t * I))⁻¹ := by
   rw [star_def, ← exp_conj, ← exp_neg (t * I)]
-  congr 1
-  simp only [map_mul, conj_ofReal, conj_I, mul_neg]
+  simp
 
 /-- `1 - star z * w ≠ 0`, for `z` in unit disc and `w` in closed unit disc -/
 lemma one_sub_star_mul_neq_zero {z : ℂ} {w : ℂ} (hz : z ∈ ball 0 1) (hw : w ∈ closedBall 0 1) :
@@ -250,8 +249,7 @@ theorem poisson_formula_analytic_scaled {E : Type*} [NormedAddCommGroup E]
   simp only [ofReal_div, ofReal_sub, ofReal_one, ofReal_pow, map_sub]
   congr 1
   simp only [← star_def, star_exp_ofReal_mul_I_eq_inv, mul_sub, sub_mul]
-  simp only [ne_eq, Complex.exp_ne_zero, not_false_eq_true, mul_inv_cancel₀, star_def,
-             mul_conj, normSq_eq_norm_sq z, ofReal_pow, sub_add_sub_cancel]
+  simp [mul_conj, normSq_eq_norm_sq z]
 
 open InnerProductSpace
 
@@ -414,7 +412,7 @@ theorem poisson_integral_formula_harmonic {u : ℂ → ℝ} {z : ℂ}
                  (poisson_kernel_continousOn_circle hz) hr hr_lim
   have hu_lim : Tendsto (fun n => (u (r n * z))) atTop (𝓝 ((1 / (2 * π)) * ∫ t in 0..2 * π,
       ((1 - ‖z‖^2) / ‖(exp (t * I)) - z‖^2 * u (exp (t * I))))) := by
-    simp only [r,h_poisson]
+    simp only [r, h_poisson]
     dsimp only [smul_eq_mul] at hu_lim
     exact (Tendsto.const_mul (1 / (2 * π)) hu_lim)
   -- We conclude by uniqueness of limits and by revealing the Poisson kernel.
@@ -435,7 +433,7 @@ theorem poisson_integral_formula_analytic {E : Type*} [NormedAddCommGroup E]
   have h_poisson (n : ℕ) := poisson_formula_analytic_scaled hf (hr n) hz
   have hu_lim : Tendsto (fun n => (f (r n * z))) atTop (𝓝 ((1 / (2 * π)) • ∫ t in 0..2 * π,
       ((1 - ‖z‖ ^ 2) / ‖(exp (t * I)) - z‖ ^ 2) • f (exp (t * I)))) := by
-    simp only [r,h_poisson]
+    simp only [r, h_poisson]
     exact (Tendsto.const_smul (tendsto_integral_prod_of_continuousOn hc
             (poisson_kernel_continousOn_circle hz) hr hr_lim) (1 / (2 * π)))
   -- We conclude by uniqueness of limits and by revealing the Poisson kernel.
