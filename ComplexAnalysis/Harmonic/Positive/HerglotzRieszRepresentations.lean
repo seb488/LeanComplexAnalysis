@@ -50,7 +50,8 @@ The proof proceeds by:
 
 1. The existence of μ is proven in `HerglotzRiesz_representation_existence`.
 The construction uses the Banach-Alaoglu theorem and the Riesz-Markov-Kakutani representation
-theorem. Furthermore, we use the Poisson integral formula `harmonic_representation_scaled_radius`.
+theorem. Furthermore, we use the Poisson integral formula
+`poisson_formula_of_harmonicOn_scaled_unitDisc`.
 2. Uniqueness of μ is established via the identity principle in
 Theorem `HerglotzRiesz_representation_uniqueness`.
 3. Finally, we combine the two parts to obtain `HerglotzRiesz_representation_analytic`
@@ -507,6 +508,19 @@ lemma harmonic_of_analytic_real
       h_real z hz ▸ rfl
   exact (harmonicAt_congr_nhds h_eq).mpr (h_harmonic x hx)
 
+lemma poisson_formula_of_harmonicOn_scaled_unitDisc_re_kernel
+    {u : ℂ → ℝ} {z : ℂ} {r : ℝ}
+    (hu : HarmonicOnNhd u (ball 0 1))
+    (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
+    u (r * z) = (1 / (2 * Real.pi)) * ∫ t in (0)..(2 * Real.pi),
+      ((exp (t * I) + z) / (exp (t * I) - z)).re  * u (r * exp (t * I)) := by
+      rw [poisson_formula_of_harmonicOn_scaled_unitDisc hu hr hz]
+      congr 3
+      ext t
+      congr 1
+      exact (realPart_herglotz_kernel_eq_poisson_kernel
+            (exp (t * I)) z (by rw [norm_exp_ofReal_mul_I])).symm
+
 /-- The value of `u` at `r_n * z` is equal to the functional
 `Λ_n` applied to the Poisson kernel at `z`. -/
 lemma u_approx_eq_Lambda (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ)
@@ -517,7 +531,7 @@ lemma u_approx_eq_Lambda (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ)
   have : HarmonicOnNhd (u p) (ball (0 : ℂ) 1) := by
     refine harmonic_of_analytic_real (u p) p hp_analytic ?_
     simp [u]
-  convert poisson_formula_harmonic_scaled_radius this hr hz using 1
+  convert poisson_formula_of_harmonicOn_scaled_unitDisc_re_kernel this hr hz using 1
   unfold poisson_kernel_func Λ_n_val; norm_num [circleMap]
 
 lemma K_eq_polar : K_weak = WeakDual.polar ℝ (ball (0 : C_unit_circle) 1) := by
@@ -1114,7 +1128,7 @@ theorem HerglotzRiesz_representation_harmonic
       ((x + z) / (x - z)).re = (1 - ‖z‖^2) / ‖(x : ℂ) - z‖^2 := by
       intros z hz x;
       have hx : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
-      exact real_part_herglotz_kernel x z hx
+      exact realPart_herglotz_kernel_eq_poisson_kernel x z hx
     exact fun z hz => by rw [← hF_re.1 z hz, h_real_part' z hz, integral_congr_ae (
       Filter.Eventually.of_forall fun x => h_real_part_eq z hz x)]
   refine ExistsUnique.intro ?μ ?hμ ?uniq
@@ -1154,7 +1168,7 @@ theorem HerglotzRiesz_representation_harmonic
           refine integral_congr_ae ?_
           filter_upwards with x
           have hx : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
-          exact real_part_herglotz_kernel x z hx
+          exact realPart_herglotz_kernel_eq_poisson_kernel x z hx
         rw [hF_re.1 z hz, hg_real_part, hν z hz]
       · rw [hF_re.2, h_u_zero] ; exact hg0.symm
     apply HerglotzRiesz_representation_uniqueness μ ν
