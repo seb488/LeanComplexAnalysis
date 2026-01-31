@@ -11,7 +11,8 @@ public import Mathlib.Analysis.Complex.Harmonic.Analytic
 
 ## Main results
 
-Theorems `poisson_integral_formula_harmonic` and `poisson_integral_formula_harmonic_re_kernel`:
+Theorems `poisson_integral_of_harmonicOn_unitDisc_continuousOn_closedUnitDisc` and
+`poisson_integral_of_harmonicOn_unitDisc_continuousOn_closedUnitDisc_re_kernel`:
 Every function `u : ℂ → ℝ` harmonic on the unit disc and continuous on the closed unit disc
 can be represented as
 ```
@@ -20,7 +21,8 @@ u(z) = 1/(2π) ∫_0^{2π} (1 - |z|^2) / |e^{it} - z|^2 * u(e^{it}) dt
 ```
 for `z` in the unit disc.
 
-Theorem `poisson_integral_formula_analytic` and `poisson_integral_formula_analytic_re_kernel`:
+Theorem `poisson_integral_of_analyticOn_unitDisc_continuousOn_closedUnitDisc` and
+`poisson_integral_of_analyticOn_unitDisc_continuousOn_closedUnitDisc_re_kernel`:
 Every function `f : ℂ → E` analytic on the unit disc, continuous on the closed unit disc,
 with values in a complex Banach space `E`, can be represented as
 ```
