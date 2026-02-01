@@ -95,7 +95,7 @@ lemma one_sub_star_mul_neq_zero {z : ℂ} {w : ℂ} (hz : z ∈ ball 0 1) (hw : 
   exact absurd this (lt_irrefl 1)
 
 /-- If f is analytic on the unit disc, then `ζ ↦ f (r * ζ)` is differentiable at `z`
-  for `r` in `(0,1)` and `z` in the closed unit ball. -/
+for `r` in `(0,1)` and `z` in the closed unit ball. -/
 lemma differentiableAt_of_analyticOn_unitDisc_of_mul {E : Type*} [NormedAddCommGroup E]
     [NormedSpace ℂ E] {f : ℂ → E} {z : ℂ} {r : ℝ}
     (hf : AnalyticOn ℂ f (ball 0 1)) (hz : z ∈ closedBall 0 1) (hr : r ∈ Ioo 0 1) :
@@ -125,7 +125,7 @@ lemma cauchy_circleIntegral_formula_on_scaled_unitDisc {E : Type*} [NormedAddCom
       exact differentiableAt_of_analyticOn_unitDisc_of_mul hf (ball_subset_closedBall hx) hr
 
 /-- Cauchy's integral formula for analytic functions on the unit disc,
-    evaluated at scaled points `r * z` with `r ∈ (0,1)`. -/
+evaluated at scaled points `r * z` with `r ∈ (0,1)`. -/
 lemma cauchy_integral_formula_on_scaled_unitDisc {E : Type*} [NormedAddCommGroup E]
     [NormedSpace ℂ E] [CompleteSpace E] {f : ℂ → E} {z : ℂ} {r : ℝ}
     (hf : AnalyticOn ℂ f (ball 0 1)) (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
@@ -208,7 +208,7 @@ lemma vanishing_goursat_integral_scaled_unitDisc {E : Type*} [NormedAddCommGroup
     rw [mul_comm I]
 
 /-- We put together `vanishing_goursat_integral_scaled_unitDisc` and
-  `cauchy_integral_formula_on_scaled_unitDisc` -/
+`cauchy_integral_formula_on_scaled_unitDisc` -/
 lemma cauchy_goursat_integral_scaled_unitDisc {E : Type*} [NormedAddCommGroup E]
     [NormedSpace ℂ E] [CompleteSpace E] {f : ℂ → E} {z : ℂ} {r : ℝ}
     (hf : AnalyticOn ℂ f (ball 0 1)) (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 1) :
