@@ -67,15 +67,15 @@
 \label{thm:poisson}
 Let $u : \C \to \R$ be harmonic on the open unit disc $\D = \set{z \in \C : \abs{z} < 1}$ and continuous on the closed unit disc $\overline{\D}$. Then for all $z \in \D$,
 \[
-u(z) = \frac{1}{2\pi} \int_0^{2\pi} \frac{1 - \abs{z}^2}{\abs{e^{it} - z}^2} \, u(e^{it}) \, dt.
+u(z) = \frac{1}{2\pi} \int_0^{2\pi} \frac{1 - \abs{z}^2}{\abs{e^{it} - z}^2} \, u(e^{it}) \, dt = \frac{1}{2\pi} \int_0^{2\pi} \Re\left(\frac{e^{it}+z}{e^{it}-z}\right) \, u(e^{it}) \, dt
 \]
 \end{theorem}
 
 The kernel 
 \[
-P(z, e^{it}) = \frac{1 - \abs{z}^2}{\abs{e^{it} - z}^2}
+P(z, e^{it}) = \frac{1 - \abs{z}^2}{\abs{e^{it} - z}^2} = \Re\left(\frac{e^{it}+z}{e^{it}-z}\right)
 \]
-is called the \emph{Poisson kernel} for the unit disc.
+is called the \emph{Poisson kernel} for the unit disc. 
 
 \
 \section{Key Lemmas and Intermediate Results}
@@ -116,11 +116,11 @@ This identity connects the Herglotz kernel to the Poisson kernel and is verified
 
 \section{Poisson Formula for Analytic Functions}
 
-\begin{proposition}[Poisson Formula for Analytic Functions]
+\begin{proposition}[Poisson Formula for Analytic Functions on Scaled Disc]
 \label{prop:poisson_analytic}
 Let $f : \C \to E$ be analytic on $\D$, and let $z \in \D$, $r \in (0,1)$. Then
 \[
-f(rz) = \frac{1}{2\pi} \int_0^{2\pi} \Re\left(\frac{e^{it} + z}{e^{it} - z}\right) \, f(re^{it}) \, dt.
+f(rz) = \frac{1}{2\pi} \int_0^{2\pi} \frac{1-|z|^2}{|e^{it}-z|^2} \, f(re^{it}) \, dt = \frac{1}{2\pi} \int_0^{2\pi} \Re\left(\frac{e^{it} + z}{e^{it} - z}\right) \, f(re^{it}) \, dt.
 \]
 \end{proposition}
 
@@ -135,7 +135,7 @@ The proof of \cref{thm:poisson} proceeds in several steps:
 
 \item \textbf{Scaled formula:} For $r \in (0,1)$ and $z \in \D$, apply \cref{prop:poisson_analytic} to obtain
 \[
-u(rz) = \frac{1}{2\pi} \int_0^{2\pi} \Re\left(\frac{e^{it} + z}{e^{it} - z}\right) \, u(re^{it}) \, dt.
+u(rz) = \frac{1}{2\pi} \int_0^{2\pi} \frac{1-|z|^2}{|e^{it}-z|^2} \, u(re^{it}) \, dt = \frac{1}{2\pi} \int_0^{2\pi} \Re\left(\frac{e^{it} + z}{e^{it} - z}\right) \, u(re^{it}) \, dt.
 \]
 
 \item \textbf{Approximation sequence:} Consider a sequence $r_n \to 1$ with $r_n \in (0,1)$ and the integral representation of $u(r_n \cdot)$. For $r_n \to 1$ we can apply the dominated convergence theorem as the integrand is uniformly bounded (using continuity of $u$ on $\overline{\D}$ and the fact that the Poisson kernel is bounded for $z$ in a compact subset of $\D$).\\
@@ -143,6 +143,11 @@ u(rz) = \frac{1}{2\pi} \int_0^{2\pi} \Re\left(\frac{e^{it} + z}{e^{it} - z}\righ
 The continuity of $u$ on $\overline{\D}$ ensures that $u(r_n e^{it}) \to u(e^{it})$ as $r_n \to 1$, yielding the desired formula.
 \end{enumerate}
 
+\begin{remark} (The Poisson Formula for Analytic Functions) If $f:\C\to E$ is analytic on $\D$ and continuous on $\overline{D}$, then 
+\[
+f(z) = \frac{1}{2\pi} \int_0^{2\pi} \frac{1 - \abs{z}^2}{\abs{e^{it} - z}^2} \, f(e^{it}) \, dt = \frac{1}{2\pi} \int_0^{2\pi} \Re\left(\frac{e^{it}+z}{e^{it}-z}\right) \, f(e^{it}) \, dt.
+\]
+\end{remark}
 
 \section{A Counterexample}
 
