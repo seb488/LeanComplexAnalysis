@@ -192,7 +192,7 @@ lemma goursat_integrand_eq_aux (z : ℂ) (t : ℝ) : star z / (star (exp (t * I)
   rw [div_div, mul_sub, mul_one, mul_comm (star z), ← mul_assoc,
       inv_mul_cancel₀ (Complex.exp_ne_zero (t * I)), one_mul]
 
-/-- Cauchy-Goursat theorem for the unit disc implies the integral of an ℂ-differentiable function
+/-- Cauchy-Goursat theorem for the unit disc implies the integral of a ℂ-differentiable function
 against the conjugate Cauchy kernel vanishes. -/
 lemma vanishing_goursat_integral_scaled_unitDisc {E : Type*} [NormedAddCommGroup E]
     [NormedSpace ℂ E] {f : ℂ → E} {z : ℂ} {r : ℝ}
@@ -236,7 +236,7 @@ lemma cauchy_goursat_integral_scaled_unitDisc {E : Type*} [NormedAddCommGroup E]
     · exact hf.continuousOn.comp (by fun_prop)
                 (fun t _ => mem_unitDisc_of_scaled_exp_ofReal_mul_I hr t)
 
-/-- For an ℂ-differentiable function `f : ℂ → E` on the unit disc, `f(r*z)` equals the integral
+/-- For a ℂ-differentiable function `f : ℂ → E` on the unit disc, `f(r*z)` equals the integral
 of `f(r*e^{it})` against the Poisson kernel, where `r ∈ (0,1)` and `z` is in the unit disc. -/
 theorem poisson_formula_of_differentiableOn_scaled_unitDisc {E : Type*} [NormedAddCommGroup E]
     [NormedSpace ℂ E] [CompleteSpace E] {f : ℂ → E} {z : ℂ} {r : ℝ}
