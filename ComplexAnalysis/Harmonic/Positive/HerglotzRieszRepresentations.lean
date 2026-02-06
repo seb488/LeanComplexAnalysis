@@ -74,7 +74,7 @@ set_option Elab.async false
 open Complex InnerProductSpace MeasureTheory Metric Set Topology
 
 /-! ## Properties of Herglotz–Riesz functions-/
---#count_heartbeats in
+--#count_heartbeats in --6000
 /-- The Herglotz-Riesz kernel is integrable on the unit circle. -/
 lemma herglotz_integrable (μ : ProbabilityMeasure (sphere (0 : ℂ) 1))
     (w : ℂ) (hw : w ∈ ball 0 1) :
@@ -447,9 +447,8 @@ lemma u_n_mean_value (p : ℂ → ℂ) (r : ℕ → ℝ) (n : ℕ)
       convert (integral_re (hf.integrableOn_Ioc))
       infer_instance
     rw [h_real_part_integral] ; focus norm_num [mul_assoc, mul_comm, mul_left_comm]
-    refine ContinuousOn.comp_continuous (s := {z : ℂ | ‖z‖ < 1}) ?_ ?_ ?_
+    refine ContinuousOn.comp_continuous (s := ball 0 1) ?_ ?_ ?_
     · refine hp_analytic.continuousOn.mono fun x hx => ?_
-      simp only [Metric.mem_ball, Complex.dist_eq, sub_zero]
       exact hx
     · continuity
     · norm_num [circleMap, abs_of_pos hr.1]
@@ -493,7 +492,6 @@ lemma harmonic_of_analytic_real
     (h_real : ∀ z ∈ ball (0 : ℂ) 1, (p z).re = u z) : HarmonicOnNhd u (ball (0 : ℂ) 1) := by
   have h_harmonic : ∀ x ∈ ball (0 : ℂ) 1, HarmonicAt (fun z => (p z).re) x := by
     intro x hx
-    have hx': ‖x‖ < 1 := by rw [mem_ball_zero_iff] at hx ; exact hx
     have h_analytic : AnalyticAt ℂ p x := by
       apply_rules [DifferentiableOn.analyticAt, hp.differentiableOn]
       apply IsOpen.mem_nhds
@@ -867,27 +865,20 @@ lemma analytic_unique_of_real_part
     EqOn f g (ball (0 : ℂ) 1) := by
   -- Let `h(z) = f(z) - g(z)`. We need to show that `h(z) = 0` for all z in the unit disc.
   let h : ℂ → ℂ := fun z => f z - g z
-  have ball_zero_one_eq : ball (0 : ℂ) 1 = {z : ℂ | ‖z‖ < 1} := by
-    ext z
-    simp [Metric.mem_ball]
-  rw [ball_zero_one_eq] at ⊢ hf hg
 
-  let unitDisc := {z : ℂ | ‖z‖ < 1}
-  have h_analytic : AnalyticOn ℂ h unitDisc := by
+  have h_analytic : AnalyticOn ℂ h (ball (0:ℂ) 1) := by
     exact hf.sub hg
-  have h_zero : h 0 = 0 := by simp_all only [mem_setOf_eq, sub_self, h, unitDisc]
-  have h_real_part : ∀ z ∈ unitDisc, (h z).re = 0 := by
+  have h_zero : h 0 = 0 := by simp_all only [sub_self, h]
+  have h_real_part : ∀ z ∈ ball (0:ℂ) 1, (h z).re = 0 := by
     intro z a
-    simp_all only [mem_setOf_eq, sub_self, sub_re, h, unitDisc]
+    simp_all only [sub_self, sub_re, h]
   /- Since `h` is analytic on the unit disc and its real part is zero,
   by the Cauchy-Riemann equations, `h` must be constant. -/
-  have h_const : ∀ z ∈ unitDisc, h z = h 0 := by
-    have h_const : ∀ z ∈ unitDisc, deriv h z = 0 := by
+  have h_const : ∀ z ∈ ball (0:ℂ) 1, h z = h 0 := by
+    have h_const : ∀ z ∈ ball (0:ℂ) 1, deriv h z = 0 := by
       intro z hz
       have h_cauchy_riemann : HasDerivAt h (deriv h z) z := by
-        exact h_analytic.differentiableOn.differentiableAt (
-          IsOpen.mem_nhds (
-            isOpen_lt continuous_norm continuous_const) hz) |> DifferentiableAt.hasDerivAt
+        exact h_analytic.differentiableOn.differentiableAt (isOpen_ball.mem_nhds hz) |>.hasDerivAt
       have h_cauchy_riemann : HasDerivAt (fun x : ℝ => h (z + x)) (
         deriv h z) 0 ∧ HasDerivAt (
           fun x : ℝ => h (z + Complex.I * x)) (deriv h z * Complex.I) 0 := by
@@ -922,10 +913,9 @@ lemma analytic_unique_of_real_part
         have h_cauchy_riemann : ∀ᶠ x in nhds 0, (h (z + x)).re = 0 ∧
           (h (z + Complex.I * x)).re = 0 := by
           rw [Metric.eventually_nhds_iff]
-          obtain ⟨ε, hε, hε'⟩ := Metric.mem_nhds_iff.mp (
-            IsOpen.mem_nhds (isOpen_lt continuous_norm continuous_const) hz);
-          exact ⟨ε, hε, fun y hy => ⟨h_real_part _ <| hε' <| by simpa using hy,
-            h_real_part _ <| hε' <| by simpa using hy⟩⟩
+          obtain ⟨ε, hε, hε'⟩ := Metric.mem_nhds_iff.mp (isOpen_ball.mem_nhds hz)
+          exact ⟨ε, hε, fun y hy => ⟨h_real_part _ (hε' (by simpa using hy)),
+            h_real_part _ (hε' (by simpa using hy))⟩⟩
         exact ⟨HasDerivAt.congr_of_eventuallyEq (hasDerivAt_const _ _) (
           by filter_upwards [h_cauchy_riemann.filter_mono (
             Complex.continuous_ofReal.continuousAt)] with x hx using hx.1),
@@ -936,17 +926,20 @@ lemma analytic_unique_of_real_part
       exact ⟨tendsto_nhds_unique (by tauto) h_cauchy_riemann.1, neg_eq_zero.mp (
         tendsto_nhds_unique (by tauto) h_cauchy_riemann.2)⟩
 
-    have h_ftc (z : ℂ) (hz : z ∈ unitDisc) : h z = h 0 := by
+    have h_ftc (z : ℂ) (hz : z ∈ ball (0:ℂ) 1) : h z = h 0 := by
       have h_ftc_step (t : ℝ) (ht : t ∈ Set.Icc (0 : ℝ) 1) : deriv (fun t => h (t * z)) t = 0 := by
         have h_ftc_step' : deriv (fun t => h (t * z)) t = deriv h (t * z) * z := by
+          have hmem : ↑t * z ∈ ball 0 1 := by
+            rw [mem_ball_zero_iff, norm_mul, Complex.norm_real]
+            rw [Real.norm_eq_abs, abs_of_nonneg ht.1]
+            rw [mem_ball_zero_iff] at hz
+            calc t * ‖z‖ ≤ 1 * ‖z‖ := mul_le_mul_of_nonneg_right ht.2 (norm_nonneg _)
+            _ = ‖z‖ := one_mul _
+            _ < 1 := hz
           convert HasDerivAt.deriv (HasDerivAt.comp (t : ℂ) (
-            h_analytic.differentiableOn.differentiableAt (IsOpen.mem_nhds (
-              show IsOpen unitDisc from isOpen_lt continuous_norm continuous_const) ?_) |>
+            h_analytic.differentiableOn.differentiableAt (isOpen_ball.mem_nhds hmem) |>
                 DifferentiableAt.hasDerivAt) (hasDerivAt_mul_const z)) using 1
-          exact show ‖(t : ℂ) * z‖ < 1 from
-            by simpa [abs_of_nonneg ht.1] using lt_of_le_of_lt (
-              mul_le_of_le_one_left (norm_nonneg _) (mod_cast ht.2)) (by simpa using hz)
-        simp_all [unitDisc]
+        simp_all
         exact Or.inl <| h_const _ <| by simpa [abs_of_nonneg ht.1] using lt_of_le_of_lt (
           mul_le_of_le_one_left (norm_nonneg _) ht.2) hz
       /- By fundamental theorem of calculus, if the derivative of a function is zero,
@@ -956,16 +949,17 @@ lemma analytic_unique_of_real_part
         intros a b _ _ _; rw [intervalIntegral.integral_eq_sub_of_hasDerivAt]
         · intro x hx
           have h_diff : DifferentiableAt ℂ (fun t => h (t * z)) x := by
-            have h_diff : DifferentiableOn ℂ h unitDisc := by
+            have h_diff : DifferentiableOn ℂ h (ball (0:ℂ) 1) := by
               exact h_analytic.differentiableOn
             refine h_diff.differentiableAt ?_ |> DifferentiableAt.comp ?_ <|
               differentiableAt_id.mul_const _
-            exact IsOpen.mem_nhds (isOpen_lt continuous_norm continuous_const) (
-              show ‖ (x : ℂ) * z‖ < 1 from by simpa [abs_of_nonneg (
-                show 0 ≤ x by cases Set.mem_uIcc.mp hx <;> linarith)] using lt_of_le_of_lt (
-                  mul_le_of_le_one_left (norm_nonneg _) (
-                    show |x| ≤ 1 by cases Set.mem_uIcc.mp hx <;> exact abs_le.mpr ⟨
-                      by linarith, by linarith⟩)) hz)
+            refine isOpen_ball.mem_nhds ?_
+            rw [mem_ball_zero_iff, id_eq, norm_mul, Complex.norm_real]
+            have hx_bound : x ∈ Icc 0 1 := by
+              simp only [uIcc_of_le ‹a ≤ b›, mem_Icc] at hx ⊢
+              exact ⟨‹0 ≤ a›.trans hx.1, hx.2.trans ‹b ≤ 1›⟩
+            rw [Real.norm_eq_abs, abs_of_nonneg hx_bound.1, mem_ball_zero_iff] at *
+            nlinarith [norm_nonneg z, hx_bound.1, hx_bound.2, hz]
           convert h_diff.hasDerivAt.comp_ofReal using 1
         · exact (ContinuousOn.intervalIntegrable (
           by rw [continuousOn_congr fun t ht => h_ftc_step t ⟨by linarith [Set.mem_Icc.mp (
