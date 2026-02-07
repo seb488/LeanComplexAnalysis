@@ -21,9 +21,8 @@ for all `z` in the unit disc.
 
 public section
 
-open  Complex InnerProductSpace Metric Set
+open  Complex InnerProductSpace Metric Set Real
 set_option Elab.async false
-
 
 --#count_heartbeats in --5000
 lemma non_neg_boundary
@@ -39,118 +38,150 @@ lemma non_neg_boundary
         · norm_num [Set.MapsTo, norm_exp]
           exact fun x hx₁ hx₂ => abs_le.mpr ⟨by linarith, by linarith⟩
       have := h_cont 1 (by norm_num)
-      simpa using this.tendsto.mono_left <| nhdsWithin_mono _ <| Set.Ioo_subset_Icc_self;
+      simpa using this.tendsto.mono_left <| nhdsWithin_mono _ <| Set.Ioo_subset_Icc_self
   have h_boundary : ∀ᶠ r : ℝ in nhdsWithin 1 (Set.Iio 1), 0 < u (r * exp (t * I)) := by
       filter_upwards [Ioo_mem_nhdsLT zero_lt_one] with r hr using h_pos _ <| by
         simpa [abs_of_nonneg hr.1.le, norm_exp] using hr.2
   exact le_of_tendsto_of_tendsto tendsto_const_nhds ‹_› (
       Filter.eventually_of_mem h_boundary fun x hx => le_of_lt hx)
 
---#time -- 17000ms
---#count_heartbeats in --184509 --> 135000
-/-- Harnack's inequality for a positive harmonic functions u on the unit disc
-with u(0) = 1 and assuming continuous extension to the closed unit disc.
--/
-lemma harnack_ineq_cont_normalized
+--#count_heartbeats in --93000 --> 67000
+lemma harnack_ineq_cont_normalized_upper
     (u : ℂ → ℝ)
     (h_pos : ∀ z ∈ ball (0 : ℂ) 1, 0 < u z)
     (h_f_zero : u 0 = 1)
     (h_harmonic : HarmonicOnNhd u (ball (0 : ℂ) 1))
     (hc : ContinuousOn u (closedBall 0 1))
     (z : ℂ) (hz : z ∈ ball 0 1) :
-    (1 - ‖z‖) / (1 + ‖z‖) ≤ u z ∧ u z ≤ (1 + ‖z‖) / (1 - ‖z‖) := by
-  have h_cont_exp : Continuous fun t : ℝ => cexp (t * I) := by
-    continuity
-  -- Apply the Poisson integral formula to u.
-  have h_poisson : u z = (1 / (2 * Real.pi)) * ∫ t in (0 : ℝ)..2 * Real.pi,
-    (1 - ‖z‖^2) / ‖(exp (t * I)) - z‖^2 * u (exp (t * I)) := by
-    exact poisson_integral_of_harmonicOn_unitDisc_continuousOn_closedUnitDisc h_harmonic hc hz
-  -- Using the Poisson integral formula, we can bound u(z) from below and above.
-  have h_integral_bounds : (1 / (2 * Real.pi)) * ∫ t in (0 : ℝ)..2 * Real.pi,
-    (1 - ‖z‖^2) / (1 + ‖z‖)^2 * u (exp (t * I)) ≤ u z ∧
-      u z ≤ (1 / (2 * Real.pi)) * ∫ t in (0 : ℝ)..2 * Real.pi,
-        (1 - ‖z‖^2) / (1 - ‖z‖)^2 * u (exp (t * I)) := by
-    -- Using the bounds on the Poisson kernel, we can bound the integral.
-    have h_bound_integral : ∀ t : ℝ, 0 ≤ t → t ≤ 2 * Real.pi →
-        (1 - ‖z‖^2) / (1 + ‖z‖)^2 * u (exp (t * I)) ≤
-        (1 - ‖z‖^2) / ‖(exp (t * I)) - z‖^2 * u (exp (t * I)) ∧
-        (1 - ‖z‖^2) / ‖(exp (t * I)) - z‖^2 * u (exp (t * I)) ≤
-        (1 - ‖z‖^2) / (1 - ‖z‖)^2 * u (exp (t * I)) := by
-      intros t ht_nonneg ht_le_two_pi
-      have h_norm_bound : ‖(exp (t * I)) - z‖^2 ≥ (1 - ‖z‖)^2 ∧
-        ‖(exp (t * I)) - z‖^2 ≤ (1 + ‖z‖)^2 := by
-        have h_norm_bound : ‖(exp (t * I)) - z‖ ≥ 1 - ‖z‖ ∧ ‖(exp (t * I)) - z‖ ≤ 1 + ‖z‖ := by
-          constructor
-          · have := norm_sub_norm_le (exp (t * I)) z
-            rw [mem_ball_zero_iff] at hz ; simp at h_pos ; simp [norm_exp] at this
-            simp only [one_div, mul_comm] at h_poisson
-            simp
-            linarith
-          · have := norm_sub_le (exp (t * I)) z
-            rw [mem_ball_zero_iff] at hz ; simp at h_pos ; simp [norm_exp] at this
-            simp only [one_div, mul_comm] at h_poisson
-            simp
-            linarith
-        constructor
-        · exact  pow_le_pow_left₀ (sub_nonneg.2 <| le_of_lt <| by simpa using hz)  h_norm_bound.1 2
-        · exact  pow_le_pow_left₀ (norm_nonneg _) h_norm_bound.2 2
-      constructor <;> gcongr
-      any_goals nlinarith [norm_nonneg z, show ‖z‖ < 1 from by simpa using hz]
-      · exact non_neg_boundary u t h_pos hc
-      · exact non_neg_boundary u t h_pos hc
-      · nlinarith [norm_nonneg (exp (t * I) - z)]
-    rw [h_poisson]
-    constructor <;> apply_rules [mul_le_mul_of_nonneg_left,
-      intervalIntegral.integral_mono_on] <;>
-    all_goals try linarith [Real.pi_pos]
-    all_goals try exact one_div_nonneg.mpr (by nlinarith [Real.pi_pos])
-    all_goals  norm_num
-    any_goals intro t ht₁ ht₂; linarith [h_bound_integral t ht₁ ht₂]
-    · apply_rules [ContinuousOn.intervalIntegrable]
-      apply ContinuousOn.mul
-      · exact continuousOn_const
-      · apply hc.comp
-        · exact Continuous.continuousOn h_cont_exp
-        · intro t ht ; simp [norm_exp]
+    u z ≤ (1 + ‖z‖) / (1 - ‖z‖) := by
+   -- Applying the Poisson integral formula to $u$ at $z$, we get:
+  have h_poisson : u z = (1 / (2 * π)) * ∫ t in 0..(2 * π),
+    (1 - ‖z‖^2) / ‖(exp (t * Complex.I)) - z‖^2 * u (exp (t * Complex.I)) := by
+    convert poisson_integral_of_harmonicOn_unitDisc_continuousOn_closedUnitDisc h_harmonic hc hz
+      using 1;
+  have h_max : ∫ t in (0 : ℝ)..(2 * π),
+    (1 - ‖z‖^2) / ‖(exp (t * Complex.I)) - z‖^2 * u (exp (t * Complex.I)) ≤
+    ∫ t in (0 : ℝ)..(2 * π), (1 - ‖z‖^2) / (1 - ‖z‖)^2 * u (exp (t * Complex.I)) := by
+    refine intervalIntegral.integral_mono_on ?_ ?_ ?_ ?_
+    · positivity
     · apply_rules [ContinuousOn.intervalIntegrable]
       refine ContinuousOn.mul ?_ ?_
-      · refine ContinuousOn.div continuousOn_const ?_ ?_
+      · refine ContinuousOn.div ?_ ?_ ?_
+        · exact continuousOn_const
         · fun_prop
-        · norm_num [exp_ne_zero, sub_eq_zero]
-          intro t ht H; rw [← H] at hz; norm_num [norm_exp] at hz
-      · apply hc.comp
-        · exact Continuous.continuousOn h_cont_exp
-        · intro t ht ; simp [norm_exp]
+        · intro x _
+          apply pow_ne_zero
+          intro heq
+          rw [norm_eq_zero] at heq
+          have hz_eq : z = cexp (↑x * I) := by
+            grind only
+          have hz_norm : ‖z‖ = 1 := by
+            simp [hz_eq]
+          rw [mem_ball_zero_iff] at hz
+          exact (lt_irrefl (1 : ℝ)) (by simp [hz_norm] at hz)
+      · exact hc.comp (Continuous.continuousOn <| by continuity) fun x hx =>
+          by simp [Complex.norm_exp]
+    · apply_rules [ContinuousOn.intervalIntegrable]
+      exact ContinuousOn.mul continuousOn_const <|
+        hc.comp (Continuous.continuousOn <| by continuity) fun x hx =>
+          by simp [Complex.norm_exp]
+    · intro t ht₁; gcongr
+      · convert non_neg_boundary u t h_pos hc using 1
+      · exact sub_nonneg_of_le (pow_le_one₀ (norm_nonneg _) (le_of_lt (by simpa using hz)))
+      · exact pow_pos (sub_pos.mpr (by simpa using hz)) _
+      · exact sub_nonneg.2 (le_of_lt (by simpa using hz))
+      · have := norm_sub_norm_le (Complex.exp (t * Complex.I)) z ; aesop
+  -- Applying the maximum principle to $u$ on the closed unit disc,
+  -- we get that $\int_0^{2\pi} u(e^{it}) dt = 2\pi$.
+  have h_integral : ∫ t in (0 : ℝ)..(2 * π), u (exp (t * Complex.I)) = 2 * π := by
+    have h_integral : u 0 = (1 / (2 * π)) * ∫ t in (0 : ℝ)..(2 * π),
+      u (exp (t * Complex.I)) := by
+      convert poisson_integral_of_harmonicOn_unitDisc_continuousOn_closedUnitDisc h_harmonic hc
+        (Metric.mem_ball_self zero_lt_one) using 1
+      norm_num [Complex.norm_exp]
+    rw [h_f_zero] at h_integral
+    rw [div_mul_eq_mul_div, eq_div_iff] at h_integral <;> nlinarith [Real.pi_pos]
+  calc u z
+    = 1 / (2 * π) * ∫ (t : ℝ) in 0..2 * π, (1 - ‖z‖ ^ 2) /
+      ‖cexp (↑t * I) - z‖ ^ 2 * u (cexp (↑t * I)) := h_poisson
+  _ ≤ 1 / (2 * π) * ∫ (t : ℝ) in 0..2 * π, (1 - ‖z‖ ^ 2) / (1 - ‖z‖) ^ 2 * u (cexp (↑t * I)) := by
+      apply mul_le_mul_of_nonneg_left h_max
+      have h : 0 < (2 * π) := by nlinarith [Real.pi_pos]
+      exact one_div_nonneg.mpr (le_of_lt h)
+  _ = 1 / (2 * π) * ((1 - ‖z‖ ^ 2) / (1 - ‖z‖) ^ 2 * ∫ (t : ℝ) in 0..2 * π, u (cexp (↑t * I))) := by
+      congr 1
+      rw [← intervalIntegral.integral_const_mul]
+  _ = 1 / (2 * π) * ((1 - ‖z‖ ^ 2) / (1 - ‖z‖) ^ 2 * (2 * π)) := by rw [h_integral]
+  _ = (1 - ‖z‖ ^ 2) / (1 - ‖z‖) ^ 2 := by field_simp
+  _ = (1 + ‖z‖) * (1 - ‖z‖) / (1 - ‖z‖) ^ 2 := by ring_nf
+  _ = (1 + ‖z‖) / (1 - ‖z‖) := by
+      have hz' : ‖z‖ < 1 := mem_ball_zero_iff.mp hz
+      field_simp
+
+
+#count_heartbeats in --87023  --> 62000
+lemma harnack_ineq_cont_normalized_lower
+    (u : ℂ → ℝ)
+    (h_pos : ∀ z ∈ ball (0 : ℂ) 1, 0 < u z)
+    (h_f_zero : u 0 = 1)
+    (h_harmonic : HarmonicOnNhd u (ball (0 : ℂ) 1))
+    (hc : ContinuousOn u (closedBall 0 1))
+    (z : ℂ) (hz : z ∈ ball 0 1) :
+    (1 - ‖z‖) / (1 + ‖z‖) ≤ u z := by
+  have h_integral : u z = (1 / (2 * π)) * ∫ t in (0 : ℝ)..(2 * π),
+    (1 - ‖z‖ ^ 2) / ‖(exp (t * I)) - z‖ ^ 2 * u (exp (t * I)) := by
+    convert poisson_integral_of_harmonicOn_unitDisc_continuousOn_closedUnitDisc
+      h_harmonic hc hz using 1
+      -- Since $u$ is positive and harmonic, we can apply the mean value property to get
+      -- $u(z) \geq \frac{1 - \|z\|}{1 + \|z\|}$.
+  have h_mean_value : ∫ t in (0 : ℝ)..(2 * π), (1 - ‖z‖ ^ 2) /
+    ‖(exp (t * I)) - z‖ ^ 2 * u (exp (t * I)) ≥ ∫ t in (0 : ℝ)..(2 * π),
+      (1 - ‖z‖ ^ 2) / (1 + ‖z‖) ^ 2 * u (exp (t * I)) := by
+    refine intervalIntegral.integral_mono_on ?_ ?_ ?_ ?_
+    · positivity
+    · apply_rules [ContinuousOn.intervalIntegrable]
+      exact ContinuousOn.mul continuousOn_const <| hc.comp (Continuous.continuousOn <|
+        by continuity) fun x hx => by simp [Complex.norm_exp]
     · apply_rules [ContinuousOn.intervalIntegrable]
       refine ContinuousOn.mul ?_ ?_
-      · refine ContinuousOn.div continuousOn_const ?_ ?_
-        · fun_prop;
-        · norm_num [exp_ne_zero, sub_eq_zero]
-          intro t ht H; rw [← H] at hz; norm_num [norm_exp] at hz
-      · apply hc.comp
-        · exact Continuous.continuousOn h_cont_exp
-        · intro t ht ; simp [norm_exp]
-    · apply_rules [ContinuousOn.intervalIntegrable]
-      refine ContinuousOn.mul continuousOn_const ?_
-      apply hc.comp
-      · exact Continuous.continuousOn h_cont_exp
-      · intro t ht ; simp [norm_exp]
-  -- Using the fact that u(0) = 1, we can simplify the integrals.
-  have h_integral_simplified : ∫ t in (0 : ℝ)..2 * Real.pi, u (exp (t * I)) = 2 * Real.pi := by
-    -- Apply the Poisson integral formula at the center of the disc (= mean value property).
-    have := poisson_integral_of_harmonicOn_unitDisc_continuousOn_closedUnitDisc h_harmonic hc (z:=0)
-    norm_num at this ⊢
-    nlinarith [Real.pi_pos, mul_inv_cancel₀ Real.pi_ne_zero]
-  convert h_integral_bounds using 2
-  all_goals simp [h_integral_simplified]
-  all_goals ring_nf
-  · field_simp
-    ring
-  · have hz' : ‖z‖ < 1 := by simpa [Metric.mem_ball, dist_eq_norm] using hz
-    have hz'' : (1 - ‖z‖) ≠ 0 := by nlinarith
-    have hz''' : (1 - ‖z‖ * 2 + ‖z‖ ^ 2) ≠ 0 := by  nlinarith
-    field_simp
-    ring
+      · refine ContinuousOn.div ?_ ?_ ?_
+        · exact continuousOn_const
+        · fun_prop
+        · rw [mem_ball_zero_iff] at hz
+          simp
+          intro x _ heq
+          have h_circle : ‖cexp (↑x * I)‖ = 1 := by simp
+          have : ‖z‖ = 1 := by
+            calc ‖z‖ = ‖cexp (↑x * I)‖ := by rw [← sub_eq_zero.mp heq]
+            _ = 1 := h_circle
+          linarith [hz]
+      · exact hc.comp (Continuous.continuousOn <| by continuity) fun x hx =>
+         by simp [Complex.norm_exp]
+    · intro x hx₁ ; gcongr
+      · exact non_neg_boundary u x h_pos hc
+      · nlinarith only [show ‖z‖ < 1 from by simpa using hz, show ‖z‖ ≥ 0 from norm_nonneg z]
+      · rw [mem_ball_zero_iff] at hz
+        apply sq_pos_of_pos
+        rw [norm_pos_iff]
+        intro heq
+        have hz_eq : z = cexp (↑x * I) := by
+          rw [sub_eq_zero] at heq
+          exact heq.symm
+        have hz_norm : ‖z‖ = 1 := by
+          simp [hz_eq]
+        exact (lt_irrefl (1 : ℝ)) (by simp [hz_norm] at hz)
+      · exact le_trans (norm_sub_le _ _) (by simp [Complex.norm_exp]);
+  -- Since $u$ is positive and harmonic, we can apply the mean value property to get
+  -- $u(z) \geq \frac{1 - \|z\|}{1 + \|z\|}$ for all $z$ in the unit disk.
+  have h_mean_value : ∫ t in (0 : ℝ)..(2 * π), u (exp (t * I)) = 2 * π * u 0 := by
+    have := @poisson_integral_of_harmonicOn_unitDisc_continuousOn_closedUnitDisc u 0;
+    simp at this;
+    grind;
+  simp_all [division_def]
+  convert mul_le_mul_of_nonneg_left ‹_› (show 0 ≤ π⁻¹ * 2⁻¹ by positivity) using 1 ; ring_nf;
+  -- Combine like terms and simplify the expression.
+  field_simp
+  ring
 
 --#time -- 1000ms
 --#count_heartbeats in -- 11000 --> 6000
@@ -186,18 +217,20 @@ private lemma harnack_ineq_cont
     intro w _
     exact ne_of_gt (h_pos 0 (mem_ball_self zero_lt_one))
   -- Apply `harnack_ineq_cont_normalized` to v
-  have := harnack_ineq_cont_normalized v hv_pos hv_zero hv_harmonic hv_cont z hz
+  have lower_bound := harnack_ineq_cont_normalized_lower v hv_pos hv_zero hv_harmonic hv_cont z hz
+  have upper_bound := harnack_ineq_cont_normalized_upper v hv_pos hv_zero hv_harmonic hv_cont z hz
   -- Scale back
-  simp [hv] at this
+  simp [hv] at lower_bound upper_bound
   have h0_ne : u 0 ≠ 0 := ne_of_gt (h_pos 0 (mem_ball_self zero_lt_one))
   have h0_ge : u 0 > 0 := h_pos 0 (mem_ball_self zero_lt_one)
   constructor
   · calc (1 - ‖z‖) / (1 + ‖z‖) * u 0
-      _ ≤ (u z / u 0) * u 0 := by apply mul_le_mul_of_nonneg_right this.1 (le_of_lt h0_ge)
+      _ ≤ (u z / u 0) * u 0 := by apply mul_le_mul_of_nonneg_right lower_bound (le_of_lt h0_ge)
       _ = u z := by exact div_mul_cancel₀ (u z) h0_ne
   · calc u z
       = (u z / u 0) * u 0 := by field_simp [h0_ne]
-    _ ≤ ((1 + ‖z‖) / (1 - ‖z‖)) * u 0 := by exact mul_le_mul_of_nonneg_right this.2 (le_of_lt h0_ge)
+    _ ≤ ((1 + ‖z‖) / (1 - ‖z‖)) * u 0 := by
+      exact mul_le_mul_of_nonneg_right upper_bound (le_of_lt h0_ge)
     _ = u 0 * (1 + ‖z‖) / (1 - ‖z‖) := by ring
 
 
