@@ -231,7 +231,7 @@ lemma vanishing_goursat_integral_scaled_disc {E : Type*} [NormedAddCommGroup E]
 /-- We put together `cauchy_integral_formula_scaled_disc` and
 `vanishing_goursat_integral_scaled_disc`. -/
 lemma cauchy_goursat_integral_scaled_disc {E : Type*} [NormedAddCommGroup E]
-    [NormedSpace ℂ E] [CompleteSpace E] {f : ℂ → E} {z : ℂ} {r R : ℝ} (hR : 0 < R)
+    [NormedSpace ℂ E] [CompleteSpace E] {f : ℂ → E} {z : ℂ} {r R : ℝ}
     (hf : DifferentiableOn ℂ f (ball 0 R)) (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 R) :
     f (r * z) = (1 / (2 * π)) • ∫ t in 0..2 * π,
               (R * exp (t * I) / (R * exp (t * I) - z)) • f (r * R * exp (t * I)) +
@@ -245,14 +245,14 @@ lemma cauchy_goursat_integral_scaled_disc {E : Type*} [NormedAddCommGroup E]
                                (Continuous.continuousOn (by fun_prop))
                                (fun t _ => neq_in_disc_of_mul_exp_ofReal_mul_I hz t)
     · exact hf.continuousOn.comp (Continuous.continuousOn (by fun_prop))
-              (fun t _ => mem_disc_of_scaled_exp_ofReal_mul_I hR hr t)
+              (fun t _ => mem_disc_of_scaled_exp_ofReal_mul_I (pos_of_mem_ball hz) hr t)
   · apply ContinuousOn.intervalIntegrable
     refine ContinuousOn.smul ?_ ?_
     · exact ContinuousOn.div (Continuous.continuousOn continuous_const)
        (Continuous.continuousOn (by fun_prop))
        (fun t _ => neq_in_disc_of_mul_star_exp_ofReal_mul_I hz t)
     · exact hf.continuousOn.comp (by fun_prop)
-                (fun t _ => mem_disc_of_scaled_exp_ofReal_mul_I hR hr t)
+                (fun t _ => mem_disc_of_scaled_exp_ofReal_mul_I (pos_of_mem_ball hz) hr t)
 
 /-- For a ℂ-differentiable function `f : ℂ → E` on a disc centered at `0`, `f(r*z)` equals the
 integral of `f(r*R*e^{it})` against the Poisson kernel, where `r ∈ (0,1)` and `z` is in the disc. -/
@@ -261,7 +261,7 @@ theorem poisson_integral_of_differentiableOn_scaled_disc {E : Type*} [NormedAddC
     (hf : DifferentiableOn ℂ f (ball 0 R)) (hr : r ∈ Ioo 0 1) (hz : z ∈ ball 0 R) :
     f (r * z) = (1 / (2 * π)) • ∫ t in 0..2 * π,
       ((R ^ 2 - ‖z‖ ^ 2) / ‖R * exp (t * I) - z‖ ^ 2) • f (r * R * exp (t * I)) := by
-  convert cauchy_goursat_integral_scaled_disc (pos_of_mem_ball hz) hf hr hz using 3
+  convert cauchy_goursat_integral_scaled_disc hf hr hz using 3
   ext t
   rw [← add_smul]
   apply congrArg (fun (x : ℂ) => x • f (r * R * exp (t * I)))
@@ -394,7 +394,7 @@ lemma tendsto_integral_prod_of_continuousOn_circle_closedDisc
     · simp [mem_closedBall, dist_zero_right, norm_exp_ofReal_mul_I, abs_of_pos hR]
 
 /-- The Poisson kernel is continuous on the circle. -/
-theorem poisson_kernel_continousOn_circle {z : ℂ} {R : ℝ} (hz : z ∈ ball 0 R) :
+theorem poisson_ker_continousOn_circle {z : ℂ} {R : ℝ} (hz : z ∈ ball 0 R) :
      ContinuousOn (fun ζ => (R ^ 2 - ‖z‖ ^ 2) / ‖ζ - z‖ ^ 2) (sphere 0 R) := by
   refine continuousOn_of_forall_continuousAt ?_
   intro ζ hζ
@@ -447,7 +447,7 @@ theorem poisson_integral_of_harmonicOn_disc_continuousOn_closedDisc
   obtain ⟨hr, hr_lim⟩ := seq_tendsto_to_one_in_unit_interval_aux
   have h_poisson (n : ℕ) := poisson_integral_of_harmonicOn_scaled_disc hu (hr n) hz
   have hu_lim := tendsto_integral_prod_of_continuousOn_circle_closedDisc (pos_of_mem_ball hz) hc
-                 (poisson_kernel_continousOn_circle hz) hr hr_lim
+                 (poisson_ker_continousOn_circle hz) hr hr_lim
   have hu_lim : Tendsto (fun n => (u (r n * z))) atTop (𝓝 ((1 / (2 * π)) * ∫ t in 0..2 * π,
       ((R ^ 2 - ‖z‖^2) / ‖R * exp (t * I) - z‖^2 * u (R * exp (t * I))))) := by
     simp only [r, h_poisson]
@@ -475,12 +475,12 @@ theorem poisson_integral_of_diffContOnCl_disc
       ((R ^ 2 - ‖z‖ ^ 2) / ‖R * exp (t * I) - z‖ ^ 2) • f (R * exp (t * I)))) := by
     simp only [r, h_poisson]
     exact (Tendsto.const_smul (tendsto_integral_prod_of_continuousOn_circle_closedDisc
-      (pos_of_mem_ball hz) hc (poisson_kernel_continousOn_circle hz) hr hr_lim) (1 / (2 * π)))
+      (pos_of_mem_ball hz) hc (poisson_ker_continousOn_circle hz) hr hr_lim) (1 / (2 * π)))
   rw [← tendsto_nhds_unique (hu_lim)
         (tendsto_of_radius_tendsto_one_of_continuousOn_closedDisc hc hr_lim hz)]
 
 /-- The real part of the Herglotz–Riesz kernel is equal to the Poisson kernel. -/
-theorem realPart_herglotz_kernel_eq_poisson_kernel {R : ℝ} (x w : ℂ) (hx : ‖x‖ = R) :
+theorem realPart_herglotz_ker_eq_poisson_ker {R : ℝ} (x w : ℂ) (hx : ‖x‖ = R) :
     ((x + w) / (x - w)).re = (R ^ 2 - ‖w‖ ^ 2) / ‖x - w‖ ^ 2 := by
   rw [div_re, normSq_eq_norm_sq (x - w)]
   calc (x + w).re * (x - w).re / ‖x - w‖ ^ 2 + (x + w).im * (x - w).im / ‖x - w‖ ^ 2
@@ -505,7 +505,7 @@ theorem poisson_integral_of_harmonicOn_disc_continuousOn_closedDisc_ker_re
   congr 3
   ext t
   congr 1
-  exact (realPart_herglotz_kernel_eq_poisson_kernel
+  exact (realPart_herglotz_ker_eq_poisson_ker
          (R * exp (t * I)) z (by simp [norm_exp_ofReal_mul_I, (pos_of_mem_ball hz).le])).symm
 
 /-- **Poisson integral formula for ℂ-differentiable functions on a disc**:
@@ -522,7 +522,7 @@ theorem poisson_integral_of_diffContOnCl_disc_ker_re
   congr 3
   ext t
   congr 1
-  exact (realPart_herglotz_kernel_eq_poisson_kernel
+  exact (realPart_herglotz_ker_eq_poisson_ker
          (R * exp (t * I)) z (by simp [norm_exp_ofReal_mul_I, (pos_of_mem_ball hz).le])).symm
 
 /-- **Poisson integral formula for harmonic functions on a disc**:
@@ -542,7 +542,7 @@ A function `f : ℂ → E` `ℂ`-differentiable on a disc with radius `R` and ce
 and continuous on the closed disc, satisfies
 `f(z) = (1/2π) ∫_0^{2π} Re((R*e^{it} + z) / (R*e^{it} - z)) • f(R*e^{it}) dt`
 for `z` in the disc. -/
-theorem circleAverage_of_diffContOnCl_disc_ker_re
+theorem circleAverage_of_diffContOnCl_disc
     {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
     {f : ℂ → E} {z : ℂ} {R : ℝ} (hf : DiffContOnCl ℂ f (ball 0 R)) (hz : z ∈ ball 0 R) :
     f z = circleAverage (fun ζ => ((ζ + z) / (ζ - z)).re • f ζ) 0 R := by
