@@ -11,6 +11,13 @@ public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 public import Mathlib.Topology.ContinuousMap.StoneWeierstrass
 public import Mathlib.Tactic
 
+set_option Elab.async false
+--set_option linter.upstreamableDecl true
+--set_option linter.tacticAnalysis.tryAtEachStepAesop true
+--set_option linter.tacticAnalysis.tryAtEachStepGrind true
+--set_option linter.tacticAnalysis.tryAtEachStepSimpAll true
+
+
 /-!
 # Uniqueness of the Herglotz–Riesz measure
 
@@ -24,9 +31,9 @@ identical on the unit disc, then `μ₁` = `μ₂`.
 -/
 
 public section
-set_option Elab.async false
+
 open MeasureTheory Metric Complex Topology
---#count_heartbeats in 4500
+--#count_heartbeats in --3300
 /-- Equal moments with natural exponents imply equal moments with integer exponents. -/
 lemma moments_eq_integers (μ₁ μ₂ : ProbabilityMeasure (sphere (0 : ℂ) 1))
     (h : ∀ n : ℕ, ∫ x : sphere (0 : ℂ) 1, x.val ^ n ∂μ₁ = ∫ x : sphere (0 : ℂ) 1, x.val ^ n ∂μ₂) :
@@ -72,7 +79,7 @@ lemma continuous_zpow_on_unit_circle (n : ℤ) :
          rw [← norm_ne_zero_iff, this]
          exact one_ne_zero
 
---#count_heartbeats in --109296  --> 38000
+--#count_heartbeats in --109296  --> 38000 --> 21000
 /-- The span of moments is dense in the space of continuous functions on the unit circle. -/
 lemma span_moments_dense : (Submodule.span ℂ (Set.range (fun n : ℤ => ContinuousMap.mk (
     fun x : sphere (0 : ℂ) 1 => x.val ^ n)
@@ -93,7 +100,8 @@ lemma span_moments_dense : (Submodule.span ℂ (Set.range (fun n : ℤ => Contin
       intro A hA hA'
       have := @ContinuousMap.starSubalgebra_topologicalClosure_eq_top_of_separatesPoints ℂ
         (sphere (0 : ℂ) 1)
-      simp [SetLike.ext_iff] at this hA hA'
+      simp only [SetLike.ext_iff, StarSubalgebra.mem_top, iff_true, ne_eq, Subtype.forall,
+        mem_sphere_iff_norm, sub_zero, Subtype.mk.injEq] at this hA hA'
       convert this A _ using 2
       · intro x y hxy
         have hx_norm : ‖(x : ℂ)‖ = 1 := by exact mem_sphere_zero_iff_norm.mp x.2
@@ -103,13 +111,13 @@ lemma span_moments_dense : (Submodule.span ℂ (Set.range (fun n : ℤ => Contin
         exact ⟨f, ⟨f, hf_mem, rfl⟩, hf_ne⟩
     apply h_stone_weierstrass A
     · rintro ⟨a, ha⟩ ⟨b, hb⟩ hab
-      show ∃ f : C(sphere (0:ℂ) 1, ℂ), f ∈ A ∧ f ⟨a, ha⟩ ≠ f ⟨b, hb⟩
+    --  show ∃ f : C(sphere (0:ℂ) 1, ℂ), f ∈ A ∧ f ⟨a, ha⟩ ≠ f ⟨b, hb⟩
       refine ⟨⟨fun x => x.val, continuous_subtype_val⟩, ?_, ?_⟩
       · -- Membership
         apply StarAlgebra.subset_adjoin
         simp only [Set.mem_singleton_iff]
       · -- Inequality
-        simp
+        simp only [ContinuousMap.coe_mk, ne_eq]
         intro h
         exact hab (Subtype.ext h)
     · intro c
@@ -140,14 +148,14 @@ lemma span_moments_dense : (Submodule.span ℂ (Set.range (fun n : ℤ => Contin
     rw [Submodule.mem_toAddSubmonoid] at hx hy ⊢
     rw [Finsupp.mem_span_range_iff_exists_finsupp] at hx hy
     obtain ⟨c₁, hc₁⟩ := hx; obtain ⟨c₂, hc₂⟩ := hy; rw [← hc₁, ← hc₂]
-    simp [Finsupp.sum, Finset.sum_mul _ _ _]
+    simp only [Finsupp.sum, Finset.sum_mul _ _ _, Algebra.smul_mul_assoc]
     simp only [Finset.mul_sum _ _ _]
     refine Submodule.sum_mem _ fun i hi =>
       Submodule.smul_mem _ _ (Submodule.sum_mem _ fun j hj => ?_)
     rw [mul_smul_comm]
     refine Submodule.smul_mem _ _ (Submodule.subset_span ⟨i + j, ?_⟩)
     ext x
-    simp [ContinuousMap.mul_apply]
+    simp only [ContinuousMap.coe_mk, ContinuousMap.mul_apply]
     rw [zpow_add₀]
     unfold sphere at x
     obtain ⟨x, hx⟩ := x
@@ -159,12 +167,15 @@ lemma span_moments_dense : (Submodule.span ℂ (Set.range (fun n : ℤ => Contin
   | star =>
     rename_i h₁ h₂ h₃
     refine Submodule.span_induction ?_ ?_ ?_ ?_ h₃
-    · simp [ContinuousMap.ext_iff]
+    · simp only [Set.mem_range, ContinuousMap.ext_iff, ContinuousMap.coe_mk, Subtype.forall,
+      mem_sphere_iff_norm, sub_zero, Submodule.coe_toAddSubmonoid, SetLike.mem_coe,
+      forall_exists_index]
       intro f n hn
       refine Submodule.subset_span ⟨-n, ?_⟩
       ext ⟨y, hy⟩
       have hy' : ‖y‖ = 1 := by exact mem_sphere_zero_iff_norm.mp hy
-      simp [hn y hy']
+      simp only [zpow_neg, ContinuousMap.coe_mk, hn y hy', ContinuousMap.star_apply,
+        RCLike.star_def]
       rw [← hn y hy', inv_def]
       simp [normSq_eq_norm_sq, hy']
     · simp [star_zero]
@@ -174,7 +185,7 @@ lemma span_moments_dense : (Submodule.span ℂ (Set.range (fun n : ℤ => Contin
       rw [star_smul]
       exact Submodule.smul_mem _ _ hsx
 
---#count_heartbeats in --28000
+--#count_heartbeats in --24000
 /-- If two finite measures agree on a dense subspace of continuous functions,
 then they agree on all continuous functions. -/
 lemma integral_eq_on_dense_set {X : Type*} [TopologicalSpace X] [CompactSpace X]
@@ -196,7 +207,7 @@ lemma integral_eq_on_dense_set {X : Type*} [TopologicalSpace X] [CompactSpace X]
         refine le_trans this ?_
         calc  ‖g‖ = ‖f + (g - f)‖ := by simp
           _ ≤ ‖f‖ + ‖g - f‖ := norm_add_le _ _
-          _ ≤ ‖f‖ + 1 :=  by rw [<- dist_eq_norm] ; exact add_le_add_left (le_of_lt hg) ‖f‖
+          _ ≤ ‖f‖ + 1 :=  by rw [<- dist_eq_norm] ; linarith
       · exact Filter.Eventually.of_forall fun x => Continuous.tendsto (by continuity) _
   intro f
   /- Since `S` is dense in `C(X, ℂ)`, there exists a sequence `f_n` in `S`
@@ -213,7 +224,7 @@ lemma integral_eq_on_dense_set {X : Type*} [TopologicalSpace X] [CompactSpace X]
       symm
       exact h (f_n x) hx))
 
---#count_heartbeats in --14000
+--#count_heartbeats in --12000
 /-- If two probability measures on the unit circle have the same moments, then they are equal. -/
 lemma measure_eq_of_moments (μ₁ μ₂ : Measure (sphere (0 : ℂ) 1))
     [IsProbabilityMeasure μ₁] [IsProbabilityMeasure μ₂]
@@ -226,7 +237,8 @@ lemma measure_eq_of_moments (μ₁ μ₂ : Measure (sphere (0 : ℂ) 1))
       have h_integrals : ∀ n : ℤ, ∫ x, x.val ^ n ∂μ₁ = ∫ x, x.val ^ n ∂μ₂ :=
          fun n ↦ moments_eq_integers ⟨μ₁, inferInstance⟩ ⟨μ₂, inferInstance⟩ h n
       rw [Finsupp.mem_span_range_iff_exists_finsupp] at hf
-      obtain ⟨c, rfl⟩ := hf; simp_all [Finsupp.sum]
+      obtain ⟨c, rfl⟩ := hf; simp_all only [Finsupp.sum, ContinuousMap.coe_sum,
+        ContinuousMap.coe_smul, ContinuousMap.coe_mk, Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
       rw [integral_finset_sum, integral_finset_sum]
       · simp only [integral_const_mul, h_integrals]
       · intro n hn; apply_rules [Integrable.const_mul, integrable_const]
@@ -253,7 +265,7 @@ lemma measure_eq_of_moments (μ₁ μ₂ : Measure (sphere (0 : ℂ) 1))
     · exact Eq.symm (by erw [integral_ofReal] ; norm_cast)
   exact ext_of_forall_integral_eq_of_IsFiniteMeasure fun f ↦ h_eq f.toContinuousMap
 
---#count_heartbeats in -- 45000
+--#count_heartbeats in -- 37000
 /-- If two power series are equal on the unit disc, then their coefficients are equal. -/
 lemma coeffs_eq_of_series_eq (c1 c2 : ℕ → ℂ)
     (hc1 : ∃ M, ∀ n, ‖c1 n‖ ≤ M) (hc2 : ∃ M, ∀ n, ‖c2 n‖ ≤ M)
@@ -317,7 +329,7 @@ lemma coeffs_eq_of_series_eq (c1 c2 : ℕ → ℂ)
           exact ⟨Summable.of_norm <| by simpa using h_summable.1,
                   Summable.of_norm <| by simpa using h_summable.2⟩
         simpa only [mul_sub] using h_summable.1.sub h_summable.2
-      · simp [add_assoc, Finset.sum_range_succ]
+      · simp only [Finset.sum_range_succ, add_assoc, Nat.reduceAdd, add_eq_right]
         exact Finset.sum_eq_zero fun i hi => by simp [ih i (Finset.mem_range.mp hi)]
     /- If we factor out `z^(n + 1)` from the series,
        then the limit of the series is the separated term, when z approaches 0. -/
@@ -367,7 +379,7 @@ lemma coeffs_eq_of_series_eq (c1 c2 : ℕ → ℂ)
                             mem_ball, dist_zero_right, zero_div]) -- here we use h_eq
   exact eq_of_sub_eq_zero (tendsto_nhds_unique h_limit h_zero_limit)
 
---#count_heartbeats in --6000
+--#count_heartbeats in --5000
 /-- We expand the Herglotz–Riesz kernel into a power series at 0 by using that
  1/(1 - z/w) = Σ_{n=0}^∞ (z/w)^n. -/
 lemma kernel_expansion (z : ℂ) (hz : ‖z‖ < 1) (w : ℂ) (hw : ‖w‖ = 1) :
@@ -392,12 +404,13 @@ lemma kernel_expansion (z : ℂ) (hz : ‖z‖ < 1) (w : ℂ) (hw : ‖w‖ = 1)
   · rw [one_add_div]
     · ring
     · exact sub_ne_zero_of_ne <| by rintro rfl; rw [hw] at hz ; exact (not_lt_of_ge (le_refl 1) hz)
-  · simp [div_pow]
+  · simp only [star_pow, RCLike.star_def, div_pow, add_right_inj, mul_eq_mul_left_iff,
+    OfNat.ofNat_ne_zero, or_false]
     congr! 2
     rw [div_eq_mul_inv, inv_def]
     simp [normSq_eq_norm_sq,hw]
-
-#count_heartbeats in --19000
+--#time
+--#count_heartbeats in --14000
 /-- The kernel_expansion is used to rewrite the integral. -/
 lemma integral_kernel_expansion
     (μ : ProbabilityMeasure (sphere (0 : ℂ) 1)) (z : ℂ) (hz : ‖z‖ < 1) :
@@ -416,7 +429,8 @@ lemma integral_kernel_expansion
     · refine ne_of_lt (lt_of_le_of_lt (ENNReal.tsum_le_tsum
         (g := fun n => ENNReal.ofReal (‖z‖ ^ (n + 1))) fun n => ?_) ?_)
       · refine le_trans (lintegral_mono_ae (g := fun _ => ENNReal.ofReal (‖z‖ ^ (n + 1))) ?_) ?_
-        · simp [ENorm.enorm]
+        · simp only [enorm, nnnorm_mul, nnnorm_pow, RCLike.nnnorm_conj, ENNReal.coe_mul,
+          ENNReal.coe_pow, norm_nonneg, ENNReal.ofReal_pow, ofReal_norm]
           filter_upwards with a
           simp [show ‖(a : ℂ)‖₊ = 1 from by ext; simp]
         · norm_num
@@ -443,8 +457,8 @@ lemma integral_kernel_expansion
         congr 1
         ext i
         rw [norm_mul, norm_pow, norm_pow]
-
---#count_heartbeats in --10000
+--#time
+--#count_heartbeats in --7000
 /-- If two probability measures on the unit circle yield the same Herglotz–Riesz functions,
 then they are equal. -/
 theorem HerglotzRiesz_representation_uniqueness
@@ -483,7 +497,8 @@ theorem HerglotzRiesz_representation_uniqueness
   -- We conclude the equality of the measures by `measure_eq_of_moments`.
   have h : μ₁.toMeasure = μ₂.toMeasure := by
     apply_rules [measure_eq_of_moments]
-    ext (_ | k) <;> simp at h_coeffs ⊢
+    ext (_ | k) <;> simp only [star_pow, RCLike.star_def, pow_zero, integral_const, probReal_univ,
+      one_smul] at h_coeffs ⊢
     convert congr_arg Star.star (h_coeffs k) using 1
     · simp [← integral_conj]
     · simp [← integral_conj]

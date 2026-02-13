@@ -45,7 +45,7 @@ lemma non_neg_boundary
   exact le_of_tendsto_of_tendsto tendsto_const_nhds ‹_› (
       Filter.eventually_of_mem h_boundary fun x hx => le_of_lt hx)
 
---#count_heartbeats in --93000 --> 67000
+--#count_heartbeats in --93000 --> 60000
 lemma harnack_ineq_cont_normalized_upper
     (u : ℂ → ℝ)
     (h_pos : ∀ z ∈ ball (0 : ℂ) 1, 0 < u z)
@@ -118,8 +118,7 @@ lemma harnack_ineq_cont_normalized_upper
       have hz' : ‖z‖ < 1 := mem_ball_zero_iff.mp hz
       field_simp
 
-
-#count_heartbeats in --87023  --> 62000
+--#count_heartbeats in --87023  --> 55000
 lemma harnack_ineq_cont_normalized_lower
     (u : ℂ → ℝ)
     (h_pos : ∀ z ∈ ball (0 : ℂ) 1, 0 < u z)
@@ -148,7 +147,7 @@ lemma harnack_ineq_cont_normalized_lower
         · exact continuousOn_const
         · fun_prop
         · rw [mem_ball_zero_iff] at hz
-          simp
+          simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, pow_eq_zero_iff, norm_eq_zero]
           intro x _ heq
           have h_circle : ‖cexp (↑x * I)‖ = 1 := by simp
           have : ‖z‖ = 1 := by
@@ -174,11 +173,12 @@ lemma harnack_ineq_cont_normalized_lower
   -- Since $u$ is positive and harmonic, we can apply the mean value property to get
   -- $u(z) \geq \frac{1 - \|z\|}{1 + \|z\|}$ for all $z$ in the unit disk.
   have h_mean_value : ∫ t in (0 : ℝ)..(2 * π), u (exp (t * I)) = 2 * π * u 0 := by
-    have := @poisson_integral_of_harmonicOn_unitDisc_continuousOn_closedUnitDisc u 0;
-    simp at this;
-    grind;
+    have := @poisson_integral_of_harmonicOn_unitDisc_continuousOn_closedUnitDisc u 0
+    simp at this
+    grind
   simp_all [division_def]
-  convert mul_le_mul_of_nonneg_left ‹_› (show 0 ≤ π⁻¹ * 2⁻¹ by positivity) using 1 ; ring_nf;
+  convert mul_le_mul_of_nonneg_left ‹_› (show 0 ≤ π⁻¹ * 2⁻¹ by positivity) using 1
+  ring_nf
   -- Combine like terms and simplify the expression.
   field_simp
   ring
@@ -200,11 +200,11 @@ private lemma harnack_ineq_cont
   -- v satisfies the conditions of `harnack_ineq_normalized`
   have hv_pos : ∀ w ∈ ball (0 : ℂ) 1, 0 < v w := by
     intro w hw
-    simp [hv]
+    simp only [hv]
     exact div_pos (h_pos w hw) (h_pos 0 (mem_ball_self zero_lt_one))
   have hv_zero : v 0 = 1 := by
-    simp [hv]
-    exact div_self (ne_of_gt (h_pos 0 (mem_ball_self zero_lt_one)))
+    simp only [hv, div_self_eq_one₀, ne_eq]
+    exact ne_of_gt (h_pos 0 (mem_ball_self one_pos))
   have hv_harmonic : HarmonicOnNhd v (ball 0 1) := by
     intro w hw
     change HarmonicAt (fun z => u z / u 0) w
@@ -220,7 +220,7 @@ private lemma harnack_ineq_cont
   have lower_bound := harnack_ineq_cont_normalized_lower v hv_pos hv_zero hv_harmonic hv_cont z hz
   have upper_bound := harnack_ineq_cont_normalized_upper v hv_pos hv_zero hv_harmonic hv_cont z hz
   -- Scale back
-  simp [hv] at lower_bound upper_bound
+  simp only [hv] at lower_bound upper_bound
   have h0_ne : u 0 ≠ 0 := ne_of_gt (h_pos 0 (mem_ball_self zero_lt_one))
   have h0_ge : u 0 > 0 := h_pos 0 (mem_ball_self zero_lt_one)
   constructor
