@@ -8,7 +8,10 @@ A small collection of formalized theorems in **complex analysis** using **Lean 4
 
 - The **Poisson integral theorem** for harmonic functions on the unit disc.  
   File: [PoissonIntegral.lean](ComplexAnalysis/Harmonic/PoissonIntegral.lean), reference: [MathWorld: Poisson Integral](https://mathworld.wolfram.com/PoissonIntegral.html)  
-  📄 [PDF: sketch of the proof](Docs/ProofPoissonIntegral.pdf)  
+  📄 [PDF: sketch of the proof](Docs/ProofPoissonIntegral.pdf)
+
+  (See  [Mathlib/Analysis/Complex/Poisson.lean](https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/Analysis/Complex/Poisson.lean) and  [Mathlib/Analysis/Complex/Harmonic/Poisson.lean](https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/Analysis/Complex/Harmonic/Poisson.lean).)
+
 - The **Herglotz–Riesz representation theorem** for positive harmonic functions on the unit disc.  
   File: [HerglotzRieszRepresentations.lean](ComplexAnalysis/Harmonic/Positive/HerglotzRieszRepresentations.lean), reference: [Wikipedia: Positive_harmonic_function](https://en.wikipedia.org/wiki/Positive_harmonic_function)  
   📄 [PDF: sketch of the proof](Docs/ProofHerglotzRiesz.pdf)
