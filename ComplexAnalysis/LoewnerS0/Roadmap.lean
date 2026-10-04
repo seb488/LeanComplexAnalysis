@@ -12,19 +12,21 @@ import LoewnerS0.S0Chain
 import LoewnerS0.S0Coeff
 import LoewnerS0.StarlikeS0
 import LoewnerS0.ChainS0
+import LoewnerS0.OsgoodProof
 
 /-!
 # Roadmap: the main theorems about `S⁰(𝔹)`
 
-Every `sorry` in this file is a known theorem (with a reference); replacing these `sorry`s, one at
-a time, is the plan of the project. Nothing in the other files depends on this file.
+This file started as a list of `sorry`s, each a known theorem with a reference; replacing them,
+one at a time, was the plan of the project. Nothing in the other files depends on this file.
 
-**One `sorry` remains: Osgood's theorem** (`osgood`), a theorem of several complex variables that
-is not in mathlib: an injective holomorphic map of an open subset of `ℂⁿ` into `ℂⁿ` has nonvanishing
-Jacobian determinant. Every other statement below is proved; the two inclusions
-`classS0'_subset_classS0` and `classSstar_subset_classS0` are derived from `osgood`
-(`LoewnerS0.ChainS0`, `LoewnerS0.StarlikeS0`), and `#print axioms` shows `sorryAx` exactly for
-them and for `classS0_eq_classS0'`.
+**All statements are now proved; the file contains no `sorry`.** The last one was Osgood's theorem
+(`osgood`: an injective holomorphic map of an open subset of `ℂⁿ` into `ℂⁿ` has nonvanishing
+Jacobian determinant), a theorem of several complex variables that is not in mathlib; it is proved
+in `LoewnerS0.OsgoodProof`, by induction on the dimension. The two inclusions
+`classS0'_subset_classS0` and `classSstar_subset_classS0` are derived from it
+(`LoewnerS0.ChainS0`, `LoewnerS0.StarlikeS0`). Every theorem below depends only on the standard
+axioms `propext`, `Classical.choice` and `Quot.sound`.
 
 Status: the estimates for `M(𝔹)` (`LoewnerS0.ClassM`), existence and uniqueness for the Loewner ODE
 (`LoewnerS0.LoewnerExist`, `LoewnerS0.LoewnerODE`), the existence of the limit `lim eᵗ v(z, t)`
@@ -79,10 +81,14 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
 /-- **Osgood's theorem** (W. F. Osgood, 1899; see e.g. [Nar71] or the Encyclopedia of Mathematics,
 *Holomorphic mapping*): an injective holomorphic map of an open subset of a finite-dimensional
 complex normed space `V` into `V` has nonvanishing Jacobian determinant
-(`LoewnerS0.OsgoodTheorem`). This is the only `sorry` of the project. -/
+(`LoewnerS0.OsgoodTheorem`). Proved in `LoewnerS0.OsgoodProof`, by induction on the dimension:
+the one-variable case is a `k`-th root argument (`LoewnerS0.OsgoodOneDim`); if `Df(z) ≠ 0`, a slice
+through `z` reduces the dimension (`LoewnerS0.OsgoodSlice`); and `Df(z) = 0` is impossible, because
+then `det Df` would vanish on a Lipschitz curve along which `f` is constant
+(`LoewnerS0.OsgoodCurve`). -/
 theorem osgood {V : Type*} [NormedAddCommGroup V] [NormedSpace ℂ V] [FiniteDimensional ℂ V] :
-    OsgoodTheorem V := by
-  sorry
+    OsgoodTheorem V :=
+  osgoodTheorem
 
 /-! ### The Carathéodory class -/
 

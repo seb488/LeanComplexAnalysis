@@ -8,12 +8,12 @@ import Mathlib.Topology.Algebra.Module.Determinant
 **Osgood's theorem** (W. F. Osgood, 1899): if `U ⊆ ℂⁿ` is open and `f : U → ℂⁿ` is holomorphic and
 injective, then the complex Jacobian determinant of `f` vanishes nowhere on `U`. In one variable this
 is the familiar fact that a univalent function has a nonvanishing derivative; in several variables
-it is a genuine theorem of several complex variables (its proofs use the local theory of analytic
-sets, see [Nar71], [Chi89], or [EoM, *Holomorphic mapping*]), and it is not in mathlib.
+it is a genuine theorem of several complex variables (see [Nar71], [Chi89], or
+[EoM, *Holomorphic mapping*]), and it is not in mathlib.
 
-Here it is stated as a proposition, `LoewnerS0.OsgoodTheorem E`; the theorem itself is assumed (as
-a single `sorry`) in `LoewnerS0.Roadmap`, and everything that depends on it in this project takes
-`hO : OsgoodTheorem E` as a hypothesis.
+Here it is stated as a proposition, `LoewnerS0.OsgoodTheorem E`; the results that depend on it take
+`hO : OsgoodTheorem E` as a hypothesis. The theorem itself is proved in `LoewnerS0.OsgoodProof`
+(`LoewnerS0.osgoodTheorem`).
 
 ## Main results
 
@@ -48,7 +48,7 @@ variable (E : Type*) [NormedAddCommGroup E] [NormedSpace ℂ E]
 
 /-- **Osgood's theorem**: an injective holomorphic map of an open subset `U` of `E` into `E` has
 a nonvanishing Jacobian determinant `det Df(z)` at every point of `U`. (It is meant for
-finite-dimensional `E`, and it is stated as a proposition: it is not in mathlib.) -/
+finite-dimensional `E`; it is proved in `LoewnerS0.OsgoodProof`.) -/
 def OsgoodTheorem : Prop :=
   ∀ (f : E → E) (U : Set E), IsOpen U → DifferentiableOn ℂ f U → InjOn f U →
     ∀ z ∈ U, (fderiv ℂ f z).det ≠ 0
