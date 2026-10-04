@@ -26,7 +26,7 @@ A small collection of formalized theorems in **complex analysis** using **Lean 4
   File: [BieberbachSecondCoeff.lean](ComplexAnalysis/UnivalentFunctions/BieberbachSecondCoeff.lean) 
   , reference: [Wikipedia](https://en.wikipedia.org/wiki/De_Branges%27s_theorem)
 
-- **The class S^0 on the unit ball**: The folder 'LoewnerS0' contains basic definitions and results. A theorem by Osgood is assumed as an axiom, see  [LoewnerS0/Roadmap.lean](ComplexAnalysis/LoewnerS0/Roadmap.lean). A counterexample to the higher dimensional Bieberbach conjecture (a starlike mapping) is given in  [LoewnerS0/Cex/Main.lean](ComplexAnalysis/LoewnerS0/Cex/Main.lean).
+- **The class S^0 on the unit ball**: The folder 'LoewnerS0' contains basic definitions and results. A counterexample to the higher dimensional Bieberbach conjecture (a starlike mapping) is given in  [LoewnerS0/Cex/Main.lean](ComplexAnalysis/LoewnerS0/Cex/Main.lean).
 
 
 
