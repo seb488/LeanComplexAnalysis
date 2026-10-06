@@ -16,7 +16,7 @@ A small collection of formalized theorems in **complex analysis** using **Lean 4
   File: [HerglotzRieszRepresentations.lean](ComplexAnalysis/Harmonic/Positive/HerglotzRieszRepresentations.lean), reference: [Wikipedia: Positive_harmonic_function](https://en.wikipedia.org/wiki/Positive_harmonic_function)  
   📄 [PDF: sketch of the proof](Docs/ProofHerglotzRiesz.pdf)
 
-#### Further contributions:
+#### Further formalizations:
 
 - **Harnack's inequality** for positive harmonic functions on the unit disc.  
   File: [HarnackIneq.lean](ComplexAnalysis/Harmonic/Positive/HarnackIneq.lean) 
